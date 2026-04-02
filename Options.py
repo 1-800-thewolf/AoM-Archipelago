@@ -1,0 +1,213 @@
+from dataclasses import dataclass
+
+from Options import Choice, PerGameCommonOptions, Range, StartInventoryPool, Toggle
+
+
+################
+# Goal Options #
+################
+
+class Goal(Choice):
+    """
+    Goal for this playthrough.
+
+    fott_32_victory:
+    Beat scenario 32, A Place in My Dreams, to win.
+    Note: Beating scenario 32 requires all 3 Progressive Greek Age Unlock items
+    (the Mythic Age is needed to build the Wonder).
+    """
+    internal_name = "goal"
+    display_name = "Goal"
+
+    option_fott_32_victory = 0
+    default = option_fott_32_victory
+
+
+##################
+# Starting Setup #
+##################
+
+class StartingScenarios(Choice):
+    """
+    Which civilization block is unlocked at the start?
+
+    greek:    Scenarios 1-10
+    egyptian: Scenarios 11-20
+    norse:    Scenarios 21-30
+
+    The other two sections must be found as items in the pool.
+    Within a section, all scenarios are immediately accessible.
+
+    Starting with the Greek block is the easiest and Norse block is hardest.
+    """
+    internal_name = "starting_scenarios"
+    display_name = "Starting Scenarios"
+
+    option_greek    = 0
+    option_egyptian = 1
+    option_norse    = 2
+
+    default = option_greek
+
+
+class StartingGreekAgeUnlocks(Range):
+    """
+    You cannot advance ages until you have received enough Progressive Age Unlock items. For each civilization:
+      1st unlock = Classical Age available
+      2nd unlock = Heroic Age available
+      3rd unlock = Mythic Age available
+
+    Scenarios will not be in logic until you can reach a reasonable age to beat them.
+    Starting with unlocks makes more scenarios accessible earlier and a much easier experience.
+
+    ---
+
+    Number of Progressive Greek Age Unlock items with which to start:
+    """
+    internal_name = "starting_greek_age_unlocks"
+    display_name = "Starting Greek Age Unlocks"
+
+    range_start = 0
+    range_end   = 3
+    default     = 0
+
+
+class StartingEgyptianAgeUnlocks(Range):
+    """
+    Number of Progressive Egyptian Age Unlock items with which to start:
+    """
+    internal_name = "starting_egyptian_age_unlocks"
+    display_name = "Starting Egyptian Age Unlocks"
+
+    range_start = 0
+    range_end   = 3
+    default     = 0
+
+
+class StartingNorseAgeUnlocks(Range):
+    """
+    Number of Progressive Norse Age Unlock items with which to start:
+    """
+    internal_name = "starting_norse_age_unlocks"
+    display_name = "Starting Norse Age Unlocks"
+
+    range_start = 0
+    range_end   = 3
+    default     = 0
+
+
+#################
+# Final Section #
+#################
+
+class FinalScenarios(Choice):
+    """
+    What unlocks the Final scenario block (scenarios 31-32)?
+
+    beat_x_scenarios (recommended):
+    Beat the chosen number of scenarios (set via x_scenarios below) to receive the
+    Atlantis Key and open the Final section.
+
+    always_open:
+    The Final section is available from the start. 
+    This can result in a
+    much shorter experience.
+
+    atlantis_key:
+    The Atlantis Key is shuffled randomly into the item pool. 
+    Finding it
+    anywhere opens the Final section.
+    """
+    internal_name = "final_scenarios"
+    display_name = "Final Scenarios"
+
+    option_beat_x_scenarios = 0
+    option_always_open      = 1
+    option_atlantis_key     = 2
+
+    default = option_beat_x_scenarios
+
+
+class XScenarios(Range):
+    """
+    If Final Scenarios (above) is set to beat_x_scenarios, this is how many scenarios
+    must be completed before you receive the Atlantis Key.
+
+    You may beat any combination of the 30 non-final scenarios.
+    """
+    internal_name = "x_scenarios"
+    display_name = "X Scenarios"
+
+    range_start = 0
+    range_end   = 30
+    default     = 10
+
+
+#############
+# Item Pool #
+#############
+
+class HeroAbilities(Toggle):
+    """
+    Include custom hero special ability items in the item pool?
+
+    enabled (true):
+    Recommended setting for an exciting, hero-focued campaign.
+    The following items are included:
+
+    Arkantos:
+      - Arkantos Lifesteal         (Arkantos' melee attacks heal him)
+      - Arkantos Petrifying Shout  (shout ability petrifies and damages nearby enemies)
+      - Arkantos is a House        (Arkantos provides +10 population capacity)
+      - Arkantos Attack Speed      (increases melee attack speed)
+
+    Ajax:
+      - Ajax Stunning Blow         (shield bash stuns the target for 10 seconds)
+      - Ajax Smiting Strikes       (melee attacks temporarily reduce target's max HP)
+      - Ajax Shield Bash AOE       (shield bash hits a wide area)
+
+    Chiron:
+      - Chiron Poison Arrow        (arrows apply a poison damage over time)
+      - Chiron Crippling Fire      (arrows slow the target's attack rate significantly)
+      - Chiron Shotgun Special     (special shot fires a ton of extra arrows)
+
+    Amanra:
+      - Amanra Shockwave Jump      (leap attack sends targets flying)
+      - Amanra Army of the Dead    (enemies slain by Amanra are reincarnated as allied minions)
+      - Amanra Divine Smite        (melee attacks deal +5 divine damage)
+
+    Odysseus:
+      - Odysseus Entangling Shot   (special shot snares the targets' movement for 10 seconds)
+      - Odysseus Swift Escape      (ranged attacks cripple the target's speed)
+      - Odysseus Perfect Accuracy  (ranged attacks never miss)
+
+    Reginleif:
+      - Reginleif Frost Strike     (arrows progressively freeze the target)
+      - Reginleif +1 Projectile    (fire an additional javelin)
+
+    disabled (false):
+    All above hero ability items are removed from the pool and replaced with
+    filler. Removing these makes the game much harder and less hero-focused.
+    """
+    internal_name = "hero_abilities"
+    display_name = "Hero Abilities"
+
+    default = 1  # enabled
+
+
+####################
+# Options Dataclass #
+####################
+
+@dataclass
+class AomOptions(PerGameCommonOptions):
+    """All options for the Age of Mythology Retold Archipelago world."""
+    start_inventory_from_pool:       StartInventoryPool
+    goal:                            Goal
+    starting_scenarios:              StartingScenarios
+    starting_greek_age_unlocks:      StartingGreekAgeUnlocks
+    starting_egyptian_age_unlocks:   StartingEgyptianAgeUnlocks
+    starting_norse_age_unlocks:      StartingNorseAgeUnlocks
+    final_scenarios:                 FinalScenarios
+    x_scenarios:                     XScenarios
+    hero_abilities:                  HeroAbilities
