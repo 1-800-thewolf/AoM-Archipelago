@@ -83,6 +83,53 @@ def _install_trigger_files(user_folder: str) -> None:
         )
 
 
+# Lines required in user.cfg for the AI echo log to function.
+# aiDebug       — enables the AI subsystem and writes aiEcho() output to the log file.
+# enableTriggerEcho — routes trMessageSetText() calls through the AI echo log.
+_REQUIRED_CFG_LINES = ["aiDebug", "enableTriggerEcho"]
+
+
+def _ensure_user_cfg(user_folder: str) -> None:
+    """
+    Ensures user.cfg in the player's AoMR user folder contains the two lines
+    required for the mod's AI echo system to function. Creates the file if it
+    does not exist. Appends only the missing lines if it already exists, so
+    any custom settings the player has are preserved.
+    """
+    if not user_folder:
+        logger.warning("user.cfg check skipped: user folder not set.")
+        return
+
+    cfg_path = Path(user_folder) / "config" / "user.cfg"
+
+    # Read existing content if the file exists
+    existing_lines: set[str] = set()
+    if cfg_path.exists():
+        try:
+            existing_lines = {line.strip() for line in cfg_path.read_text().splitlines()}
+        except Exception as e:
+            logger.warning(f"Could not read user.cfg: {e}")
+            return
+
+    missing = [line for line in _REQUIRED_CFG_LINES if line not in existing_lines]
+
+    if not missing:
+        return  # Nothing to do
+
+    try:
+        with cfg_path.open("a") as f:
+            # Add a newline separator if the file exists and doesn't end with one
+            if cfg_path.stat().st_size > 0:
+                f.write("\n")
+            f.write("\n".join(missing) + "\n")
+        logger.info(f"user.cfg updated with required lines: {missing}")
+    except Exception as e:
+        logger.error(
+            f"Could not update user.cfg: {e}. "
+            f"Please add these lines manually to {cfg_path}: {missing}"
+        )
+
+
 AOMR = "Age Of Mythology Retold"
 AOMR_CONFIG_FILE = "aomr_client.json"
 
@@ -113,15 +160,101 @@ def _resolve_mods_local_dir(user_folder: str) -> Path:
     return Path(user_folder) / "mods" / "local"
 
 
+# -----------------------------------------------------------------------
+# Scenario progress helpers
+# -----------------------------------------------------------------------
+
+def _count_beaten_scenarios(ctx: "AoMContext") -> int:
+    """
+    Counts how many non-final scenarios the player has beaten by checking
+    which Victory location IDs are in sent_checks.
+    Completion locations have address=None (they are AP events, never sent
+    as LocationChecks). Victory locations are real addressed locations that
+    ARE sent when the player wins a scenario, so they appear in sent_checks.
+    Scenarios 1-30 are non-final (global_number <= 30).
+    """
+    from ..locations.Locations import aomLocationData, aomLocationType
+    beaten = 0
+    for loc in aomLocationData:
+        if loc.type == aomLocationType.VICTORY and loc.scenario.global_number <= 30:
+            if loc.id in ctx.game_ctx.sent_checks:
+                beaten += 1
+    return beaten
+
+
+def _get_atlantis_status(ctx: "AoMContext") -> tuple[str, bool]:
+    """
+    Returns (status_text, is_green) for the Atlantis Key status label.
+    is_green=True  → bright green (unlocked / open)
+    is_green=False → yellow (in progress or neutral)
+    """
+    from ..items.Items import aomItemData
+    threshold  = getattr(ctx, "_x_scenarios_threshold", None)
+    final_mode = getattr(ctx, "_final_mode_value", None)
+
+    # Check whether Atlantis Key is in received items
+    atlantis_key_id = aomItemData.ATLANTIS_KEY.id
+    has_key = atlantis_key_id in ctx.game_ctx.received_items
+
+    if has_key:
+        return ("You have the Atlantis Key! Atlantis is Open!", True)
+
+    if final_mode == 0 and threshold is not None:
+        # beat_x_scenarios mode
+        beaten = _count_beaten_scenarios(ctx)
+        if beaten >= threshold:
+            return ("You have the Atlantis Key! Atlantis is Open!", True)
+        return (f"Missions Beaten for Atlantis Key: {beaten} / {threshold}", False)
+
+    if final_mode == 2:
+        # atlantis_key mode — key is somewhere in the multiworld
+        return ("Atlantis Key is out in the multiworld", False)
+
+    if final_mode == 1:
+        # always_open
+        return ("Atlantis is Open!", True)
+
+    return ("", False)
+
+
+def _update_atlantis_ui(ctx: "AoMContext") -> None:
+    """Push the current Atlantis status to the UI label if the UI is ready."""
+    if not (hasattr(ctx, "ui") and ctx.ui and hasattr(ctx.ui, "update_atlantis_status")):
+        return
+    text, green = _get_atlantis_status(ctx)
+    ctx.ui.update_atlantis_status(text, green)
+
+
+def _format_progress(ctx: "AoMContext") -> str:
+
+    """
+    Returns a human-readable progress string for beat_x_scenarios mode.
+    Returns an empty string if the mode is not active.
+    """
+    threshold = getattr(ctx, "_x_scenarios_threshold", None)
+    if threshold is None:
+        return ""
+    beaten = _count_beaten_scenarios(ctx)
+    if beaten >= threshold:
+        return f"Scenarios beaten: {beaten} / {threshold} — Atlantis Key unlocked!"
+    return f"Scenarios beaten: {beaten} / {threshold}"
+
+
 class AoMCommandProcessor(ClientCommandProcessor):
+
     ctx: "AoMContext"
 
     def _cmd_status(self) -> None:
-        """Print current client status."""
+        """Print current client status and scenario progress."""
         ctx = self.ctx
         self.output(f"User folder: {ctx.game_ctx.user_folder}")
         self.output(f"Items received: {len(ctx.game_ctx.received_items)}")
         self.output(f"Checks sent: {len(ctx.game_ctx.sent_checks)}")
+        progress = _format_progress(ctx)
+        if progress:
+            self.output(progress)
+        elif getattr(ctx, "_x_scenarios_threshold", None) is None:
+            self.output("Final section mode: not beat_x_scenarios (no progress tracking)")
 
 
 class AoMContext(CommonContext):
@@ -178,8 +311,20 @@ class AoMContext(CommonContext):
     def _on_connected(self, args: dict) -> None:
         # Seed sent_checks so already-found locations aren't re-reported
         self.game_ctx.sent_checks = set(args.get("checked_locations", []))
+        # Cache slot_data for UI and game state file
+        slot_data = args.get("slot_data", {})
+        final_mode  = slot_data.get("final_mode", -1)
+        x_scenarios = slot_data.get("x_scenarios", 0)
+        self._final_mode_value = final_mode
+        self._x_scenarios_threshold = int(x_scenarios) if final_mode == 0 else None
+        # Also store on game_ctx so write_aom_state can use them
+        self.game_ctx.final_mode = final_mode
+        self.game_ctx.x_scenarios_threshold = int(x_scenarios)
+        _update_atlantis_ui(self)
         # Install trigger files from apworld bundle to user's trigger folder
         _install_trigger_files(self.game_ctx.user_folder)
+        # Ensure user.cfg has the required lines for AI echo to function
+        _ensure_user_cfg(self.game_ctx.user_folder)
         mods_local = _resolve_mods_local_dir(self.game_ctx.user_folder)
         generate_ap_ai_xs(self.game_ctx, mods_local)
         from .GameClient import write_aom_state
@@ -210,10 +355,35 @@ class AoMContext(CommonContext):
             # Incremental — append new items to existing list
             combined = self.game_ctx.received_items + item_ids
             on_items_received(self.game_ctx, combined)
+        _update_atlantis_ui(self)
 
     def on_location_received(self, location_id: int) -> None:
+        from ..locations.Locations import aomLocationData, aomLocationType
+
+        # Look up this location to determine its type
+        loc_data = next((l for l in aomLocationData if l.id == location_id), None)
+
+        locations_to_send = [location_id]
+
+        if loc_data is not None and loc_data.type == aomLocationType.VICTORY:
+            # When a Victory check fires, also send the paired Completion check.
+            # Completion locations have local_id=1 (victory=0), so completion_id
+            # is always victory_id + 1. This grants the FOTT_N Complete event
+            # item in the player's AP state, which is required for:
+            #   - beat_x_scenarios Atlantis Key logic
+            #   - always_open / atlantis_key final section tracking
+            completion_id = location_id + 1
+            locations_to_send.append(completion_id)
+
+            # Print progress and update UI after a scenario victory
+            if loc_data.scenario.global_number <= 30:
+                progress = _format_progress(self)
+                if progress:
+                    logger.info(f"[AoMR] {progress}")
+                _update_atlantis_ui(self)
+
         Utils.async_start(
-            self.send_msgs([{"cmd": "LocationChecks", "locations": [location_id]}])
+            self.send_msgs([{"cmd": "LocationChecks", "locations": locations_to_send}])
         )
 
     def _start_game_loop(self) -> None:

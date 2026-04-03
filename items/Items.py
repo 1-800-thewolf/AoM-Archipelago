@@ -384,9 +384,9 @@ class aomItemData(enum.IntEnum):
     # -----------------------------------------------------------------------
     REINFORCEMENT_RELIC_MONKEY    = 4029, f"{REINFORCEMENT_AMOUNT} Relic Monkeys",     Reinforcement("RelicMonkey",    REINFORCEMENT_AMOUNT)
     REINFORCEMENT_PEGASUS         = 4030, f"{REINFORCEMENT_AMOUNT} Pegasi",            Reinforcement("Pegasus",        REINFORCEMENT_AMOUNT)
-    REINFORCEMENT_HYENA           = 4031, f"{REINFORCEMENT_AMOUNT} Hyenas of Set",     Reinforcement("Hyena",          REINFORCEMENT_AMOUNT)
-    REINFORCEMENT_HIPPO           = 4032, f"{REINFORCEMENT_AMOUNT} Hippos of Set",     Reinforcement("Hippopotamus",   REINFORCEMENT_AMOUNT)
-    REINFORCEMENT_GOLDEN_LION     = 4033, f"{REINFORCEMENT_AMOUNT} Golden Lions",      Reinforcement("GoldenLion",     REINFORCEMENT_AMOUNT)
+    REINFORCEMENT_HYENA           = 4031, f"{REINFORCEMENT_AMOUNT} Hyenas of Set",     Reinforcement("HyenaOfSet",          REINFORCEMENT_AMOUNT)
+    REINFORCEMENT_HIPPO           = 4032, f"{REINFORCEMENT_AMOUNT} Hippos of Set",     Reinforcement("HippopotamusOfSet",   REINFORCEMENT_AMOUNT)
+    REINFORCEMENT_GOLDEN_LION     = 4033, f"{REINFORCEMENT_AMOUNT} Golden Lions",      Reinforcement("RelicGoldenLion",     REINFORCEMENT_AMOUNT)
     REINFORCEMENT_NORSE_GATHERER  = 4034, f"{REINFORCEMENT_AMOUNT} Norse Gatherers",   Reinforcement("VillagerNorse",  REINFORCEMENT_AMOUNT)
 
     # -----------------------------------------------------------------------

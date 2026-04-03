@@ -117,6 +117,7 @@ const int cNORSE_AGE_UNLOCK_3            = 1010;
 const int cCAN_TRAIN_HOPLITE          = 3200;
 const int cCAN_TRAIN_SPEARMAN         = 3201;
 const int cCAN_TRAIN_BERSERK          = 3202;
+const int cCAN_TRAIN_HIRDMAN          = 3203;
 // Greek useful
 const int cCAN_TRAIN_HYPASPIST        = 3210;
 const int cCAN_TRAIN_PELTAST          = 3212;
@@ -235,7 +236,7 @@ const int cAJAX_STUNNING_BLOW        = 2700;
 const int cAJAX_SMITING_STRIKES      = 2701;
 const int cCHIRON_POISON_ARROW       = 2800;
 const int cCHIRON_CRIPPLING_FIRE     = 2801;
-const int cAMANRA_WHIRLWIND_THROW    = 2900;
+const int cAMANRA_SHOCKWAVE_JUMP     = 2900;
 const int cAMANRA_ARMY_OF_THE_DEAD   = 2901;
 const int cODYSSEUS_ENTANGLING_SHOT  = 3000;
 const int cODYSSEUS_SWIFT_ESCAPE     = 3001;
@@ -354,6 +355,7 @@ runImmediately
     trForbidProtounit(1, "Hoplite");
     trForbidProtounit(1, "Spearman");
     trForbidProtounit(1, "Berserk");
+    trForbidProtounit(1, "Hirdman");
     trForbidProtounit(1, "Hypaspist");
     trForbidProtounit(1, "Peltast");
     trForbidProtounit(1, "Hippeus");
@@ -523,7 +525,7 @@ void APShowQueuedCheckMessage(int id = 0)
     string objectiveText = APGetCheckText(id);
 
     trMessageSetText(
-        "Checked <color1,1,0>" + objectiveText + "</color>\n\nComplete or quit the mission to send checks.",
+        "Checked <color1,1,0>" + objectiveText + "</color>\n\nComplete or quit the mission to send or receive items.",
         -1
     );
     trSoundPlayFN("campaign\fott\cinematics\fott07\clearedcity.wav");
@@ -533,7 +535,7 @@ void APShowQueuedCheckMessage(int id = 0)
 void APCheckLocation(string objectiveText = "")
 {
     trMessageSetText(
-        "Checked <color1,1,0>" + objectiveText + "</color>\n\nComplete or quit the mission to send checks.",
+        "Checked <color1,1,0>" + objectiveText + "</color>\n\nComplete or quit the mission to send or receive items",
         -1
     );
     trSoundPlayFN("campaign\fott\cinematics\fott07\clearedcity.wav");
@@ -820,7 +822,7 @@ void APApplyHeroBoosts()
     bool chiPoisonArrow      = false;
     bool chiCripplingFire    = false;
     bool chiShotgunSpecial   = false;
-    bool amWhirlwindThrow    = false;
+    bool amShockwaveJump     = false;
     bool amArmyOfTheDead     = false;
     bool amDivineSmite       = false;
     bool odyEntanglingShot   = false;
@@ -891,7 +893,7 @@ void APApplyHeroBoosts()
         if (id == cAMANRA_RECHARGE_5)        { amRecharge += 5;   }
         if (id == cAMANRA_REGEN_1)      { amRegen += 1;  }
         if (id == cAMANRA_REGEN_5)      { amRegen += 5;  }
-        if (id == cAMANRA_WHIRLWIND_THROW)   { amWhirlwindThrow  = true; }
+        if (id == cAMANRA_SHOCKWAVE_JUMP)    { amShockwaveJump   = true; }
         if (id == cAMANRA_ARMY_OF_THE_DEAD)  { amArmyOfTheDead   = true; }
         if (id == cAMANRA_DIVINE_SMITE)      { amDivineSmite     = true; }
 
@@ -1015,8 +1017,8 @@ void APApplyHeroBoosts()
         trModifyProtounitAction("ChironSPC", "ChargedRangedAttack", 1, 8, 15.0, 0);
     }
 
-    // Amanra: Whirlwind Throw (JumpAttack, Throw duration 10s)
-    if (amWhirlwindThrow == true)
+    // Amanra: Shockwave Jump (JumpAttack, Throw duration 10s)
+    if (amShockwaveJump == true)
     {
         trProtounitActionSpecialEffect("Amanra", "JumpAttack", 1, 6, "All", -1, 10.0, 10.0);
     }
@@ -1346,21 +1348,21 @@ runImmediately
         {
             for (j = 0; j < 2; j++)
             {
-                trUnitCreateFromSource("Hyena", gReinforcementSpawnID, gReinforcementSpawnID, 1);
+                trUnitCreateFromSource("HyenaOfSet", gReinforcementSpawnID, gReinforcementSpawnID, 1);
             }
         }
         if (itemId == cREINFORCEMENT_HIPPO)
         {
             for (j = 0; j < 2; j++)
             {
-                trUnitCreateFromSource("Hippopotamus", gReinforcementSpawnID, gReinforcementSpawnID, 1);
+                trUnitCreateFromSource("HippopotamusOfSet", gReinforcementSpawnID, gReinforcementSpawnID, 1);
             }
         }
         if (itemId == cREINFORCEMENT_GOLDEN_LION)
         {
             for (j = 0; j < 2; j++)
             {
-                trUnitCreateFromSource("GoldenLion", gReinforcementSpawnID, gReinforcementSpawnID, 1);
+                trUnitCreateFromSource("RelicGoldenLion", gReinforcementSpawnID, gReinforcementSpawnID, 1);
             }
         }
         if (itemId == cREINFORCEMENT_NORSE_GATHERER)
@@ -1388,21 +1390,21 @@ runImmediately
         {
             for (j = 0; j < 2; j++)
             {
-                trUnitCreateFromSource("Hyena", gReinforcementSpawnID, gReinforcementSpawnID, 1);
+                trUnitCreateFromSource("HyenaOfSet", gReinforcementSpawnID, gReinforcementSpawnID, 1);
             }
         }
         if (itemId == cREINFORCEMENT_HIPPO)
         {
             for (j = 0; j < 2; j++)
             {
-                trUnitCreateFromSource("Hippopotamus", gReinforcementSpawnID, gReinforcementSpawnID, 1);
+                trUnitCreateFromSource("HippopotamusOfSet", gReinforcementSpawnID, gReinforcementSpawnID, 1);
             }
         }
         if (itemId == cREINFORCEMENT_GOLDEN_LION)
         {
             for (j = 0; j < 2; j++)
             {
-                trUnitCreateFromSource("GoldenLion", gReinforcementSpawnID, gReinforcementSpawnID, 1);
+                trUnitCreateFromSource("RelicGoldenLion", gReinforcementSpawnID, gReinforcementSpawnID, 1);
             }
         }
         if (itemId == cREINFORCEMENT_NORSE_GATHERER)
@@ -1417,6 +1419,7 @@ runImmediately
         if (itemId == cCAN_TRAIN_HOPLITE)         { trUnforbidProtounit(1, "Hoplite"); }
         if (itemId == cCAN_TRAIN_SPEARMAN)        { trUnforbidProtounit(1, "Spearman"); }
         if (itemId == cCAN_TRAIN_BERSERK)         { trUnforbidProtounit(1, "Berserk"); }
+        if (itemId == cCAN_TRAIN_HIRDMAN)         { trUnforbidProtounit(1, "Hirdman"); }
         if (itemId == cCAN_TRAIN_HYPASPIST)       { trUnforbidProtounit(1, "Hypaspist"); }
         if (itemId == cCAN_TRAIN_PELTAST)         { trUnforbidProtounit(1, "Peltast"); }
         if (itemId == cCAN_TRAIN_HIPPEUS)         { trUnforbidProtounit(1, "Hippeus"); }

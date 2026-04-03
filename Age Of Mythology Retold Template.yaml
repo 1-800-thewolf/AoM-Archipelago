@@ -1,0 +1,268 @@
+﻿# Q. What is this file?
+# A. This file contains options which allow you to configure your multiworld experience while allowing
+#    others to play how they want as well.
+#
+# Q. How do I use it?
+# A. The options in this file are weighted. This means the higher number you assign to a value, the
+#    more chances you have for that option to be chosen. For example, an option like this:
+#
+#    map_shuffle:
+#      on: 5
+#      off: 15
+#
+#    Means you have 5 chances for map shuffle to occur, and 15 chances for map shuffle to be turned
+#    off.
+#
+# Q. I've never seen a file like this before. What characters am I allowed to use?
+# A. This is a .yaml file. You are allowed to use most characters.
+#    To test if your yaml is valid or not, you can use this website:
+#        http://www.yamllint.com/
+#    You can also verify that your Archipelago options are valid at this site:
+#        https://archipelago.gg/check
+
+# Your name in-game, limited to 16 characters.
+#     {player} will be replaced with the player's slot number.
+#     {PLAYER} will be replaced with the player's slot number, if that slot number is greater than 1.
+#     {number} will be replaced with the counter value of the name.
+#     {NUMBER} will be replaced with the counter value of the name, if the counter value is greater than 1.
+name: Player{number}
+
+# Used to describe your yaml. Useful if you have multiple files.
+description: Default Age Of Mythology Retold Template
+
+game: Age Of Mythology Retold
+requires:
+  version: 0.6.5 # Version of Archipelago required for this yaml to work as expected.
+
+Age Of Mythology Retold:
+  ################
+  # Game Options #
+  ################
+  progression_balancing:
+    # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.
+    # 
+    # A lower setting means more getting stuck. A higher setting means less getting stuck.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 99
+    random: 0
+    random-low: 0 # random value weighted towards lower values
+    random-high: 0 # random value weighted towards higher values
+    random-range-0-99: 0 # random value between 0 and 99
+    disabled: 0 # equivalent to 0
+    normal: 50 # equivalent to 50
+    extreme: 0 # equivalent to 99
+
+  accessibility:
+    # Set rules for reachability of your items/locations.
+    # 
+    # **Full:** ensure everything can be reached and acquired.
+    # 
+    # **Minimal:** ensure what is needed to reach your goal can be acquired.
+    full: 50
+    minimal: 0
+
+  goal:
+    # Goal for this playthrough.
+    # 
+    # fott_32_victory:
+    # Beat scenario 32, A Place in My Dreams, to win.
+    # Note: Beating scenario 32 requires all 3 Progressive Greek Age Unlock items
+    # (the Mythic Age is needed to build the Wonder).
+    fott_32_victory: 50
+
+  ##################
+  # Starting Setup #
+  ##################
+  starting_scenarios:
+    # Which civilization block is unlocked at the start?
+    # 
+    # greek:    Scenarios 1-10
+    # egyptian: Scenarios 11-20
+    # norse:    Scenarios 21-30
+    # 
+    # The other two sections must be found as items in the pool.
+    # Within a section, all scenarios are immediately accessible.
+    # 
+    # Starting with the Greek block is the easiest and Norse block is hardest.
+    greek: 50
+    egyptian: 0
+    norse: 0
+
+  starting_greek_age_unlocks:
+    # You cannot advance ages until you have received enough Progressive Age Unlock
+    # items. For each civilization:
+    #   1st unlock = Classical Age available
+    #   2nd unlock = Heroic Age available
+    #   3rd unlock = Mythic Age available
+    # 
+    # Scenarios will not be in logic until you can reach a reasonable age to beat them.
+    # Starting with unlocks makes more scenarios accessible earlier and a much easier experience.
+    # 
+    # ---
+    # 
+    # Number of Progressive Greek Age Unlock items with which to start:
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 3
+    0: 50
+    random: 0
+    random-low: 0 # random value weighted towards lower values
+    random-high: 0 # random value weighted towards higher values
+    random-range-0-3: 0 # random value between 0 and 3
+
+  starting_egyptian_age_unlocks:
+    # Number of Progressive Egyptian Age Unlock items with which to start:
+    # See Starting Greek Age Unlocks for a full explanation of the age unlock system.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 3
+    0: 50
+    random: 0
+    random-low: 0 # random value weighted towards lower values
+    random-high: 0 # random value weighted towards higher values
+    random-range-0-3: 0 # random value between 0 and 3
+
+  starting_norse_age_unlocks:
+    # Number of Progressive Norse Age Unlock items with which to start:
+    # See Starting Greek Age Unlocks for a full explanation of the age unlock system.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 3
+    0: 50
+    random: 0
+    random-low: 0 # random value weighted towards lower values
+    random-high: 0 # random value weighted towards higher values
+    random-range-0-3: 0 # random value between 0 and 3
+
+  #################
+  # Final Section #
+  #################
+  final_scenarios:
+    # What unlocks the Final scenario block (scenarios 31-32)?
+    # 
+    # beat_x_scenarios (recommended):
+    # Beat a chosen number of scenarios (set via X Scenarios below) to receive the
+    # Atlantis Key and open the Final section.
+    # 
+    # always_open:
+    # The Final section is available from the start. This can result in a
+    # much shorter experience.
+    # 
+    # atlantis_key:
+    # The Atlantis Key is shuffled randomly into the item pool. Finding it
+    # anywhere opens the Final section.
+    beat_x_scenarios: 50
+    always_open: 0
+    atlantis_key: 0
+
+  x_scenarios:
+    # If Final Scenarios is set to beat_x_scenarios, this is how many scenarios
+    # must be completed before you receive the Atlantis Key.
+    # 
+    # You may beat any combination of the 30 non-final scenarios.
+    # 
+    # Minimum: 0  Maximum: 30
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 30
+    10: 50
+    random: 0
+    random-low: 0 # random value weighted towards lower values
+    random-high: 0 # random value weighted towards higher values
+    random-range-0-30: 0 # random value between 0 and 30
+
+  #############
+  # Item Pool #
+  #############
+  hero_abilities:
+    # Include custom hero special ability items in the item pool?
+    # 
+    # enabled (true, default):
+    # The following items are included:
+    # 
+    # Arkantos:
+    #   - Arkantos Lifesteal         (melee attacks heal Arkantos for 10% of damage dealt)
+    #   - Arkantos Petrifying Shout  (shout ability petrifies and damages nearby enemies)
+    #   - Arkantos is a House        (Arkantos provides +10 population capacity)
+    #   - Arkantos Attack Speed      (increases melee attack speed)
+    # 
+    # Ajax:
+    #   - Ajax Stunning Blow         (shield bash stuns the target for 10 seconds)
+    #   - Ajax Smiting Strikes       (melee attacks temporarily reduce target's max HP)
+    #   - Ajax Shield Bash AOE       (shield bash hits a wider area)
+    # 
+    # Chiron:
+    #   - Chiron Poison Arrow        (arrows apply a poison DoT: 20 damage over 20 seconds)
+    #   - Chiron Crippling Fire      (arrows slow the target's attack rate for 3 seconds)
+    #   - Chiron Shotgun Special     (special shot fires 15 additional projectiles)
+    # 
+    # Amanra:
+    #   - Amanra Whirlwind Throw     (leap attack throws the target through the air)
+    #   - Amanra Army of the Dead    (enemies slain by Amanra are reincarnated as allied minions)
+    #   - Amanra Divine Smite        (melee attacks deal +5 divine damage)
+    # 
+    # Odysseus:
+    #   - Odysseus Entangling Shot   (special shot snares the target's movement for 10 seconds)
+    #   - Odysseus Swift Escape      (ranged attacks boost Odysseus's own movement speed)
+    #   - Odysseus Perfect Accuracy  (ranged attacks gain enhanced precision)
+    # 
+    # Reginleif:
+    #   - Reginleif Frost Strike     (arrows progressively freeze the target's attack rate)
+    #   - Reginleif +1 Projectile    (ranged attacks fire an additional arrow)
+    # 
+    # disabled (false):
+    # All 18 hero ability items are removed from the pool and replaced with
+    # filler. Makes the game harder and more focused on army composition.
+    'false': 0
+    'true': 50
+
+  ###########################
+  # Item & Location Options #
+  ###########################
+  local_items:
+    # Forces these items to be in their native world.
+    []
+
+  non_local_items:
+    # Forces these items to be outside their native world.
+    []
+
+  start_inventory:
+    # Start with the specified amount of these items. Example: "Bomb: 1"
+    {}
+
+  start_inventory_from_pool:
+    # Start with the specified amount of these items and don't place them in the world. Example: "Bomb: 1"
+    # 
+    # The game decides what the replacement items will be.
+    {}
+
+  start_hints:
+    # Start with these item's locations prefilled into the ``!hint`` command.
+    []
+
+  start_location_hints:
+    # Start with these locations and their item prefilled into the ``!hint`` command.
+    []
+
+  exclude_locations:
+    # Prevent these locations from having an important item.
+    []
+
+  priority_locations:
+    # Prevent these locations from having an unimportant item.
+    []
+
+  item_links:
+    # Share part of your item pool with other players.
+    []
+
+  plando_items:
+    # Generic items plando.
+    []

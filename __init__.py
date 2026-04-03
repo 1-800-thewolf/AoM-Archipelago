@@ -1,7 +1,5 @@
 # world/aom/__init__.py
 
-from __future__ import annotations
-
 import logging
 import time
 from typing import Any, ClassVar, Mapping
@@ -72,7 +70,7 @@ class aomWorld(World):
     """
 
     game = AOMR
-    settings: ClassVar[type[AoMSettings]] = AoMSettings
+    settings: ClassVar[AoMSettings] = AoMSettings
     options_dataclass = AomOptions
     options: AomOptions
     topology_present = True
@@ -282,6 +280,9 @@ class aomWorld(World):
             "version_major": 1,
             "version_minor": 0,
             "world_id": ((time.time_ns() >> 17) + self.player) & 0x7FFF_FFFF,
+            # Final section mode and threshold for client progress display
+            "final_mode":  self._final_mode(),
+            "x_scenarios": int(self.options.x_scenarios.value),
         }
 
 

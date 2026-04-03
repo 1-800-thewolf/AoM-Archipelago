@@ -36,6 +36,9 @@ class AoMGameContext:
     sent_checks: set[int] = field(default_factory=set)
     last_ai_output_mtime: float = 0.0
     client_interface: object = None
+    # Slot data cached on connect for state file logic
+    final_mode: int = -1           # 0=beat_x, 1=always_open, 2=atlantis_key
+    x_scenarios_threshold: int = 0  # only used when final_mode == 0
 
     @property
     def trigger_folder(self) -> Path:
@@ -109,7 +112,35 @@ def generate_ap_ai_xs(ctx: AoMGameContext, mods_local_dir: Path) -> None:
 # aom_state.xs writing
 # -----------------------------------------------------------------------
 
+def _get_has_atlantis(ctx: AoMGameContext, received_set: set) -> int:
+    """
+    Returns 9004 if the player should have Atlantis access, 9000 otherwise.
+    In beat_x_scenarios mode, derives access from the local sent_checks count
+    so the game state matches the UI without relying on AP event locations.
+    In atlantis_key mode, requires the actual item to be received.
+    In always_open mode, always returns 9004.
+    """
+    ATLANTIS_KEY = 3510
+    if ATLANTIS_KEY in received_set:
+        return 9004
+    if ctx.final_mode == 1:  # always_open
+        return 9004
+    if ctx.final_mode == 0 and ctx.x_scenarios_threshold > 0:  # beat_x_scenarios
+        BASE_ID = 0x3B0000
+        from ..locations.Locations import aomLocationData, aomLocationType
+        beaten = sum(
+            1 for loc in aomLocationData
+            if loc.type == aomLocationType.VICTORY
+            and loc.scenario.global_number <= 30
+            and loc.id in ctx.sent_checks
+        )
+        if beaten >= ctx.x_scenarios_threshold:
+            return 9004
+    return 9000
+
+
 def write_aom_state(ctx: AoMGameContext) -> None:
+
     """
     Write aom_state.xs to the trigger folder.
     Contains received item IDs, campaign ID, and civ override.
@@ -145,7 +176,7 @@ def write_aom_state(ctx: AoMGameContext) -> None:
         9001 if GREEK_SCENARIOS    in received_set else 9000,
         9002 if EGYPTIAN_SCENARIOS in received_set else 9000,
         9003 if NORSE_SCENARIOS    in received_set else 9000,
-        9004 if ATLANTIS_KEY       in received_set else 9000,
+        _get_has_atlantis(ctx, received_set),
         9100 + campaign_id,  # index 4: campaign ID for age unlock logic
     ]
     items_with_flags = flags + list(ctx.received_items)
@@ -165,7 +196,7 @@ def write_aom_state(ctx: AoMGameContext) -> None:
     try:
         ctx.trigger_folder.mkdir(parents=True, exist_ok=True)
         ctx.aom_state_file.write_text(content, encoding="utf-8")
-        logger.info(f"Wrote aom_state.xs with {len(ctx.received_items)} items.")
+        logger.debug(f"Wrote aom_state.xs with {len(ctx.received_items)} items.")
     except Exception as ex:
         logger.error(f"Failed to write aom_state.xs: {ex}")
 
@@ -260,7 +291,7 @@ async def game_loop(ctx: AoMGameContext) -> None:
         if new_checks and ctx.client_interface is not None:
             for loc_id in new_checks:
                 loc_name = location_id_to_name.get(loc_id, str(loc_id))
-                logger.info(f"Check found: {loc_name}")
+                logger.debug(f"Check found: {loc_name}")
                 ctx.client_interface.on_location_received(loc_id)
 
         await asyncio.sleep(2.0)
