@@ -91,6 +91,9 @@ const int cNORSE_CARRY_GOLD              = 5008;
 const int cGREEK_VILLAGER_CHEAPER        = 5009;
 const int cEGYPTIAN_VILLAGER_CHEAPER     = 5010;
 const int cNORSE_VILLAGER_CHEAPER        = 5011;
+const int cGREEK_VILLAGER_CHEAPER_2      = 5012;
+const int cEGYPTIAN_VILLAGER_CHEAPER_2   = 5013;
+const int cNORSE_VILLAGER_CHEAPER_2      = 5014;
 
 const int cGREEK_SCENARIOS               = 3500;
 const int cEGYPTIAN_SCENARIOS            = 3501;
@@ -1109,6 +1112,7 @@ runImmediately
     int norCarryFood = 0; int norCarryWood = 0; int norCarryGold = 0;
     // Villager food cost reduction counters
     int grkCheaper = 0; int egyCheaper = 0; int norCheaper = 0;
+    int grkCheaper2 = 0; int egyCheaper2 = 0; int norCheaper2 = 0;
 
     int itemId = 0;
     int i = 0;
@@ -1446,9 +1450,12 @@ runImmediately
         if (itemId == cNORSE_CARRY_WOOD)    { norCarryWood++; }
         if (itemId == cNORSE_CARRY_GOLD)    { norCarryGold++; }
         // Villager food cost reduction
-        if (itemId == cGREEK_VILLAGER_CHEAPER)    { grkCheaper++; }
-        if (itemId == cEGYPTIAN_VILLAGER_CHEAPER) { egyCheaper++; }
-        if (itemId == cNORSE_VILLAGER_CHEAPER)    { norCheaper++; }
+        if (itemId == cGREEK_VILLAGER_CHEAPER)      { grkCheaper++;  }
+        if (itemId == cEGYPTIAN_VILLAGER_CHEAPER)   { egyCheaper++;  }
+        if (itemId == cNORSE_VILLAGER_CHEAPER)      { norCheaper++;  }
+        if (itemId == cGREEK_VILLAGER_CHEAPER_2)    { grkCheaper2++; }
+        if (itemId == cEGYPTIAN_VILLAGER_CHEAPER_2) { egyCheaper2++; }
+        if (itemId == cNORSE_VILLAGER_CHEAPER_2)    { norCheaper2++; }
     }
 
     if (wood  > 0) { trPlayerGrantResources(1, "Wood",  wood);  }
@@ -1468,9 +1475,12 @@ runImmediately
     if (norCarryGold > 0) { trModifyProtounitResource("VillagerNorse",    "gold", 1, 1, 10.0 * norCarryGold, 0); }
 
     // Villager food cost reduction — cXSPUResourceEffectCost=0
-    if (grkCheaper > 0) { trModifyProtounitResource("VillagerGreek",    "food", 1, 0, -3.0 * grkCheaper, 0); }
-    if (egyCheaper > 0) { trModifyProtounitResource("VillagerEgyptian", "food", 1, 0, -3.0 * egyCheaper, 0); }
-    if (norCheaper > 0) { trModifyProtounitResource("VillagerNorse",    "food", 1, 0, -3.0 * norCheaper, 0); }
+    if (grkCheaper  > 0) { trModifyProtounitResource("VillagerGreek",    "food", 1, 0, -3.0 * grkCheaper,  0); }
+    if (egyCheaper  > 0) { trModifyProtounitResource("VillagerEgyptian", "food", 1, 0, -3.0 * egyCheaper,  0); }
+    if (norCheaper  > 0) { trModifyProtounitResource("VillagerNorse",    "food", 1, 0, -3.0 * norCheaper,  0); }
+    if (grkCheaper2 > 0) { trModifyProtounitResource("VillagerGreek",    "food", 1, 0, -2.0 * grkCheaper2, 0); }
+    if (egyCheaper2 > 0) { trModifyProtounitResource("VillagerEgyptian", "food", 1, 0, -2.0 * egyCheaper2, 0); }
+    if (norCheaper2 > 0) { trModifyProtounitResource("VillagerNorse",    "food", 1, 0, -2.0 * norCheaper2, 0); }
 
     if (gPassiveWood > 0 || gPassiveFood > 0 || gPassiveGold > 0 || gPassiveFavor > 0)
     {

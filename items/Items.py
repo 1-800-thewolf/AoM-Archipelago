@@ -572,6 +572,9 @@ class aomItemData(enum.IntEnum):
     GREEK_VILLAGER_CHEAPER    = 5009, "Greek Villagers Cost -3 Food",    VillagerFoodCost("VillagerGreek",    3)
     EGYPTIAN_VILLAGER_CHEAPER = 5010, "Egyptian Villagers Cost -3 Food", VillagerFoodCost("VillagerEgyptian", 3)
     NORSE_VILLAGER_CHEAPER    = 5011, "Norse Villagers Cost -3 Food",    VillagerFoodCost("VillagerNorse",    3)
+    GREEK_VILLAGER_CHEAPER_2    = 5012, "Greek Villagers Cost -2 Food",    VillagerFoodCost("VillagerGreek",    2)
+    EGYPTIAN_VILLAGER_CHEAPER_2 = 5013, "Egyptian Villagers Cost -2 Food", VillagerFoodCost("VillagerEgyptian", 2)
+    NORSE_VILLAGER_CHEAPER_2    = 5014, "Norse Villagers Cost -2 Food",    VillagerFoodCost("VillagerNorse",    2)
 
 
 # -----------------------------------------------------------------------
