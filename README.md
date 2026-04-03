@@ -24,7 +24,7 @@ Archipelago is a free, open-source multiworld randomizer platform that connects 
 **32 randomized scenarios** across the Greek, Egyptian, Norse, and Final campaign sections. All sections unlock independently — finding the Egyptian Scenarios item immediately opens missions 11–20 regardless of Greek progress.
 
 **Over 150 items** in the pool, including:
-- Hero special abilities (Arkantos lifesteal, Ajax shield bash in an area, Chiron poison arrow, Amanra reincarniating enemies as minions, and more)
+- Hero special abilities (Arkantos lifesteal, Ajax shield bash in an area, Chiron poison arrow, Amanra reincarnating enemies as minions, and more)
 - Progressive Age Unlock items (Classical, Heroic, Mythic) per civilization
 - Unit unlock items for each civ (Hoplite, Berserk, Spearman, and more)
 - Section unlock items (Greek Scenarios, Egyptian Scenarios, Norse Scenarios, Atlantis Key)
