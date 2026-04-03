@@ -70,7 +70,7 @@ There are two components that work together:
 Subscribe to the **Fall of the Trident Archipelago Randomizer** mod on the Age of Mythology: Retold mod platform and enable it in your in-game mod manager. Quit and restart AoM to activate the mod.
 
 **2. Install the apworld**
-Download `aom.apworld` from the [latest release](../../releases/latest) and place it in your Archipelago `custom_worlds` folder:
+Download `aom.apworld` from the [latest release](https://github.com/1-800-thewolf/AoM-Archipelago/releases/latest) and place it in your Archipelago `custom_worlds` folder:
 ```
 C:\ProgramData\Archipelago\custom_worlds\
 ```
