@@ -8,7 +8,7 @@ Current version: **0.1.0**
 
 ## What Is This?
 
-This mod transforms the Fall of the Trident campaign into an Archipelago multiworld randomizer. Instead of progressing through the campaign in order and earning upgrades normally, items are shuffled into a randomized pool.
+This mod transforms the Fall of the Trident campaign into an Archipelago multiworld randomizer. Instead of progressing through the campaign in order and completing missions normally, items are shuffled into a randomized pool.
 
 You might start a scenario unable to advance beyond the Classical Age, and the only military units you can train are myth units. You might find an upgrade giving Arkantos lifesteal and a petrifying shout.
 
