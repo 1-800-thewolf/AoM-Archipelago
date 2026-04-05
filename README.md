@@ -4,7 +4,7 @@ Age of Mythology: Retold — Fall of the Trident Archipelago Randomizer
 
 An [Archipelago](https://archipelago.gg) multiworld randomizer for the **Fall of the Trident** campaign in Age of Mythology: Retold.
 
-Current version: **0.1.0**
+Current version: **0.1.1**
 
 ---
 
