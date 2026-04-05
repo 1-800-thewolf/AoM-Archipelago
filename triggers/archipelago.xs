@@ -966,10 +966,10 @@ void APApplyHeroBoosts()
 
     // --- Apply special effects ---
 
-    // Arkantos: Lifesteal (HandAttack, rate=10% of damage)
+    // Arkantos: Lifesteal (HandAttack, rate=150% of damage)
     if (arkLifesteal == true)
     {
-        trProtounitActionSpecialEffect("Arkantos", "HandAttack", 1, 4, "Units", -1, 0.0, 10.0);
+        trProtounitActionSpecialEffect("Arkantos", "HandAttack", 1, 4, "Units", -1, 0.0, 1.5);
     }
     // Arkantos: Petrifying Shout (AutoBoost, FreezeStone+damage on hit, Unit, Divine damage, duration 2s, value 10)
     if (arkPetrifyingShout == true)
@@ -1036,10 +1036,10 @@ void APApplyHeroBoosts()
         trModifyProtounitAction("Amanra", "HandAttack", 1, 16, 5.0, 0);
     }
 
-    // Odysseus: Entangling Shot (ChargedRangedAttack, Snare duration 10s, value 10)
+    // Odysseus: Entangling Shot (ChargedRangedAttack, Stun duration 5s, value 5)
     if (odyEntanglingShot == true)
     {
-        trProtounitActionSpecialEffect("OdysseusSPC", "ChargedRangedAttack", 1, 2, "All", -1, 10.0, 10.0);
+        trProtounitActionSpecialEffect("OdysseusSPC", "ChargedRangedAttack", 1, 0, "All", -1, 5.0, 5.0);
     }
     // Odysseus: Swift Escape (RangedAttack, Speed StatModify on self duration 0.5s)
     if (odySwiftEscape == true)

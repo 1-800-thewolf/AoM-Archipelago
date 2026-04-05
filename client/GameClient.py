@@ -276,6 +276,9 @@ async def game_loop(ctx: AoMGameContext) -> None:
     """
     logger.info("AoMR game loop started. Watching for scenario completions...")
     logger.info(f"Watching file: {ctx.ai_output_file}")
+    logger.info("Age of Mythology: Retold client commands:")
+    logger.info("  /status    — show connection info and Atlantis Key progress")
+    logger.info("  /scenarios — list beaten, in-progress, and untouched scenarios")
 
     # Seed mtime so we only react to writes that happen AFTER client starts.
     ai_file = ctx.ai_output_file

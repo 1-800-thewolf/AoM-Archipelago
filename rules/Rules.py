@@ -151,9 +151,9 @@ SCENARIO_REQUIREMENTS: dict[int, tuple[list[str], int, float]] = _build_scenario
 # --------------------------------------------------
 
 _BASE_POINTS: dict[type, float] = {
-    Campaign:              4.0,
-    FinalUnlock:           4.0,
-    AgeUnlock:             2.0,
+    Campaign:              1.0,  # section keys gate sections; points represent meta-progress
+    FinalUnlock:           1.0,  # Atlantis Key
+    AgeUnlock:             0.0,  # age unlocks gate ages directly; excluded from points
     UnitUnlockProgression: 4.0,
     UnitUnlockUseful:      2.0,
     StartingResourcesLarge: 1.0,

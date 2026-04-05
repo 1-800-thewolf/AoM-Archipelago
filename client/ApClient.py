@@ -256,6 +256,58 @@ class AoMCommandProcessor(ClientCommandProcessor):
         elif getattr(ctx, "_x_scenarios_threshold", None) is None:
             self.output("Final section mode: not beat_x_scenarios (no progress tracking)")
 
+    def _cmd_scenarios(self) -> None:
+        """List scenario completion status: beaten, partial, and untouched."""
+        from ..locations.Locations import aomLocationData, aomLocationType
+        from ..locations.Scenarios import aomScenarioData
+
+        ctx = self.ctx
+        sent = ctx.game_ctx.sent_checks
+
+        # Build per-scenario stats: {scenario: {checked: int, total: int, beaten: bool}}
+        scenario_stats: dict = {}
+        for scenario in aomScenarioData:
+            scenario_stats[scenario] = {"checked": 0, "total": 0, "beaten": False}
+
+        for loc in aomLocationData:
+            if loc.type == aomLocationType.COMPLETION:
+                continue  # events, not real locations
+            stats = scenario_stats[loc.scenario]
+            if loc.type == aomLocationType.VICTORY:
+                if loc.id in sent:
+                    stats["beaten"] = True
+            else:  # OBJECTIVE
+                stats["total"] += 1
+                if loc.id in sent:
+                    stats["checked"] += 1
+
+        beaten   = []
+        partial  = []
+        untouched = []
+
+        for scenario, stats in scenario_stats.items():
+            name = scenario.display_name
+            if stats["beaten"]:
+                beaten.append(name)
+            elif stats["checked"] > 0:
+                partial.append(
+                    f"{name} ({stats['checked']}/{stats['total']} objectives)"
+                )
+            else:
+                untouched.append(name)
+
+        self.output(f"=== Beaten ({len(beaten)}) ===")
+        for name in beaten:
+            self.output(f"  {name}")
+
+        self.output(f"=== In Progress ({len(partial)}) ===")
+        for entry in partial:
+            self.output(f"  {entry}")
+
+        self.output(f"=== Not Started ({len(untouched)}) ===")
+        for name in untouched:
+            self.output(f"  {name}")
+
 
 class AoMContext(CommonContext):
     game = AOMR

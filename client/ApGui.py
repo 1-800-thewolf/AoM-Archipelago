@@ -78,11 +78,15 @@ class AoMManager(GameManager):
                 self._atlantis_label.text = ""
                 return
             color = "44FF44" if green else "FFD700"
-            self._atlantis_label.text = f"[b][color={color}]{text}[/color][/b]"
+            self._atlantis_label.text = f"[b][color={color}]{text}[/b]"
         Clock.schedule_once(_update)
 
     def on_start(self) -> None:
         logging.getLogger(__name__).addHandler(LogtoUI(self.log_panels["All"].on_log))
+        logger = logging.getLogger("Client")
+        logger.info("Age of Mythology: Retold client commands:")
+        logger.info("  /status    — show connection info and Atlantis Key progress")
+        logger.info("  /scenarios — list beaten, in-progress, and untouched scenarios")
 
     @staticmethod
     def start_ap_ui(ctx: "AoMContext") -> None:
