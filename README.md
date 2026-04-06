@@ -142,6 +142,12 @@ Key options to consider:
 
 ---
 
+For support, questions, and discussion, please join us on the [AoM:R Archipelago discord](https://discord.com/channels/731205301247803413/1302047515482390588).
+
+Link to the [Archipelago Discord](https://discord.gg/archipelago) if you're not already a member.
+
+---
+
 ## Credits
 
 Developed by **1.800.thewolf**
