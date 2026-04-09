@@ -292,6 +292,7 @@ void APFindReinforcementSpawn()
 int gAPScenarioId  = 0;
 int gAPCampaignId  = 0;
 int gAPMajorGod    = 0;
+bool gAPGodsanity  = false;
 bool gHasGreek     = false;
 bool gHasEgyptian  = false;
 bool gHasNorse     = false;
@@ -500,6 +501,7 @@ runImmediately
     gAPScenarioId = trQuestVarGet("APScenarioID");
     gAPCampaignId = APGetCampaignForScenario(gAPScenarioId);
     gAPMajorGod = APGetMajorGodForScenario(gAPScenarioId);
+    APInitItems();               // populate gAPItems array first — needed by reads below
     APInitGods();                // populate APGod1..APGod32 quest vars
     APReadRandomGod();           // override gAPMajorGod if godsanity is active
     APSetPlayerCiv();            // change civ + force-clear old civ age techs
@@ -515,6 +517,38 @@ runImmediately
     xsEnableRule("APApplyItems");
     trMusicPlayCurrent();
     xsDisableSelf();
+}
+
+// -----------------------------------------------------------------------
+// God announcement — called from APApplyItems when godsanity is on.
+// Fires at the same time as APCheckCampaignLock, after the cinematic ends.
+// -----------------------------------------------------------------------
+
+void APAnnounceGod()
+{
+    if (gAPGodsanity == false) { return; }
+
+    string godName   = "";
+    string colorOpen = "";
+
+    if (gAPMajorGod == cAPMajorZeus)     { godName = "Zeus";     colorOpen = "<color0,0,255>"; }
+    if (gAPMajorGod == cAPMajorPoseidon) { godName = "Poseidon"; colorOpen = "<color0,0,255>"; }
+    if (gAPMajorGod == cAPMajorHades)    { godName = "Hades";    colorOpen = "<color0,0,255>"; }
+    if (gAPMajorGod == cAPMajorIsis)     { godName = "Isis";     colorOpen = "<color255,255,0>"; }
+    if (gAPMajorGod == cAPMajorRa)       { godName = "Ra";       colorOpen = "<color255,255,0>"; }
+    if (gAPMajorGod == cAPMajorSet)      { godName = "Set";      colorOpen = "<color255,255,0>"; }
+    if (gAPMajorGod == cAPMajorOdin)     { godName = "Odin";     colorOpen = "<color136,8,8>"; }
+    if (gAPMajorGod == cAPMajorThor)     { godName = "Thor";     colorOpen = "<color136,8,8>"; }
+    if (gAPMajorGod == cAPMajorLoki)     { godName = "Loki";     colorOpen = "<color136,8,8>"; }
+    if (gAPMajorGod == cAPMajorKronos)   { godName = "Kronos";   colorOpen = "<color0,255,255>"; }
+    if (gAPMajorGod == cAPMajorOranos)   { godName = "Oranos";   colorOpen = "<color0,255,255>"; }
+    if (gAPMajorGod == cAPMajorGaia)     { godName = "Gaia";     colorOpen = "<color0,255,255>"; }
+
+    if (godName != "")
+    {
+        trMessageSetText("Major God:\n" + colorOpen + godName + "</color>", 5);
+        trSoundPlayFN("ui\thunder3.wav");
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -993,7 +1027,7 @@ void APApplyAgeUnlocks()
     int i = 0;
     int id = 0;
 
-    for (i = 5; i < gAPItemCount; i++)
+    for (i = 6; i < gAPItemCount; i++)
     {
         id = gAPItems[i];
         if (id == cGREEK_AGE_UNLOCK)      { greekCount++;     }
@@ -1065,8 +1099,8 @@ void APApplyHeroBoosts()
     bool regFrostStrike       = false;
     bool regProjectile        = false;
 
-    // Start at 5 — indices 0-4 are flags/campaign ID
-    for (i = 5; i < gAPItemCount; i++)
+    // Start at 6 — indices 0-5 are flags (campaign unlocks, campaign ID, godsanity)
+    for (i = 6; i < gAPItemCount; i++)
     {
         id = gAPItems[i];
 
@@ -1315,21 +1349,25 @@ runImmediately
     //   [2]: 9003 = has Norse Scenarios,    9000 = no
     //   [3]: 9004 = has Atlantis Key,       9000 = no
     //   [4]: 9100 + campaign_id (for age unlock logic)
+    //   [5]: 9010 = godsanity on,           9000 = no
     gHasGreek    = false;
     gHasEgyptian = false;
     gHasNorse    = false;
     gHasAtlantis = false;
-    if (gAPItemCount > 4)
+    gAPGodsanity = false;
+    if (gAPItemCount > 5)
     {
         if (gAPItems[0] == 9001) { gHasGreek    = true; }
         if (gAPItems[1] == 9002) { gHasEgyptian = true; }
         if (gAPItems[2] == 9003) { gHasNorse    = true; }
         if (gAPItems[3] == 9004) { gHasAtlantis = true; }
+        if (gAPItems[5] == 9010) { gAPGodsanity = true; }
         // Scenario identity is driven by APScenarioID + APActivateScenario.
         // Keep slot 4 for compatibility, but do not overwrite gAPCampaignId here.
     }
 
     APCheckCampaignLock();
+    APAnnounceGod();
     APFindReinforcementSpawn();
     APApplyAgeUnlocks();
     APApplyHeroBoosts();
@@ -1350,8 +1388,8 @@ runImmediately
     int itemId = 0;
     int i = 0;
     int j = 0;
-    // Start at 5 — indices 0-4 are flags/campaign ID
-    for (i = 5; i < gAPItemCount; i++)
+    // Start at 6 — indices 0-5 are flags (campaign unlocks, campaign ID, godsanity)
+    for (i = 6; i < gAPItemCount; i++)
     {
         itemId = gAPItems[i];
 

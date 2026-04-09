@@ -193,12 +193,14 @@ def write_aom_state(ctx: AoMGameContext) -> None:
             campaign_id = derived
             break
 
-    # Prepend 4 campaign unlock flags at indices 0-3:
+    # Prepend flags at indices 0-5:
     #   [0] = 9001 if Greek Scenarios in items,    else 9000
     #   [1] = 9002 if Egyptian Scenarios in items, else 9000
     #   [2] = 9003 if Norse Scenarios in items,    else 9000
     #   [3] = 9004 if Atlantis Key in items,       else 9000
-    # Real items start at index 4.
+    #   [4] = 9100 + campaign_id
+    #   [5] = 9010 if godsanity is on,             else 9000
+    # Real items start at index 6.
     GREEK_SCENARIOS    = 3500
     EGYPTIAN_SCENARIOS = 3501
     NORSE_SCENARIOS    = 3502
@@ -210,6 +212,7 @@ def write_aom_state(ctx: AoMGameContext) -> None:
         9003 if NORSE_SCENARIOS    in received_set else 9000,
         _get_has_atlantis(ctx, received_set),
         9100 + campaign_id,  # index 4: campaign ID for age unlock logic
+        9010 if ctx.godsanity else 9000,  # index 5: godsanity flag
     ]
     items_with_flags = flags + list(ctx.received_items)
     total = len(items_with_flags)

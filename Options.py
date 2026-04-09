@@ -35,10 +35,9 @@ class StartingScenarios(Choice):
     egyptian: Scenarios 11-20
     norse:    Scenarios 21-30
 
-    The other two sections must be found as items in the pool.
-    Within a section, all scenarios are immediately accessible.
+    The other two sections must be found as items in the pool. Within a section, all scenarios are immediately accessible.
 
-    Starting with the Greek block is the easiest and Norse block is hardest.
+    Starting with the Greek block is the easiest.
     """
     internal_name = "starting_scenarios"
     display_name = "Starting Scenarios"
@@ -105,18 +104,13 @@ class FinalScenarios(Choice):
     What unlocks the Final scenario block (scenarios 31-32)?
 
     beat_x_scenarios (recommended):
-    Beat the chosen number of scenarios (set via x_scenarios below) to receive the
-    Atlantis Key and open the Final section.
+    Beat the chosen number of scenarios (set via x_scenarios below) to receive the Atlantis Key and open the Final section.
 
     always_open:
-    The Final section is available from the start. 
-    This can result in a
-    much shorter experience.
+    The Final section is available from the start. This can result in a much shorter experience.
 
     atlantis_key:
-    The Atlantis Key is shuffled randomly into the item pool. 
-    Finding it
-    anywhere opens the Final section.
+    The Atlantis Key is shuffled randomly into the item pool. Finding it anywhere opens the Final section.
     """
     internal_name = "final_scenarios"
     display_name = "Final Scenarios"
@@ -130,8 +124,7 @@ class FinalScenarios(Choice):
 
 class XScenarios(Range):
     """
-    If Final Scenarios (above) is set to beat_x_scenarios, this is how many scenarios
-    must be completed before you receive the Atlantis Key.
+    If Final Scenarios (above) is set to beat_x_scenarios, this is how many scenarios must be completed before you receive the Atlantis Key.
 
     You may beat any combination of the 30 non-final scenarios.
     """
@@ -140,7 +133,7 @@ class XScenarios(Range):
 
     range_start = 0
     range_end   = 30
-    default     = 10
+    default     = 12
 
 
 #############
@@ -149,10 +142,8 @@ class XScenarios(Range):
 
 class ExtraFinalMissionAgeUnlocks(Range):
     """
-    Scenario 32 requires 3 Age Unlock items to reach the Mythic Age and build
-    the Wonder. This adds extra copies of whichever civilization's Age Unlock
-    corresponds to the god assigned to scenario 32 (Greek by default, or
-    randomized if Godsanity is enabled). These replace filler items.
+    Scenario 32 requires 3 Age Unlock items to reach the Mythic Age and build the Wonder. 
+    This adds extra copies of whichever civilization's Age Unlock corresponds to the god assigned to scenario 32 (Greek by default, or randomized if godsanity is enabled). These replace filler items.
 
     At the default of 1, there are 4 total copies of that unlock in the pool.
     """
@@ -166,20 +157,18 @@ class ExtraFinalMissionAgeUnlocks(Range):
 
 class Godsanity(Toggle):
     """
-    Randomize the major god for each scenario at generation time.
-    The assigned god determines which age techs and minor gods are available,
-    giving each scenario a different playstyle.
+    Randomize the major god for each scenario at generation time. The assigned god determines which techs and minor gods are available.
+    Be ready to think on your feat with this turned on.
     """
     internal_name = "godsanity"
-    display_name = "Godsanity"
-    default = 0
+    display_name = "godsanity"
+    default = 1
 
 
 class GodForceChange(Toggle):
     """
-    When Godsanity is enabled, forces the random god to never be the vanilla
-    major god for that scenario. Also gives a 50%% chance to pick a god from
-    an entirely different civilization than the vanilla one.
+    When godsanity is enabled, forces the random god to never be the vanilla major god for that scenario and makes it more likely to play a civilization different from the vanilla.
+    (e.g. If 1. Omens is normally Poseidon, you'll never play Poseidon on that mission with this on, and Zeus and Hades are much less likely)
     """
     internal_name = "god_force_change"
     display_name = "God Force Change"
@@ -189,9 +178,8 @@ class GodForceChange(Toggle):
 class MythUnitSanity(Toggle):
     """
     Include myth unit tier unlock items in the pool.
-    When enabled, all myth units are forbidden at scenario start and must
-    be unlocked by finding the corresponding tier item.
-    When disabled, all myth units are available from the start.
+    When enabled, all myth units are forbidden at the start and must be unlocked by finding the corresponding tier item.
+    Turn this off for an easier time.
     """
     internal_name = "myth_unit_sanity"
     display_name = "Myth Unit Sanity"
