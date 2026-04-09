@@ -91,8 +91,7 @@ Age Of Mythology Retold:
     norse: 0
 
   starting_greek_age_unlocks:
-    # You cannot advance ages until you have received enough Progressive Age Unlock
-    # items. For each civilization:
+    # You cannot advance ages until you have received enough Progressive Age Unlock items. For each civilization:
     #   1st unlock = Classical Age available
     #   2nd unlock = Heroic Age available
     #   3rd unlock = Mythic Age available
@@ -115,7 +114,6 @@ Age Of Mythology Retold:
 
   starting_egyptian_age_unlocks:
     # Number of Progressive Egyptian Age Unlock items with which to start:
-    # See Starting Greek Age Unlocks for a full explanation of the age unlock system.
     #
     # You can define additional values between the minimum and maximum values.
     # Minimum value is 0
@@ -128,7 +126,6 @@ Age Of Mythology Retold:
 
   starting_norse_age_unlocks:
     # Number of Progressive Norse Age Unlock items with which to start:
-    # See Starting Greek Age Unlocks for a full explanation of the age unlock system.
     #
     # You can define additional values between the minimum and maximum values.
     # Minimum value is 0
@@ -146,27 +143,27 @@ Age Of Mythology Retold:
     # What unlocks the Final scenario block (scenarios 31-32)?
     # 
     # beat_x_scenarios (recommended):
-    # Beat a chosen number of scenarios (set via X Scenarios below) to receive the
+    # Beat the chosen number of scenarios (set via x_scenarios below) to receive the
     # Atlantis Key and open the Final section.
     # 
     # always_open:
-    # The Final section is available from the start. This can result in a
+    # The Final section is available from the start. 
+    # This can result in a
     # much shorter experience.
     # 
     # atlantis_key:
-    # The Atlantis Key is shuffled randomly into the item pool. Finding it
+    # The Atlantis Key is shuffled randomly into the item pool. 
+    # Finding it
     # anywhere opens the Final section.
     beat_x_scenarios: 50
     always_open: 0
     atlantis_key: 0
 
   x_scenarios:
-    # If Final Scenarios is set to beat_x_scenarios, this is how many scenarios
+    # If Final Scenarios (above) is set to beat_x_scenarios, this is how many scenarios
     # must be completed before you receive the Atlantis Key.
     # 
     # You may beat any combination of the 30 non-final scenarios.
-    # 
-    # Minimum: 0  Maximum: 30
     #
     # You can define additional values between the minimum and maximum values.
     # Minimum value is 0
@@ -183,11 +180,12 @@ Age Of Mythology Retold:
   hero_abilities:
     # Include custom hero special ability items in the item pool?
     # 
-    # enabled (true, default):
+    # enabled (true):
+    # Recommended setting for an exciting, hero-focued campaign.
     # The following items are included:
     # 
     # Arkantos:
-    #   - Arkantos Lifesteal         (melee attacks heal Arkantos for 10% of damage dealt)
+    #   - Arkantos Lifesteal         (Arkantos' melee attacks heal him)
     #   - Arkantos Petrifying Shout  (shout ability petrifies and damages nearby enemies)
     #   - Arkantos is a House        (Arkantos provides +10 population capacity)
     #   - Arkantos Attack Speed      (increases melee attack speed)
@@ -195,30 +193,30 @@ Age Of Mythology Retold:
     # Ajax:
     #   - Ajax Stunning Blow         (shield bash stuns the target for 10 seconds)
     #   - Ajax Smiting Strikes       (melee attacks temporarily reduce target's max HP)
-    #   - Ajax Shield Bash AOE       (shield bash hits a wider area)
+    #   - Ajax Shield Bash AOE       (shield bash hits a wide area)
     # 
     # Chiron:
-    #   - Chiron Poison Arrow        (arrows apply a poison DoT: 20 damage over 20 seconds)
-    #   - Chiron Crippling Fire      (arrows slow the target's attack rate for 3 seconds)
-    #   - Chiron Shotgun Special     (special shot fires 15 additional projectiles)
+    #   - Chiron Poison Arrow        (arrows apply a poison damage over time)
+    #   - Chiron Crippling Fire      (arrows slow the target's attack rate significantly)
+    #   - Chiron Shotgun Special     (special shot fires a ton of extra arrows)
     # 
     # Amanra:
-    #   - Amanra Whirlwind Throw     (leap attack throws the target through the air)
+    #   - Amanra Shockwave Jump      (leap attack sends targets flying)
     #   - Amanra Army of the Dead    (enemies slain by Amanra are reincarnated as allied minions)
     #   - Amanra Divine Smite        (melee attacks deal +5 divine damage)
     # 
     # Odysseus:
-    #   - Odysseus Entangling Shot   (special shot snares the target's movement for 10 seconds)
-    #   - Odysseus Swift Escape      (ranged attacks boost Odysseus's own movement speed)
-    #   - Odysseus Perfect Accuracy  (ranged attacks gain enhanced precision)
+    #   - Odysseus Entangling Shot   (special shot snares the targets' movement for 10 seconds)
+    #   - Odysseus Swift Escape      (ranged attacks cripple the target's speed)
+    #   - Odysseus Perfect Accuracy  (ranged attacks never miss)
     # 
     # Reginleif:
-    #   - Reginleif Frost Strike     (arrows progressively freeze the target's attack rate)
-    #   - Reginleif +1 Projectile    (ranged attacks fire an additional arrow)
+    #   - Reginleif Frost Strike     (arrows progressively freeze the target)
+    #   - Reginleif +1 Projectile    (fire an additional javelin)
     # 
     # disabled (false):
-    # All 18 hero ability items are removed from the pool and replaced with
-    # filler. Makes the game harder and more focused on army composition.
+    # All above hero ability items are removed from the pool and replaced with
+    # filler. Removing these makes the game much harder and less hero-focused.
     'false': 0
     'true': 50
 

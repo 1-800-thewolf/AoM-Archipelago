@@ -94,6 +94,49 @@ class UnitUnlockUseful:
 
 
 @dataclass
+class MythUnitUnlockProgression:
+    units: list  # proto unit names forbidden until received
+    culture: str
+    age: str
+
+
+@dataclass
+class MythUnitUnlockUseful:
+    units: list
+    culture: str
+    age: str
+
+
+@dataclass
+class MythUnitUnlockFiller:
+    units: list
+    culture: str
+    age: str
+
+
+@dataclass
+class AtlanteanUnitUnlockProgression:
+    """Atlantean unit unlock — only in pool when godsanity is enabled."""
+    unit_name: str
+    culture: str
+
+
+@dataclass
+class AtlanteanUnitUnlockUseful:
+    """Atlantean unit unlock — only in pool when godsanity is enabled."""
+    unit_name: str
+    culture: str
+
+
+@dataclass
+class AtlanteanMythUnitUnlock:
+    """Atlantean myth unit unlock — only in pool when godsanity is enabled."""
+    units: list
+    culture: str
+    age: str
+
+
+@dataclass
 class HeroStatBoost:
     hero: str          # proto unit name e.g. "Arkantos", "AjaxSPC"
     stat: str          # e.g. "Hitpoints", "HandAttack", "RechargeTime", "UnitRegenRate"
@@ -200,8 +243,14 @@ item_type_to_classification: dict[type, ItemClassification] = {
     ArkantosHousing:        ItemClassification.useful,
     VillagerCarryCapacity:  ItemClassification.filler,
     VillagerFoodCost:       ItemClassification.filler,
-    VillagerCarryCapacity:  ItemClassification.filler,
-    VillagerFoodCost:       ItemClassification.filler,
+    VillagerCarryCapacity:       ItemClassification.filler,
+    VillagerFoodCost:            ItemClassification.filler,
+    MythUnitUnlockProgression:   ItemClassification.progression,
+    MythUnitUnlockUseful:        ItemClassification.progression,
+    MythUnitUnlockFiller:        ItemClassification.progression,
+    AtlanteanUnitUnlockProgression: ItemClassification.progression,
+    AtlanteanUnitUnlockUseful:      ItemClassification.useful,
+    AtlanteanMythUnitUnlock:        ItemClassification.progression,
 }
 
 
@@ -262,17 +311,12 @@ class aomItemData(enum.IntEnum):
     # Items within each civ are visually identical to the player; the Unicode
     # zero-width characters keep names unique in the AP item tables.
     # -----------------------------------------------------------------------
-    GREEK_AGE_UNLOCK_1    = 1002, "Progressive Greek Age Unlock",      AgeUnlock("Greek")
-    GREEK_AGE_UNLOCK_2    = 1003, "Progressive Greek Age Unlock\u200b", AgeUnlock("Greek")
-    GREEK_AGE_UNLOCK_3    = 1004, "Progressive Greek Age Unlock\u200c", AgeUnlock("Greek")
+    GREEK_AGE_UNLOCK      = 1002, "Progressive Greek Age Unlock",      AgeUnlock("Greek")
 
-    EGYPTIAN_AGE_UNLOCK_1 = 1005, "Progressive Egyptian Age Unlock",      AgeUnlock("Egyptian")
-    EGYPTIAN_AGE_UNLOCK_2 = 1006, "Progressive Egyptian Age Unlock\u200b", AgeUnlock("Egyptian")
-    EGYPTIAN_AGE_UNLOCK_3 = 1007, "Progressive Egyptian Age Unlock\u200c", AgeUnlock("Egyptian")
+    EGYPTIAN_AGE_UNLOCK   = 1005, "Progressive Egyptian Age Unlock",      AgeUnlock("Egyptian")
 
-    NORSE_AGE_UNLOCK_1    = 1008, "Progressive Norse Age Unlock",      AgeUnlock("Norse")
-    NORSE_AGE_UNLOCK_2    = 1009, "Progressive Norse Age Unlock\u200b", AgeUnlock("Norse")
-    NORSE_AGE_UNLOCK_3    = 1010, "Progressive Norse Age Unlock\u200c", AgeUnlock("Norse")
+    NORSE_AGE_UNLOCK      = 1008, "Progressive Norse Age Unlock",      AgeUnlock("Norse")
+    ATLANTEAN_AGE_UNLOCK  = 1011, "Progressive Atlantean Age Unlock", AgeUnlock("Atlantean")  # only in pool when godsanity is on
 
     # -----------------------------------------------------------------------
     # Unit Unlocks
@@ -285,8 +329,7 @@ class aomItemData(enum.IntEnum):
     # Progression — one per civilization
     CAN_TRAIN_HOPLITE         = 3200, "Can train Hoplite",         UnitUnlockProgression("Hoplite", "Greek")
     CAN_TRAIN_SPEARMAN        = 3201, "Can train Spearman",        UnitUnlockProgression("Spearman", "Egyptian")
-    CAN_TRAIN_BERSERK         = 3202, "Can train Berserk",         UnitUnlockProgression("Berserk",  "Norse")
-    CAN_TRAIN_HIRDMAN         = 3203, "Can train Hirdman",         UnitUnlockProgression("Hirdman", "Norse")
+    CAN_TRAIN_BERSERK         = 3202, "Can train Berserk",         UnitUnlockProgression("Berserk", "Norse")
 
     # Useful — Greek
     CAN_TRAIN_HYPASPIST       = 3210, "Can train Hypaspist",       UnitUnlockUseful("Hypaspist", "Greek")
@@ -304,9 +347,20 @@ class aomItemData(enum.IntEnum):
 
     # Useful — Norse
     CAN_TRAIN_THROWING_AXEMAN = 3230, "Can train Throwing Axeman", UnitUnlockUseful("ThrowingAxeman", "Norse")
+    CAN_TRAIN_HIRDMAN         = 3234, "Can train Hirdman",         UnitUnlockUseful("Hirdman", "Norse")
     CAN_TRAIN_HUSKARL         = 3231, "Can train Huskarl",         UnitUnlockUseful("Huskarl", "Norse")
     CAN_TRAIN_RAIDING_CAVALRY = 3232, "Can train Raiding Cavalry", UnitUnlockUseful("RaidingCavalry", "Norse")
     CAN_TRAIN_JARL            = 3233, "Can train Jarl",            UnitUnlockUseful("Jarl", "Norse")
+
+    # Atlantean unit unlocks — only added to pool when godsanity is enabled
+    CAN_TRAIN_MURMILLO        = 3240, "Can train Murmillo",        AtlanteanUnitUnlockProgression("Murmillo", "Atlantean")
+    CAN_TRAIN_KATAPELTES      = 3241, "Can train Katapeltes",      AtlanteanUnitUnlockUseful("Katapeltes", "Atlantean")
+    CAN_TRAIN_TURMA           = 3242, "Can train Turma",           AtlanteanUnitUnlockUseful("Turma", "Atlantean")
+    CAN_TRAIN_CHEIROBALLISTA  = 3243, "Can train Cheiroballista",  AtlanteanUnitUnlockUseful("Cheiroballista", "Atlantean")
+    CAN_TRAIN_CONTARIUS       = 3244, "Can train Contarius",       AtlanteanUnitUnlockUseful("Contarius", "Atlantean")
+    CAN_TRAIN_ARCUS           = 3245, "Can train Arcus",           AtlanteanUnitUnlockUseful("Arcus", "Atlantean")
+    CAN_TRAIN_FANATIC         = 3246, "Can train Fanatic",         AtlanteanUnitUnlockUseful("Fanatic", "Atlantean")
+    CAN_TRAIN_DESTROYER       = 3247, "Can train Destroyer",       AtlanteanUnitUnlockUseful("Destroyer", "Atlantean")
 
     # -----------------------------------------------------------------------
     # Starting Resources
@@ -349,7 +403,7 @@ class aomItemData(enum.IntEnum):
     REINFORCEMENT_MERCENARY_CAV   = 4004, f"{REINFORCEMENT_AMOUNT} Mercenary Cavalry", Reinforcement("MercenaryCavalry", REINFORCEMENT_AMOUNT)
     REINFORCEMENT_AUTOMATON       = 4006, f"{REINFORCEMENT_AMOUNT} Automatons",        Reinforcement("Automaton",        REINFORCEMENT_AMOUNT)
     REINFORCEMENT_WADJET          = 4007, f"{REINFORCEMENT_AMOUNT} Wadjets",           Reinforcement("Wadjet",           REINFORCEMENT_AMOUNT)
-    REINFORCEMENT_ULFSARK         = 4008, f"{REINFORCEMENT_AMOUNT} Ulfsarks",          Reinforcement("Ulfsark",          REINFORCEMENT_AMOUNT)
+    REINFORCEMENT_ULFSARK         = 4008, f"{REINFORCEMENT_AMOUNT} Berserks",          Reinforcement("Berserk",          REINFORCEMENT_AMOUNT)
     REINFORCEMENT_SLINGER         = 4009, f"{REINFORCEMENT_AMOUNT} Slingers",          Reinforcement("Slinger",          REINFORCEMENT_AMOUNT)
     REINFORCEMENT_TURMA           = 4010, f"{REINFORCEMENT_AMOUNT} Turmas",            Reinforcement("Turma",            REINFORCEMENT_AMOUNT)
     REINFORCEMENT_KATASKOPOS      = 4011, f"{REINFORCEMENT_AMOUNT} Kataskopos",        Reinforcement("Kataskopos",       REINFORCEMENT_AMOUNT)
@@ -376,6 +430,23 @@ class aomItemData(enum.IntEnum):
 
     # Special: spawns exactly 1 Reginleif (not REINFORCEMENT_AMOUNT)
     REGINLEIF_JOINS               = 4028, "Reginleif Joins the Campaign",              ReinforcementUseful("Reginleif", 1)
+    ODYSSEUS_JOINS                = 5015, "Odysseus Joins the Campaign",               ReinforcementUseful("OdysseusSPC", 1)
+
+    # Myth unit tier unlocks — forbidden at start, unlocked by item
+    GREEK_CLASSICAL_MYTH_UNITS               = 5016, "Can train Greek Classical Myth Units", MythUnitUnlockProgression(['Centaur', 'Minotaur', 'Cyclops', 'Lykaon'], "Greek", "Classical")
+    GREEK_HEROIC_MYTH_UNITS                  = 5017, "Can train Greek Heroic Myth Units", MythUnitUnlockProgression(['Hydra', 'Manticore', 'NemeanLion', 'Hamadryad', 'Scylla'], "Greek", "Heroic")
+    GREEK_MYTHIC_MYTH_UNITS                  = 5018, "Can train Greek Mythic Myth Units", MythUnitUnlockProgression(['Medusa', 'Colossus', 'Chimera', 'Siren', 'Harpy', 'Carcinos'], "Greek", "Mythic")
+    EGYPTIAN_CLASSICAL_MYTH_UNITS            = 5019, "Can train Egyptian Classical Myth Units", MythUnitUnlockProgression(['Sphinx', 'Wadjet', 'Anubite'], "Egyptian", "Classical")
+    EGYPTIAN_HEROIC_MYTH_UNITS               = 5020, "Can train Egyptian Heroic Myth Units", MythUnitUnlockProgression(['Petsuchos', 'Scarab', 'ScorpionMan', 'Roc', 'Leviathan'], "Egyptian", "Heroic")
+    EGYPTIAN_MYTHIC_MYTH_UNITS               = 5021, "Can train Egyptian Mythic Myth Units", MythUnitUnlockProgression(['Mummy', 'Avenger', 'Phoenix', 'WarTurtle'], "Egyptian", "Mythic")
+    NORSE_CLASSICAL_MYTH_UNITS               = 5022, "Can train Norse Classical Myth Units", MythUnitUnlockProgression(['Valkyrie', 'Troll', 'Einherjar', 'Draugr'], "Norse", "Classical")
+    NORSE_HEROIC_MYTH_UNITS                  = 5023, "Can train Norse Heroic Myth Units", MythUnitUnlockProgression(['FrostGiant', 'BattleBoar', 'MountainGiant', 'RockGiant', 'Kraken'], "Norse", "Heroic")
+    NORSE_MYTHIC_MYTH_UNITS                  = 5024, "Can train Norse Mythic Myth Units", MythUnitUnlockProgression(['FireGiant', 'FenrisWolfBrood', 'Fafnir', 'JormunElver'], "Norse", "Mythic")
+
+    # Atlantean myth unit unlocks — only added to pool when godsanity is enabled
+    ATLANTEAN_CLASSICAL_MYTH_UNITS = 5025, "Can train Atlantean Classical Myth Units", AtlanteanMythUnitUnlock(['Promethean', 'Automaton', 'Caladria', 'Servant'], "Atlantean", "Classical")
+    ATLANTEAN_HEROIC_MYTH_UNITS    = 5026, "Can train Atlantean Heroic Myth Units",    AtlanteanMythUnitUnlock(['Behemoth', 'Satyr', 'StymphalianBird', 'Nereid'], "Atlantean", "Heroic")
+    ATLANTEAN_MYTHIC_MYTH_UNITS    = 5027, "Can train Atlantean Mythic Myth Units",    AtlanteanMythUnitUnlock(['Centimanus', 'Argus', 'Lampades', 'ManOWar'], "Atlantean", "Mythic")
 
     # -----------------------------------------------------------------------
     # Reinforcements — Additional Filler
@@ -384,9 +455,9 @@ class aomItemData(enum.IntEnum):
     # -----------------------------------------------------------------------
     REINFORCEMENT_RELIC_MONKEY    = 4029, f"{REINFORCEMENT_AMOUNT} Relic Monkeys",     Reinforcement("RelicMonkey",    REINFORCEMENT_AMOUNT)
     REINFORCEMENT_PEGASUS         = 4030, f"{REINFORCEMENT_AMOUNT} Pegasi",            Reinforcement("Pegasus",        REINFORCEMENT_AMOUNT)
-    REINFORCEMENT_HYENA           = 4031, f"{REINFORCEMENT_AMOUNT} Hyenas of Set",     Reinforcement("HyenaOfSet",          REINFORCEMENT_AMOUNT)
-    REINFORCEMENT_HIPPO           = 4032, f"{REINFORCEMENT_AMOUNT} Hippos of Set",     Reinforcement("HippopotamusOfSet",   REINFORCEMENT_AMOUNT)
-    REINFORCEMENT_GOLDEN_LION     = 4033, f"{REINFORCEMENT_AMOUNT} Golden Lions",      Reinforcement("RelicGoldenLion",     REINFORCEMENT_AMOUNT)
+    REINFORCEMENT_HYENA           = 4031, f"{REINFORCEMENT_AMOUNT} Hyenas of Set",     Reinforcement("Hyena",          REINFORCEMENT_AMOUNT)
+    REINFORCEMENT_HIPPO           = 4032, f"{REINFORCEMENT_AMOUNT} Hippos of Set",     Reinforcement("Hippopotamus",   REINFORCEMENT_AMOUNT)
+    REINFORCEMENT_GOLDEN_LION     = 4033, f"{REINFORCEMENT_AMOUNT} Golden Lions",      Reinforcement("GoldenLion",     REINFORCEMENT_AMOUNT)
     REINFORCEMENT_NORSE_GATHERER  = 4034, f"{REINFORCEMENT_AMOUNT} Norse Gatherers",   Reinforcement("VillagerNorse",  REINFORCEMENT_AMOUNT)
 
     # -----------------------------------------------------------------------
@@ -511,7 +582,7 @@ class aomItemData(enum.IntEnum):
 
     # --- Amanra — 2900-2999 ---
 
-    # Shockwave Jump: Amanra's JumpAttack (leap strike) throws the target
+    # Whirlwind Throw: Amanra's JumpAttack (leap strike) throws the target
     # unit through the air on hit.
     AMANRA_SHOCKWAVE_JUMP     = 2900, "Amanra Shockwave Jump",        HeroSpecialEffect("Amanra", "JumpAttack Throw All 10 10")
 
@@ -572,9 +643,6 @@ class aomItemData(enum.IntEnum):
     GREEK_VILLAGER_CHEAPER    = 5009, "Greek Villagers Cost -3 Food",    VillagerFoodCost("VillagerGreek",    3)
     EGYPTIAN_VILLAGER_CHEAPER = 5010, "Egyptian Villagers Cost -3 Food", VillagerFoodCost("VillagerEgyptian", 3)
     NORSE_VILLAGER_CHEAPER    = 5011, "Norse Villagers Cost -3 Food",    VillagerFoodCost("VillagerNorse",    3)
-    GREEK_VILLAGER_CHEAPER_2    = 5012, "Greek Villagers Cost -2 Food",    VillagerFoodCost("VillagerGreek",    2)
-    EGYPTIAN_VILLAGER_CHEAPER_2 = 5013, "Egyptian Villagers Cost -2 Food", VillagerFoodCost("VillagerEgyptian", 2)
-    NORSE_VILLAGER_CHEAPER_2    = 5014, "Norse Villagers Cost -2 Food",    VillagerFoodCost("VillagerNorse",    2)
 
 
 # -----------------------------------------------------------------------

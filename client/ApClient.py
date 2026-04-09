@@ -257,42 +257,74 @@ class AoMCommandProcessor(ClientCommandProcessor):
             self.output("Final section mode: not beat_x_scenarios (no progress tracking)")
 
     def _cmd_scenarios(self) -> None:
-        """List scenario completion status: beaten, partial, and untouched."""
+        """List scenario completion status by category, with section unlock summary."""
         from ..locations.Locations import aomLocationData, aomLocationType
         from ..locations.Scenarios import aomScenarioData
+        from ..items.Items import aomItemData
 
         ctx = self.ctx
-        sent = ctx.game_ctx.sent_checks
+        sent     = ctx.game_ctx.sent_checks
+        received = set(ctx.game_ctx.received_items)
 
-        # Build per-scenario stats: {scenario: {checked: int, total: int, beaten: bool}}
+        # Build per-scenario stats
         scenario_stats: dict = {}
         for scenario in aomScenarioData:
             scenario_stats[scenario] = {"checked": 0, "total": 0, "beaten": False}
 
         for loc in aomLocationData:
             if loc.type == aomLocationType.COMPLETION:
-                continue  # events, not real locations
+                continue
             stats = scenario_stats[loc.scenario]
             if loc.type == aomLocationType.VICTORY:
                 if loc.id in sent:
                     stats["beaten"] = True
-            else:  # OBJECTIVE
+            else:
                 stats["total"] += 1
                 if loc.id in sent:
                     stats["checked"] += 1
 
-        beaten   = []
-        partial  = []
+        # Section unlock status
+        has_greek    = aomItemData.GREEK_SCENARIOS.id    in received
+        has_egyptian = aomItemData.EGYPTIAN_SCENARIOS.id in received
+        has_norse    = aomItemData.NORSE_SCENARIOS.id    in received
+        has_atlantis = aomItemData.ATLANTIS_KEY.id       in received
+        threshold    = getattr(ctx, "_x_scenarios_threshold", None)
+        beaten_count = _count_beaten_scenarios(ctx)
+        if not has_atlantis and threshold is not None and beaten_count >= threshold:
+            has_atlantis = True
+
+        # Campaign block summary
+        def block_line(name: str, unlocked: bool, extra: str = "") -> str:
+            icon   = "v" if unlocked else "X"
+            status = "Unlocked" if unlocked else "Locked"
+            suffix = f" ({extra})" if extra else ""
+            return f"  [{icon}] {name}: {status}{suffix}"
+
+        if threshold is not None:
+            final_extra = f"{beaten_count}/{threshold} missions beaten"
+        elif not has_atlantis:
+            final_extra = "find the Atlantis Key"
+        else:
+            final_extra = ""
+
+        self.output("Campaign Blocks:")
+        self.output(block_line("Greek Scenarios",    has_greek))
+        self.output(block_line("Egyptian Scenarios", has_egyptian))
+        self.output(block_line("Norse Scenarios",    has_norse))
+        self.output(block_line("Final Scenarios",    has_atlantis, final_extra))
+
+        # Sort all non-final scenarios into categories
+        beaten    = []
+        partial   = []
         untouched = []
 
-        for scenario, stats in scenario_stats.items():
-            name = scenario.display_name
+        for scenario in aomScenarioData:
+            stats = scenario_stats[scenario]
+            name  = scenario.display_name
             if stats["beaten"]:
                 beaten.append(name)
             elif stats["checked"] > 0:
-                partial.append(
-                    f"{name} ({stats['checked']}/{stats['total']} objectives)"
-                )
+                partial.append(f"{name} ({stats['checked']}/{stats['total']} objectives)")
             else:
                 untouched.append(name)
 
@@ -307,6 +339,294 @@ class AoMCommandProcessor(ClientCommandProcessor):
         self.output(f"=== Not Started ({len(untouched)}) ===")
         for name in untouched:
             self.output(f"  {name}")
+
+    def _cmd_gods(self) -> None:
+        """Show the randomized major god for each scenario (godsanity mode only)."""
+        ctx = self.ctx
+        if not ctx.game_ctx.godsanity:
+            self.output("Godsanity is not enabled for this seed.")
+            return
+        god_names = {
+            1: "Zeus",   2: "Poseidon", 3: "Hades",
+            4: "Isis",   5: "Ra",       6: "Set",
+            7: "Odin",   8: "Thor",     9: "Loki",
+            10: "Kronos", 11: "Oranos", 12: "Gaia",
+        }
+        scenario_names = {
+            1:"1. Omens", 2:"2. Consequences", 3:"3. Scratching the Surface",
+            4:"4. A Fine Plan", 5:"5. Just Enough Rope", 6:"6. I Hope This Works",
+            7:"7. More Bandits", 8:"8. Bad News", 9:"9. Revelation",
+            10:"10. Strangers", 11:"11. The Lost Relic", 12:"12. Light Sleeper",
+            13:"13. Tug of War", 14:"14. Isis, Hear My Plea", 15:"15. Let's Go",
+            16:"16. Good Advice", 17:"17. The Jackal's Stronghold",
+            18:"18. A Long Way From Home", 19:"19. Watch That First Step",
+            20:"20. Where They Belong", 21:"21. Old Friends", 22:"22. North",
+            23:"23. The Dwarven Forge", 24:"24. Not From Around Here",
+            25:"25. Welcoming Committee", 26:"26. Union",
+            27:"27. The Well of Urd", 28:"28. Beneath the Surface",
+            29:"29. Unlikely Heroes", 30:"30. All Is Not Lost",
+            31:"31. Welcome Back", 32:"32. A Place in My Dreams",
+        }
+        self.output("=== Godsanity God Assignments ===")
+        for n in range(1, 33):
+            god_id = ctx.game_ctx.god_assignments.get(n, 0)
+            god    = god_names.get(god_id, "Unknown")
+            name   = scenario_names.get(n, str(n))
+            self.output(f"  {name}: {god}")
+
+
+    # ---------------------------------------------------------------------------
+    # Civilization item commands — unit/myth unlocks and age unlocks only
+    # ---------------------------------------------------------------------------
+
+    @staticmethod
+    def _is_civ_item(item) -> bool:
+        """True if item is a civ-specific unit unlock, myth unlock, or age unlock."""
+        try:
+            from ..items.Items import (
+                UnitUnlockProgression, UnitUnlockUseful, AgeUnlock,
+                MythUnitUnlockProgression, MythUnitUnlockUseful, MythUnitUnlockFiller,
+            )
+            civ_types = (UnitUnlockProgression, UnitUnlockUseful, AgeUnlock,
+                         MythUnitUnlockProgression, MythUnitUnlockUseful, MythUnitUnlockFiller)
+        except ImportError:
+            return False
+        try:
+            from ..items.Items import (
+                AtlanteanUnitUnlockProgression, AtlanteanUnitUnlockUseful,
+                AtlanteanMythUnitUnlock,
+            )
+            civ_types = civ_types + (AtlanteanUnitUnlockProgression,
+                                     AtlanteanUnitUnlockUseful, AtlanteanMythUnitUnlock)
+        except (ImportError, AttributeError):
+            pass
+        return isinstance(item.type, civ_types)
+
+    def _cmd_civ_items(self, civ_label: str, civ_filter) -> None:
+        """Generic helper: list received items matching a civ filter."""
+        ctx = self.ctx
+        try:
+            from ..items.Items import aomItemData
+        except Exception:
+            self.output("Could not load item data.")
+            return
+        received_set = set(ctx.game_ctx.received_items)
+        matched = [item.item_name for item in aomItemData
+                   if item.id in received_set and civ_filter(item)]
+        if not matched:
+            self.output(f"No {civ_label} items received yet.")
+            return
+        self.output(f"=== {civ_label} Items Received ({len(matched)}) ===")
+        for name in matched:
+            self.output(f"  {name}")
+
+    def _cmd_greek(self) -> None:
+        """Show received Greek unit and myth unlock items."""
+        self._cmd_civ_items("Greek", lambda item:
+            self._is_civ_item(item) and
+            hasattr(item.type, "culture") and item.type.culture == "Greek")
+
+    def _cmd_egypt(self) -> None:
+        """Show received Egyptian unit and myth unlock items."""
+        self._cmd_civ_items("Egyptian", lambda item:
+            self._is_civ_item(item) and
+            hasattr(item.type, "culture") and item.type.culture == "Egyptian")
+
+    def _cmd_norse(self) -> None:
+        """Show received Norse unit and myth unlock items."""
+        self._cmd_civ_items("Norse", lambda item:
+            self._is_civ_item(item) and
+            hasattr(item.type, "culture") and item.type.culture == "Norse")
+
+    def _cmd_atlantean(self) -> None:
+        """Show received Atlantean unit and myth unlock items."""
+        self._cmd_civ_items("Atlantean", lambda item:
+            self._is_civ_item(item) and
+            hasattr(item.type, "culture") and item.type.culture == "Atlantean")
+
+    def _cmd_generic(self) -> None:
+        """Show received non-civ items: heroes, resources, reinforcements, etc."""
+        self._cmd_civ_items("Generic", lambda item: not self._is_civ_item(item))
+
+    # Aliases for /gods
+    _cmd_god = _cmd_gods
+
+    # Aliases for civ commands
+    _cmd_egyptian = _cmd_egypt
+    _cmd_atlant   = _cmd_atlantean
+    _cmd_atlants  = _cmd_atlantean
+    _cmd_atlantis = _cmd_atlantean
+
+    # Aliases for /scenarios
+    _cmd_scenario  = _cmd_scenarios
+    _cmd_mission   = _cmd_scenarios
+    _cmd_missions  = _cmd_scenarios
+    _cmd_progress  = _cmd_scenarios
+
+
+
+    def _cmd_gods(self) -> None:
+        """Show the randomized major god for each scenario (godsanity mode only)."""
+        ctx = self.ctx
+        if not ctx.game_ctx.godsanity:
+            self.output("Godsanity is not enabled for this seed.")
+            return
+        god_names = {
+            1: "Zeus",   2: "Poseidon", 3: "Hades",
+            4: "Isis",   5: "Ra",       6: "Set",
+            7: "Odin",   8: "Thor",     9: "Loki",
+            10: "Kronos", 11: "Oranos", 12: "Gaia",
+        }
+        scenario_names = {
+            1:"1. Omens", 2:"2. Consequences", 3:"3. Scratching the Surface",
+            4:"4. A Fine Plan", 5:"5. Just Enough Rope", 6:"6. I Hope This Works",
+            7:"7. More Bandits", 8:"8. Bad News", 9:"9. Revelation",
+            10:"10. Strangers", 11:"11. The Lost Relic", 12:"12. Light Sleeper",
+            13:"13. Tug of War", 14:"14. Isis, Hear My Plea", 15:"15. Let's Go",
+            16:"16. Good Advice", 17:"17. The Jackal's Stronghold",
+            18:"18. A Long Way From Home", 19:"19. Watch That First Step",
+            20:"20. Where They Belong", 21:"21. Old Friends", 22:"22. North",
+            23:"23. The Dwarven Forge", 24:"24. Not From Around Here",
+            25:"25. Welcoming Committee", 26:"26. Union",
+            27:"27. The Well of Urd", 28:"28. Beneath the Surface",
+            29:"29. Unlikely Heroes", 30:"30. All Is Not Lost",
+            31:"31. Welcome Back", 32:"32. A Place in My Dreams",
+        }
+        self.output("=== Godsanity God Assignments ===")
+        for n in range(1, 33):
+            god_id = ctx.game_ctx.god_assignments.get(n, 0)
+            god    = god_names.get(god_id, "Unknown")
+            name   = scenario_names.get(n, str(n))
+            self.output(f"  {name}: {god}")
+
+
+    # ---------------------------------------------------------------------------
+    # Civilization item commands — show unit/myth/age unlock items per civ
+    # /generic shows everything else
+    # ---------------------------------------------------------------------------
+
+    _CIV_ITEM_TYPES = None  # populated lazily
+
+    def _get_civ_item_types(self):
+        """Return the set of type classes that are civ-specific (unit/myth/age unlocks)."""
+        try:
+            from ..items.Items import (
+                AgeUnlock, UnitUnlockProgression, UnitUnlockUseful,
+                MythUnitUnlockProgression, MythUnitUnlockUseful, MythUnitUnlockFiller,
+            )
+            types = (AgeUnlock, UnitUnlockProgression, UnitUnlockUseful,
+                     MythUnitUnlockProgression, MythUnitUnlockUseful, MythUnitUnlockFiller)
+            try:
+                from ..items.Items import (
+                    AtlanteanUnitUnlockProgression, AtlanteanUnitUnlockUseful,
+                    AtlanteanMythUnitUnlock,
+                )
+                types = types + (AtlanteanUnitUnlockProgression,
+                                 AtlanteanUnitUnlockUseful, AtlanteanMythUnitUnlock)
+            except (ImportError, AttributeError):
+                pass
+            return types
+        except (ImportError, AttributeError):
+            return ()
+
+    def _cmd_civ_items(self, civ_label: str, culture: str) -> None:
+        """List received unit unlocks, myth unit unlocks, and age unlocks for a civ."""
+        ctx = self.ctx
+        try:
+            from ..items.Items import aomItemData
+        except Exception:
+            self.output("Could not load item data.")
+            return
+
+        civ_types = self._get_civ_item_types()
+        received_set = set(ctx.game_ctx.received_items)
+        matched = []
+        for item in aomItemData:
+            if item.id not in received_set:
+                continue
+            t = item.type
+            if not isinstance(t, civ_types):
+                continue
+            if hasattr(t, "culture") and t.culture == culture:
+                matched.append(item.item_name)
+
+        count = len(matched)
+        self.output(f"=== {civ_label} Items Received ({count}) ===")
+        if not matched:
+            self.output("  (none)")
+        else:
+            for name in matched:
+                self.output(f"  {name}")
+
+    def _cmd_generic(self) -> None:
+        """Show received items that are not unit unlocks, myth unit unlocks, or age unlocks."""
+        ctx = self.ctx
+        try:
+            from ..items.Items import aomItemData, Victory, Campaign, FinalUnlock
+        except Exception:
+            self.output("Could not load item data.")
+            return
+
+        civ_types = self._get_civ_item_types()
+        skip_types = civ_types
+        try:
+            skip_types = skip_types + (Victory, Campaign, FinalUnlock)
+        except Exception:
+            pass
+
+        received_ids = ctx.game_ctx.received_items
+        # Count multiples using a counter
+        from collections import Counter
+        counts = Counter(received_ids)
+        received_set = set(received_ids)
+
+        matched = []
+        for item in aomItemData:
+            if item.id not in received_set:
+                continue
+            if isinstance(item.type, skip_types):
+                continue
+            n = counts[item.id]
+            label = f"  {item.item_name}" if n == 1 else f"  {item.item_name} x{n}"
+            matched.append(label)
+
+        self.output(f"=== Generic Items Received ({len(matched)}) ===")
+        if not matched:
+            self.output("  (none)")
+        else:
+            for line in matched:
+                self.output(line)
+
+    def _cmd_greek(self) -> None:
+        """Show received Greek unit, myth unit, and age unlock items."""
+        self._cmd_civ_items("Greek", "Greek")
+
+    def _cmd_egypt(self) -> None:
+        """Show received Egyptian unit, myth unit, and age unlock items."""
+        self._cmd_civ_items("Egyptian", "Egyptian")
+
+    def _cmd_norse(self) -> None:
+        """Show received Norse unit, myth unit, and age unlock items."""
+        self._cmd_civ_items("Norse", "Norse")
+
+    def _cmd_atlantean(self) -> None:
+        """Show received Atlantean unit, myth unit, and age unlock items."""
+        self._cmd_civ_items("Atlantean", "Atlantean")
+
+    # Aliases for /gods
+    _cmd_god = _cmd_gods
+
+    # Aliases for civ commands
+    _cmd_egyptian = _cmd_egypt
+    _cmd_atlant   = _cmd_atlantean
+    _cmd_atlants  = _cmd_atlantean
+    _cmd_atlantis = _cmd_atlantean
+
+    # Aliases for /scenarios
+    _cmd_scenario  = _cmd_scenarios
+    _cmd_mission   = _cmd_scenarios
+    _cmd_missions  = _cmd_scenarios
+    _cmd_progress  = _cmd_scenarios
 
 
 class AoMContext(CommonContext):
@@ -372,6 +692,17 @@ class AoMContext(CommonContext):
         # Also store on game_ctx so write_aom_state can use them
         self.game_ctx.final_mode = final_mode
         self.game_ctx.x_scenarios_threshold = int(x_scenarios)
+        self.game_ctx.godsanity = bool(slot_data.get("godsanity", False))
+        raw_gods = slot_data.get("god_assignments", {})
+        self.game_ctx.god_assignments = {int(k): int(v) for k, v in raw_gods.items()} if raw_gods else {}
+        raw_minor = slot_data.get("minor_god_assignments", {})
+        self.game_ctx.minor_god_assignments = (
+            {int(k): v for k, v in raw_minor.items()} if raw_minor else {}
+        )
+        raw_forbids = slot_data.get("archaic_forbids", {})
+        self.game_ctx.archaic_forbids = (
+            {int(k): v for k, v in raw_forbids.items()} if raw_forbids else {}
+        )
         _update_atlantis_ui(self)
         # Install trigger files from apworld bundle to user's trigger folder
         _install_trigger_files(self.game_ctx.user_folder)

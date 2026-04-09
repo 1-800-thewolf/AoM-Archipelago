@@ -1,6 +1,8 @@
 {
 	"game": "Age Of Mythology Retold",
 	"minimum_ap_version": "0.6.5",
-	"world_version": "0.1.1",
-	"authors": ["1.800.thewolf"]
+	"world_version": "0.2.0",
+	"authors": [
+		"1.800.thewolf"
+	]
 }

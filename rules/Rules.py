@@ -6,6 +6,9 @@ from worlds.generic.Rules import add_rule, forbid_item, set_rule
 from ..items.Items import (
     aomItemData,
     AgeUnlock,
+    MythUnitUnlockFiller,
+    MythUnitUnlockProgression,
+    MythUnitUnlockUseful,
     ArkantosHousing,
     Campaign,
     FinalUnlock,
@@ -13,9 +16,11 @@ from ..items.Items import (
     HeroSpecialEffect,
     HeroStatBoost,
     HeroStatBoostFiller,
+    PassiveIncome,
     PassiveIncomeLarge,
     Reinforcement,
     ReinforcementUseful,
+    StartingResources,
     StartingResourcesLarge,
     UnitUnlockProgression,
     UnitUnlockUseful,
@@ -28,6 +33,17 @@ from ..locations.Locations import (
 )
 from ..locations.Scenarios import aomScenarioData
 from ..Options import FinalScenarios
+
+# Atlantean types — only available when godsanity Items.py is packaged
+try:
+    from ..items.Items import (
+        AtlanteanMythUnitUnlock,
+        AtlanteanUnitUnlockProgression,
+        AtlanteanUnitUnlockUseful,
+    )
+    _ATLANTEAN_TYPES = True
+except (ImportError, AttributeError):
+    _ATLANTEAN_TYPES = False
 
 
 # --------------------------------------------------
@@ -55,7 +71,6 @@ def has_scenario_complete(state: CollectionState, player: int, scenario: aomScen
 
 
 def count_completed_scenarios(state: CollectionState, player: int) -> int:
-    """Counts how many non-final scenarios have been completed."""
     non_final = [s for s in aomScenarioData if s.campaign.name != "FOTT_FINAL"]
     return sum(1 for s in non_final if has_scenario_complete(state, player, s))
 
@@ -76,74 +91,169 @@ def get_x_scenarios_value(world) -> int:
 # Age unlock item name lists
 # --------------------------------------------------
 
-GREEK_UNLOCK_NAMES = [
-    aomItemData.GREEK_AGE_UNLOCK_1.item_name,
-    aomItemData.GREEK_AGE_UNLOCK_2.item_name,
-    aomItemData.GREEK_AGE_UNLOCK_3.item_name,
-]
+GREEK_UNLOCK_NAMES    = [aomItemData.GREEK_AGE_UNLOCK.item_name]
+EGYPTIAN_UNLOCK_NAMES = [aomItemData.EGYPTIAN_AGE_UNLOCK.item_name]
+NORSE_UNLOCK_NAMES    = [aomItemData.NORSE_AGE_UNLOCK.item_name]
 
-EGYPTIAN_UNLOCK_NAMES = [
-    aomItemData.EGYPTIAN_AGE_UNLOCK_1.item_name,
-    aomItemData.EGYPTIAN_AGE_UNLOCK_2.item_name,
-    aomItemData.EGYPTIAN_AGE_UNLOCK_3.item_name,
-]
-
-NORSE_UNLOCK_NAMES = [
-    aomItemData.NORSE_AGE_UNLOCK_1.item_name,
-    aomItemData.NORSE_AGE_UNLOCK_2.item_name,
-    aomItemData.NORSE_AGE_UNLOCK_3.item_name,
-]
+try:
+    ATLANTEAN_UNLOCK_NAMES = [aomItemData.ATLANTEAN_AGE_UNLOCK.item_name]
+except AttributeError:
+    ATLANTEAN_UNLOCK_NAMES = []
 
 
 def count_civ_unlocks(state: CollectionState, player: int, unlock_names: list[str]) -> int:
-    return sum(1 for name in unlock_names if state.has(name, player))
+    return sum(state.count(name, player) for name in unlock_names)
 
 
 # --------------------------------------------------
-# Per-scenario age and point requirements
+# Godsanity god-to-civ mappings
 # --------------------------------------------------
 
-def _build_scenario_requirements() -> dict[int, tuple[list[str], int, float]]:
-    raw = {
-        1:  (1, 1, True),   2:  (1, 2, False),  3:  (1, 3, False),
-        4:  (2, 4, False),  5:  (3, 4, False),  6:  (3, 3, False),
-        7:  (3, 4, True),   8:  (2, 4, False),  9:  (4, 4, True),
-        10: (1, 4, True),   11: (1, 4, True),   12: (1, 4, False),
-        13: (3, 4, False),  14: (3, 3, False),  15: (2, 4, False),
-        16: (4, 4, True),   17: (3, 4, False),  18: (2, 4, False),
-        19: (3, 4, False),  20: (3, 4, False),  21: (1, 4, False),
-        22: (1, 3, False),  23: (2, 4, False),  24: (2, 3, False),
-        25: (1, 4, True),   26: (2, 4, False),  27: (2, 4, False),
-        28: (3, 4, False),  29: (2, 4, True),   30: (2, 4, False),
-        31: (3, 4, False),  32: (3, 4, False),
-    }
+_GREEK_GOD_IDS     = frozenset({1, 2, 3})
+_EGYPTIAN_GOD_IDS  = frozenset({4, 5, 6})
+_NORSE_GOD_IDS     = frozenset({7, 8, 9})
+_ATLANTEAN_GOD_IDS = frozenset({10, 11, 12})
+_GREEK_FREE_MYTHIC_GODS = _GREEK_GOD_IDS
 
-    def unlock_names_for(n: int) -> list[str]:
-        if n <= 10 or n >= 31:
-            return GREEK_UNLOCK_NAMES
-        elif n <= 20:
-            return EGYPTIAN_UNLOCK_NAMES
-        else:
-            return NORSE_UNLOCK_NAMES
+_GOD_TO_CIV: dict[int, str] = {
+    1: "Greek", 2: "Greek",    3: "Greek",
+    4: "Egyptian", 5: "Egyptian", 6: "Egyptian",
+    7: "Norse",    8: "Norse",    9: "Norse",
+    10: "Atlantean", 11: "Atlantean", 12: "Atlantean",
+}
 
-    result: dict[int, tuple[list[str], int, float]] = {}
-    for n, (start, max_age, no_tc) in raw.items():
-        diff = max_age - start
-        if no_tc or start == max_age:
-            result[n] = ([], 0, 0.0)
-            continue
-        unlocks = 2 if diff >= 3 else max_age - 1
-        # Norse uses 3× multiplier; Greek, Egyptian, and Final use 4×
-        if 21 <= n <= 30:
-            points = 3.0 * (max_age - 1)
-        else:
-            points = 4.0 * (max_age - 1)
-        result[n] = (unlock_names_for(n), unlocks, points)
+_CIV_UNLOCK_NAMES: dict[str, list[str]] = {
+    "Greek":     GREEK_UNLOCK_NAMES,
+    "Egyptian":  EGYPTIAN_UNLOCK_NAMES,
+    "Norse":     NORSE_UNLOCK_NAMES,
+    "Atlantean": ATLANTEAN_UNLOCK_NAMES,
+}
 
-    return result
+def _unlock_names_for_god(god_id: int) -> list[str]:
+    if god_id in _GREEK_GOD_IDS:      return GREEK_UNLOCK_NAMES
+    if god_id in _EGYPTIAN_GOD_IDS:   return EGYPTIAN_UNLOCK_NAMES
+    if god_id in _ATLANTEAN_GOD_IDS:  return ATLANTEAN_UNLOCK_NAMES
+    return NORSE_UNLOCK_NAMES
 
 
-SCENARIO_REQUIREMENTS: dict[int, tuple[list[str], int, float]] = _build_scenario_requirements()
+# --------------------------------------------------
+# Scenario data
+# (start_age_num, max_unlock_count, points_needed, is_exempt, is_myth_only)
+# Age nums: 1=Archaic 2=Classical 3=Heroic 4=Mythic
+# --------------------------------------------------
+
+_SCENARIO_DATA: dict[int, tuple[int, int, float, bool, bool]] = {
+    1:  (1, 0,  0.0,  True,  False),
+    2:  (1, 1,  4.0,  False, False),
+    3:  (1, 2,  9.0,  False, False),
+    4:  (2, 3, 16.0,  False, False),
+    5:  (3, 3, 16.0,  False, False),
+    6:  (3, 2,  9.0,  False, False),
+    7:  (3, 2,  1.0,  False, False),   # special: 1pt required, human units excluded
+    8:  (2, 3, 16.0,  False, False),
+    9:  (4, 3,  0.0,  True,  False),
+    10: (1, 3,  0.0,  True,  False),
+    11: (1, 3,  0.0,  True,  False),
+    12: (1, 3, 16.0,  False, False),
+    13: (3, 3, 16.0,  False, False),
+    14: (3, 2,  9.0,  False, True),
+    15: (2, 3, 16.0,  False, False),
+    16: (4, 3,  0.0,  True,  False),
+    17: (3, 3, 16.0,  False, False),
+    18: (2, 3, 16.0,  False, False),
+    19: (3, 3, 16.0,  False, False),
+    20: (3, 3, 16.0,  False, False),
+    21: (1, 3, 16.0,  False, False),
+    22: (1, 2,  9.0,  False, False),
+    23: (2, 3, 16.0,  False, False),
+    24: (2, 2,  9.0,  False, False),
+    25: (1, 3,  0.0,  True,  False),
+    26: (2, 3, 16.0,  False, False),
+    27: (2, 3, 16.0,  False, False),
+    28: (3, 3, 16.0,  False, False),
+    29: (2, 3,  0.0,  True,  False),
+    30: (2, 3, 16.0,  False, False),
+    31: (3, 3, 16.0,  False, False),
+    32: (3, 3, 16.0,  False, False),
+}
+
+_VANILLA_CIV: dict[int, str] = {
+    1: "Greek",  2: "Greek",  3: "Greek",  4: "Greek",
+    5: "Greek",  6: "Greek",  7: "Greek",  8: "Greek",  9: "Greek",  10: "Greek",
+    11: "Egyptian", 12: "Egyptian", 13: "Egyptian", 14: "Egyptian",
+    15: "Egyptian", 16: "Greek",
+    17: "Egyptian", 18: "Egyptian", 19: "Egyptian", 20: "Egyptian",
+    21: "Greek",
+    22: "Norse", 23: "Norse", 24: "Norse", 25: "Norse",
+    26: "Norse", 27: "Norse", 28: "Norse", 29: "Norse", 30: "Norse",
+    31: "Greek", 32: "Greek",
+}
+
+_VANILLA_GODS: dict[int, int] = {
+    1: 2, 2: 2, 3: 2, 4: 2,
+    5: 1, 6: 1, 7: 1, 8: 1, 9: 1, 10: 1,
+    11: 4, 12: 5, 13: 6, 14: 4, 15: 4,
+    16: 3,
+    17: 5, 18: 5, 19: 4, 20: 4,
+    21: 1,
+    22: 8, 23: 8,
+    24: 9, 25: 9,
+    26: 7, 27: 7, 28: 7,
+    29: 8, 30: 8,
+    31: 1, 32: 1,
+}
+
+
+# --------------------------------------------------
+# Military access tables  (string literals to avoid
+# aomItemData attribute lookups at module load time)
+# --------------------------------------------------
+
+_HUMAN_UNITS: dict[str, dict[int, list[str]]] = {
+    "Greek": {
+        1: ["Can train Hoplite", "Can train Toxotes", "Can train Hippeus"],
+        2: ["Can train Hypaspist", "Can train Peltast", "Can train Prodromos"],
+    },
+    "Egyptian": {
+        1: ["Can train Spearman", "Can train Axeman",
+            "Can train Slinger", "Can train Chariot Archer"],
+        2: ["Can train Camel Rider", "Can train War Elephant"],
+    },
+    "Norse": {
+        0: ["Can train Berserk"],   # archaic, item needed, no unlock required
+        1: ["Can train Hirdman", "Can train Throwing Axeman", "Can train Raiding Cavalry"],
+        2: ["Can train Jarl", "Can train Huskarl"],
+    },
+    "Atlantean": {
+        1: ["Can train Murmillo", "Can train Katapeltes",
+            "Can train Turma", "Can train Cheiroballista"],
+        2: ["Can train Contarius", "Can train Arcus", "Can train Destroyer"],
+        3: ["Can train Fanatic"],
+    },
+}
+
+_MYTH_ITEMS_BY_UNLOCK: dict[str, dict[int, str]] = {
+    "Greek": {
+        1: "Can train Greek Classical Myth Units",
+        2: "Can train Greek Heroic Myth Units",
+        3: "Can train Greek Mythic Myth Units",
+    },
+    "Egyptian": {
+        1: "Can train Egyptian Classical Myth Units",
+        2: "Can train Egyptian Heroic Myth Units",
+        3: "Can train Egyptian Mythic Myth Units",
+    },
+    "Norse": {
+        1: "Can train Norse Classical Myth Units",
+        2: "Can train Norse Heroic Myth Units",
+        3: "Can train Norse Mythic Myth Units",
+    },
+    "Atlantean": {
+        1: "Can train Atlantean Classical Myth Units",
+        2: "Can train Atlantean Heroic Myth Units",
+        3: "Can train Atlantean Mythic Myth Units",
+    },
+}
 
 
 # --------------------------------------------------
@@ -151,33 +261,36 @@ SCENARIO_REQUIREMENTS: dict[int, tuple[list[str], int, float]] = _build_scenario
 # --------------------------------------------------
 
 _BASE_POINTS: dict[type, float] = {
-    Campaign:              1.0,  # section keys gate sections; points represent meta-progress
-    FinalUnlock:           1.0,  # Atlantis Key
-    AgeUnlock:             0.0,  # age unlocks gate ages directly; excluded from points
-    UnitUnlockProgression: 4.0,
-    UnitUnlockUseful:      2.0,
-    StartingResourcesLarge: 1.0,
-    PassiveIncomeLarge:    2.0,
-    Reinforcement:         1.0,
-    ReinforcementUseful:   2.0,
-    HeroStatBoostFiller:   1.0,
-    HeroStatBoost:         2.0,
-    HeroSpecialEffect:     5.0,
-    HeroActionBoost:       2.0,
-    ArkantosHousing:       0.0,
+    AgeUnlock:              1.0,   # small contribution to bootstrap early fill chain
+    Campaign:               0.0,
+    FinalUnlock:            0.0,
+    UnitUnlockProgression:  3.0,
+    UnitUnlockUseful:       3.0,
+    MythUnitUnlockProgression: 5.0,
+    MythUnitUnlockUseful:      5.0,
+    MythUnitUnlockFiller:      5.0,
+    StartingResources:      1.0,
+    StartingResourcesLarge: 2.0,
+    PassiveIncome:          1.0,
+    PassiveIncomeLarge:     2.0,
+    Reinforcement:          1.0,
+    ReinforcementUseful:    2.0,
+    HeroStatBoostFiller:    1.0,
+    HeroStatBoost:          2.0,
+    HeroSpecialEffect:      2.0,
+    HeroActionBoost:        2.0,
+    ArkantosHousing:        2.0,
 }
+
+if _ATLANTEAN_TYPES:
+    _BASE_POINTS[AtlanteanUnitUnlockProgression] = 3.0
+    _BASE_POINTS[AtlanteanUnitUnlockUseful]      = 3.0
+    _BASE_POINTS[AtlanteanMythUnitUnlock]        = 5.0
 
 
 def _item_point_value(item: aomItemData) -> float:
-    """
-    Returns the point value for a single item, applying hero multipliers:
-      Arkantos hero items: ×2
-      Odysseus or Reginleif hero items: ÷2
-    Special case: REGINLEIF_JOINS is worth 10 points (she is a hero joining
-    the campaign, not a generic reinforcement unit).
-    """
-    if item == aomItemData.REGINLEIF_JOINS:
-        return 10.0
+    if item == aomItemData.REGINLEIF_JOINS or item == aomItemData.ODYSSEUS_JOINS:
+        return 4.0
 
     base = _BASE_POINTS.get(item.type_data, 0.0)
     if base == 0.0:
@@ -196,7 +309,6 @@ def _item_point_value(item: aomItemData) -> float:
 
 
 def build_point_table() -> dict[str, float]:
-    """Pre-builds a {item_name: point_value} mapping for fast rule evaluation."""
     return {item.item_name: _item_point_value(item) for item in aomItemData}
 
 
@@ -211,19 +323,82 @@ def count_points(state: CollectionState, player: int, point_table: dict[str, flo
 
 
 # --------------------------------------------------
+# Per-scenario military + point rule factory
+# --------------------------------------------------
+
+def _make_scenario_rule(
+    player: int,
+    god_id: int,
+    vanilla_civ: str,
+    start_age_num: int,
+    max_unlock_count: int,
+    is_myth_only: bool,
+    point_table: dict[str, float],
+    points_needed: float,
+):
+    god_civ      = _GOD_TO_CIV.get(god_id, "Greek")
+    unlock_names = _CIV_UNLOCK_NAMES[god_civ]
+
+    # Myth items accessible at starting age for the ASSIGNED GOD's civ.
+    # With godsanity, APInitStartingAgeTechs grants these techs at scenario
+    # start, so those myth units are available without item finds.
+    vanilla_starting_myth: list[str] = [
+        _MYTH_ITEMS_BY_UNLOCK[god_civ][tier]
+        for tier in range(1, start_age_num)
+        if tier in _MYTH_ITEMS_BY_UNLOCK.get(god_civ, {})
+    ]
+
+    def rule(state: CollectionState) -> bool:
+        if count_points(state, player, point_table) < points_needed:
+            return False
+
+        raw_count    = sum(state.count(n, player) for n in unlock_names)
+        unlock_count = min(raw_count, max_unlock_count)
+
+        if is_myth_only:
+            return bool(vanilla_starting_myth) and any(
+                state.has(m, player) for m in vanilla_starting_myth
+            )
+
+        if vanilla_starting_myth and any(state.has(m, player) for m in vanilla_starting_myth):
+            return True
+
+        for needed in range(0, max_unlock_count + 1):
+            if unlock_count < needed:
+                break
+            for unit_name in _HUMAN_UNITS.get(god_civ, {}).get(needed, []):
+                if state.has(unit_name, player):
+                    return True
+            if needed >= 1:
+                myth_name = _MYTH_ITEMS_BY_UNLOCK.get(god_civ, {}).get(needed)
+                if myth_name and state.has(myth_name, player):
+                    return True
+            if god_civ == "Norse" and needed >= 1:
+                return True
+            if god_id in _GREEK_FREE_MYTHIC_GODS and needed >= 3:
+                return True
+
+        return False
+
+    return rule
+
+
+def _get_scenario_god(world, scenario_n: int) -> int:
+    assignments = getattr(world, "god_assignments", {})
+    if assignments:
+        return assignments.get(scenario_n, _VANILLA_GODS[scenario_n])
+    return _VANILLA_GODS[scenario_n]
+
+
+# --------------------------------------------------
 # Completion events
 # --------------------------------------------------
 
 def place_completion_events(world) -> None:
-    """
-    Places a hidden completion event item in each scenario's Completion location.
-    Also locks the real Victory item at FOTT_32's Victory location.
-    """
-    player = world.player
+    player    = world.player
     multiworld = world.multiworld
-
     for scenario in aomScenarioData:
-        location = multiworld.get_location(completion_location_name(scenario), player)
+        location   = multiworld.get_location(completion_location_name(scenario), player)
         event_item = Item(
             completion_event_name(scenario),
             ItemClassification.progression,
@@ -231,10 +406,8 @@ def place_completion_events(world) -> None:
             player,
         )
         location.place_locked_item(event_item)
-
     victory_location = multiworld.get_location(
-        f"{aomScenarioData.FOTT_32.display_name}: Victory",
-        player,
+        f"{aomScenarioData.FOTT_32.display_name}: Victory", player
     )
     victory_item = world.create_item(aomItemData.VICTORY.item_name)
     victory_location.place_locked_item(victory_item)
@@ -245,30 +418,15 @@ def place_completion_events(world) -> None:
 # --------------------------------------------------
 
 def place_atlantis_key(world) -> None:
-    """
-    In beat_x_scenarios mode, locks the Atlantis Key to "The Way to Atlantis"
-    and sets a rule requiring X non-final scenario completions.
-    When the player beats enough scenarios, they receive the Atlantis Key as
-    a clear item notification and the Final section opens.
-
-    In all other modes, the Atlantis Key is placed freely by the fill
-    algorithm — this function does nothing.
-    """
     if get_final_mode_value(world) != FinalScenarios.option_beat_x_scenarios:
         return
-
-    player = world.player
+    player    = world.player
     multiworld = world.multiworld
-    required = get_x_scenarios_value(world)
-
-    location = multiworld.get_location(WAY_TO_ATLANTIS_LOCATION_NAME, player)
+    required  = get_x_scenarios_value(world)
+    location     = multiworld.get_location(WAY_TO_ATLANTIS_LOCATION_NAME, player)
     atlantis_key = world.create_item(aomItemData.ATLANTIS_KEY.item_name)
     location.place_locked_item(atlantis_key)
-
-    set_rule(
-        location,
-        lambda state: count_completed_scenarios(state, player) >= required,
-    )
+    set_rule(location, lambda state: count_completed_scenarios(state, player) >= required)
 
 
 # --------------------------------------------------
@@ -276,51 +434,28 @@ def place_atlantis_key(world) -> None:
 # --------------------------------------------------
 
 def set_section_rules(world) -> None:
-    """
-    Gates access to each campaign section.
-
-    Greek / Egyptian / Norse: require their section unlock item.
-
-    Final section:
-      - beat_x_scenarios: requires the Atlantis Key (awarded from "The Way to
-        Atlantis" after beating X scenarios — see place_atlantis_key)
-      - atlantis_key: requires the Atlantis Key (randomly placed in the pool)
-      - always_open: no requirement
-    """
-    player = world.player
+    player    = world.player
     multiworld = world.multiworld
-
     greek    = multiworld.get_entrance(entrance_name("Menu", "Fall of the Trident: Greek"),    player)
     egyptian = multiworld.get_entrance(entrance_name("Menu", "Fall of the Trident: Egyptian"), player)
     norse    = multiworld.get_entrance(entrance_name("Menu", "Fall of the Trident: Norse"),    player)
     final    = multiworld.get_entrance(entrance_name("Menu", "Fall of the Trident: Final"),    player)
-
     set_rule(greek,    lambda state: state.has(aomItemData.GREEK_SCENARIOS.item_name,    player))
     set_rule(egyptian, lambda state: state.has(aomItemData.EGYPTIAN_SCENARIOS.item_name, player))
     set_rule(norse,    lambda state: state.has(aomItemData.NORSE_SCENARIOS.item_name,    player))
-
     mode = get_final_mode_value(world)
-
     if mode == FinalScenarios.option_always_open:
         set_rule(final, lambda state: True)
     else:
-        # Both beat_x_scenarios and atlantis_key require the Atlantis Key.
-        # The difference is where the key comes from:
-        #   beat_x_scenarios → locked to "The Way to Atlantis" after X completions
-        #   atlantis_key     → randomly placed anywhere in the item pool
         set_rule(final, lambda state: state.has(aomItemData.ATLANTIS_KEY.item_name, player))
 
 
 # --------------------------------------------------
-# Age unlock and point rules
+# Per-scenario military + point rules
 # --------------------------------------------------
 
 def set_scenario_age_and_point_rules(world, point_table: dict[str, float]) -> None:
-    """
-    Applies per-scenario age unlock and point requirements using add_rule,
-    ANDing them on top of the section access rule.
-    """
-    player = world.player
+    player    = world.player
     multiworld = world.multiworld
 
     section_names = {
@@ -338,24 +473,59 @@ def set_scenario_age_and_point_rules(world, point_table: dict[str, float]) -> No
 
     for scenario in aomScenarioData:
         n = scenario.global_number
-        unlock_names, unlocks_needed, points_needed = SCENARIO_REQUIREMENTS[n]
+        start_age_num, max_unlock_count, points_needed, is_exempt, is_myth_only = _SCENARIO_DATA[n]
 
-        if unlocks_needed == 0 and points_needed == 0.0:
+        if is_exempt:
             continue
+
+        god_id      = _get_scenario_god(world, n)
+        vanilla_civ = _VANILLA_CIV[n]
+        god_civ     = _GOD_TO_CIV.get(god_id, "Greek")
+        unlock_names = _CIV_UNLOCK_NAMES[god_civ]
 
         ent_name = entrance_name(section_for(n), scenario.region_name)
         entrance = multiworld.get_entrance(ent_name, player)
 
-        def make_rule(unlock_names, unlocks_needed, points_needed):
-            def rule(state: CollectionState) -> bool:
-                if count_civ_unlocks(state, player, unlock_names) < unlocks_needed:
-                    return False
-                if count_points(state, player, point_table) < points_needed:
-                    return False
-                return True
-            return rule
+        # Scenario 7: human unit unlocks don't count toward points,
+        # and the threshold is just 1pt.
+        if n == 7:
+            human_unit_types = (UnitUnlockProgression, UnitUnlockUseful)
+            if _ATLANTEAN_TYPES:
+                human_unit_types = human_unit_types + (
+                    AtlanteanUnitUnlockProgression, AtlanteanUnitUnlockUseful
+                )
+            human_unit_names = {
+                item.item_name for item in aomItemData
+                if isinstance(item.type, human_unit_types)
+            }
+            effective_table = {
+                name: (0.0 if name in human_unit_names else val)
+                for name, val in point_table.items()
+            }
+        else:
+            effective_table = point_table
 
-        add_rule(entrance, make_rule(unlock_names, unlocks_needed, points_needed))
+        # Military + points rule
+        add_rule(entrance, _make_scenario_rule(
+            player, god_id, vanilla_civ,
+            start_age_num, max_unlock_count, is_myth_only,
+            effective_table, points_needed,
+        ))
+
+        # Hard requirement: scenario 2 needs at least 1 age unlock
+        # (must advance to Classical age to complete its objective)
+        if n == 2:
+            add_rule(entrance,
+                lambda state, un=unlock_names:
+                    count_civ_unlocks(state, player, un) >= 1
+            )
+
+        # Hard requirement: scenario 32 needs 3 age unlocks (Mythic age for the Wonder)
+        if n == 32:
+            add_rule(entrance,
+                lambda state, un=unlock_names:
+                    count_civ_unlocks(state, player, un) >= 3
+            )
 
 
 # --------------------------------------------------
@@ -363,21 +533,13 @@ def set_scenario_age_and_point_rules(world, point_table: dict[str, float]) -> No
 # --------------------------------------------------
 
 def exclude_scenario_32_locations(world) -> None:
-    """
-    Marks all FOTT_32 non-Victory locations as EXCLUDED so only filler
-    items can be placed there. Victory is unaffected.
-    """
-    player = world.player
+    player    = world.player
     multiworld = world.multiworld
-
     for location_data in aomLocationData:
         if location_data.scenario != aomScenarioData.FOTT_32:
             continue
-        if location_data.type == aomLocationType.VICTORY:
+        if location_data.type in (aomLocationType.VICTORY, aomLocationType.COMPLETION):
             continue
-        if location_data.type == aomLocationType.COMPLETION:
-            continue
-
         location = multiworld.get_location(location_data.global_name(), player)
         location.progress_type = LocationProgressType.EXCLUDED
 
@@ -387,21 +549,16 @@ def exclude_scenario_32_locations(world) -> None:
 # --------------------------------------------------
 
 def set_item_placement_restrictions(world) -> None:
-    """
-    Prevents a section unlock item from appearing in its own section's locations.
-    """
-    player = world.player
+    player    = world.player
     multiworld = world.multiworld
-
     campaign_to_forbidden = {
         "FOTT_GREEK":    aomItemData.GREEK_SCENARIOS.item_name,
         "FOTT_EGYPTIAN": aomItemData.EGYPTIAN_SCENARIOS.item_name,
         "FOTT_NORSE":    aomItemData.NORSE_SCENARIOS.item_name,
         "FOTT_FINAL":    aomItemData.ATLANTIS_KEY.item_name,
     }
-
     for location_data in aomLocationData:
-        location = multiworld.get_location(location_data.global_name(), player)
+        location  = multiworld.get_location(location_data.global_name(), player)
         forbidden = campaign_to_forbidden.get(location_data.scenario.campaign.name)
         if forbidden:
             forbid_item(location, forbidden, player)
@@ -422,20 +579,7 @@ def set_completion_rule(world) -> None:
 # --------------------------------------------------
 
 def set_rules(world) -> None:
-    """
-    Main entry point called by the World.
-
-    Order:
-    1. Exclude FOTT_32 non-Victory locations.
-    2. Place completion events and lock Victory.
-    3. Lock Atlantis Key to "The Way to Atlantis" in beat_x mode.
-    4. Apply section gate rules.
-    5. Apply per-scenario age unlock and point rules.
-    6. Apply item placement restrictions.
-    7. Set win condition.
-    """
     point_table = build_point_table()
-
     exclude_scenario_32_locations(world)
     place_completion_events(world)
     place_atlantis_key(world)

@@ -147,7 +147,61 @@ class XScenarios(Range):
 # Item Pool #
 #############
 
+class ExtraFinalMissionAgeUnlocks(Range):
+    """
+    Scenario 32 requires 3 Age Unlock items to reach the Mythic Age and build
+    the Wonder. This adds extra copies of whichever civilization's Age Unlock
+    corresponds to the god assigned to scenario 32 (Greek by default, or
+    randomized if Godsanity is enabled). These replace filler items.
+
+    At the default of 1, there are 4 total copies of that unlock in the pool.
+    """
+    internal_name = "extra_final_mission_age_unlocks"
+    display_name = "Extra Final Mission Age Unlocks"
+
+    range_start = 0
+    range_end   = 5
+    default     = 1
+
+
+class Godsanity(Toggle):
+    """
+    Randomize the major god for each scenario at generation time.
+    The assigned god determines which age techs and minor gods are available,
+    giving each scenario a different playstyle.
+    """
+    internal_name = "godsanity"
+    display_name = "Godsanity"
+    default = 0
+
+
+class GodForceChange(Toggle):
+    """
+    When Godsanity is enabled, forces the random god to never be the vanilla
+    major god for that scenario. Also gives a 50%% chance to pick a god from
+    an entirely different civilization than the vanilla one.
+    """
+    internal_name = "god_force_change"
+    display_name = "God Force Change"
+    default = 1
+
+
+class MythUnitSanity(Toggle):
+    """
+    Include myth unit tier unlock items in the pool.
+    When enabled, all myth units are forbidden at scenario start and must
+    be unlocked by finding the corresponding tier item.
+    When disabled, all myth units are available from the start.
+    """
+    internal_name = "myth_unit_sanity"
+    display_name = "Myth Unit Sanity"
+    default = 1
+
+
 class HeroAbilities(Toggle):
+
+
+
     """
     Include custom hero special ability items in the item pool?
 
@@ -172,7 +226,7 @@ class HeroAbilities(Toggle):
       - Chiron Shotgun Special     (special shot fires a ton of extra arrows)
 
     Amanra:
-      - Amanra Shockwave Jump      (leap attack sends targets flying)
+      - Amanra Whirlwind Throw     (leap attack sends targets flying)
       - Amanra Army of the Dead    (enemies slain by Amanra are reincarnated as allied minions)
       - Amanra Divine Smite        (melee attacks deal +5 divine damage)
 
@@ -210,4 +264,8 @@ class AomOptions(PerGameCommonOptions):
     starting_norse_age_unlocks:      StartingNorseAgeUnlocks
     final_scenarios:                 FinalScenarios
     x_scenarios:                     XScenarios
+    extra_final_mission_age_unlocks: ExtraFinalMissionAgeUnlocks
+    godsanity:                       Godsanity
+    god_force_change:                GodForceChange
+    myth_unit_sanity:                MythUnitSanity
     hero_abilities:                  HeroAbilities

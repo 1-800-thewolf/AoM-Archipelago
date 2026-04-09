@@ -492,13 +492,13 @@ class aomLocationData(enum.IntEnum):
     # FOTT 1: 1. Omens
     FOTT_1_OBJ_1 = (
         global_location_id(aomScenarioData.FOTT_1.id, 2),
-        "Protect Atlantis by killing the Kraken.",
+        "Kill the Kraken.",
         aomScenarioData.FOTT_1,
         aomLocationType.OBJECTIVE,
     )
     FOTT_1_OBJ_2 = (
         global_location_id(aomScenarioData.FOTT_1.id, 3),
-        "Train reinforcements to defend the harbor until the Atlantean Army arrives.",
+        "Train reinforcements to defend the harbor.",
         aomScenarioData.FOTT_1,
         aomLocationType.OBJECTIVE,
     )
@@ -506,7 +506,7 @@ class aomLocationData(enum.IntEnum):
     # FOTT 2: 2. Consequences
     FOTT_2_OBJ_1 = (
         global_location_id(aomScenarioData.FOTT_2.id, 2),
-        "Advance to the Classical Age and explore the island.",
+        "Advance to the Classical Age.",
         aomScenarioData.FOTT_2,
         aomLocationType.OBJECTIVE,
     )
@@ -530,7 +530,7 @@ class aomLocationData(enum.IntEnum):
     )
     FOTT_2_OBJ_5 = (
         global_location_id(aomScenarioData.FOTT_2.id, 6),
-        "Train an army and destroy the pirate Town Center.",
+        "Destroy the pirate Town Center.",
         aomScenarioData.FOTT_2,
         aomLocationType.OBJECTIVE,
     )
@@ -538,7 +538,7 @@ class aomLocationData(enum.IntEnum):
     # FOTT 3: 3. Scratching the Surface
     FOTT_3_OBJ_1 = (
         global_location_id(aomScenarioData.FOTT_3.id, 2),
-        "Lead your men to the unclaimed Settlement.",
+        "Reach the unclaimed Settlement.",
         aomScenarioData.FOTT_3,
         aomLocationType.OBJECTIVE,
     )
@@ -570,7 +570,7 @@ class aomLocationData(enum.IntEnum):
     )
     FOTT_4_OBJ_2 = (
         global_location_id(aomScenarioData.FOTT_4.id, 3),
-        "Train an army and destroy the Trojan West Gate.",
+        "Destroy the Trojan West Gate.",
         aomScenarioData.FOTT_4,
         aomLocationType.OBJECTIVE,
     )
@@ -584,13 +584,13 @@ class aomLocationData(enum.IntEnum):
     )
     FOTT_5_OBJ_2 = (
         global_location_id(aomScenarioData.FOTT_5.id, 3),
-        "Bring Arkantos and your army to Ajax's Town Center to the southwest.",
+        "Reach Ajax's Town Center.",
         aomScenarioData.FOTT_5,
         aomLocationType.OBJECTIVE,
     )
     FOTT_5_OBJ_3 = (
         global_location_id(aomScenarioData.FOTT_5.id, 4),
-        "Build up a stronger army and destroy all the buildings in the Trojan forward military base area.",
+        "Destroy all buildings in the Trojan forward base.",
         aomScenarioData.FOTT_5,
         aomLocationType.OBJECTIVE,
     )
@@ -598,7 +598,7 @@ class aomLocationData(enum.IntEnum):
     # FOTT 6: 6. I Hope This Works
     FOTT_6_OBJ_1 = (
         global_location_id(aomScenarioData.FOTT_6.id, 2),
-        "Accumulate 1000 Wood to build the Trojan Horse.",
+        "Accumulate 1000 Wood.",
         aomScenarioData.FOTT_6,
         aomLocationType.OBJECTIVE,
     )
@@ -610,13 +610,13 @@ class aomLocationData(enum.IntEnum):
     )
     FOTT_6_OBJ_3 = (
         global_location_id(aomScenarioData.FOTT_6.id, 4),
-        "Sneak your Heroes through Troy toward the Trojan gate and find a way to destroy it.",
+        "Destroy the Trojan gate.",
         aomScenarioData.FOTT_6,
         aomLocationType.OBJECTIVE,
     )
     FOTT_6_OBJ_4 = (
         global_location_id(aomScenarioData.FOTT_6.id, 5),
-        "Defeat Troy by destroying the three Fortresses within its walls.",
+        "Destroy the three Fortresses within Troy's walls.",
         aomScenarioData.FOTT_6,
         aomLocationType.OBJECTIVE,
     )
@@ -624,13 +624,13 @@ class aomLocationData(enum.IntEnum):
     # FOTT 7: 7. More Bandits
     FOTT_7_OBJ_1 = (
         global_location_id(aomScenarioData.FOTT_7.id, 2),
-        "Bring Arkantos and Ajax to the prison area to rescue the hostages.",
+        "Reach the prison area.",
         aomScenarioData.FOTT_7,
         aomLocationType.OBJECTIVE,
     )
     FOTT_7_OBJ_2 = (
         global_location_id(aomScenarioData.FOTT_7.id, 3),
-        "Defeat the bandits guarding the prison to free the prisoners.",
+        "Defeat the bandits guarding the prison.",
         aomScenarioData.FOTT_7,
         aomLocationType.OBJECTIVE,
     )
@@ -648,7 +648,7 @@ class aomLocationData(enum.IntEnum):
     )
     FOTT_7_OBJ_5 = (
         global_location_id(aomScenarioData.FOTT_7.id, 6),
-        "Destroy the Migdol Stronghold to free Chiron.",
+        "Destroy the Migdol Stronghold.",
         aomScenarioData.FOTT_7,
         aomLocationType.OBJECTIVE,
     )
@@ -656,7 +656,7 @@ class aomLocationData(enum.IntEnum):
     # FOTT 8: 8. Bad News
     FOTT_8_OBJ_1 = (
         global_location_id(aomScenarioData.FOTT_8.id, 2),
-        "Build up Ajax and Arkantos' bases and fight your way to the mine.",
+        "Fight your way to the mine.",
         aomScenarioData.FOTT_8,
         aomLocationType.OBJECTIVE,
     )
@@ -678,7 +678,7 @@ class aomLocationData(enum.IntEnum):
     )
     FOTT_10_OBJ_2 = (
         global_location_id(aomScenarioData.FOTT_10.id, 3),
-        "Scout forward. Shades are invisible to enemy units and can see farther than your other units.",
+        "Scout forward with the Shades.",
         aomScenarioData.FOTT_10,
         aomLocationType.OBJECTIVE,
     )
@@ -690,7 +690,7 @@ class aomLocationData(enum.IntEnum):
     )
     FOTT_10_OBJ_4 = (
         global_location_id(aomScenarioData.FOTT_10.id, 5),
-        "Collect the three lost relics of Hades.",
+        "Collect the three relics of Hades.",
         aomScenarioData.FOTT_10,
         aomLocationType.OBJECTIVE,
     )
@@ -704,7 +704,7 @@ class aomLocationData(enum.IntEnum):
     # FOTT 11: 11. The Lost Relic
     FOTT_11_OBJ_1 = (
         global_location_id(aomScenarioData.FOTT_11.id, 2),
-        "Defend against attacks from the three passes long enough for your Laborers to dig out the artifact.",
+        "Dig out the artifact.",
         aomScenarioData.FOTT_11,
         aomLocationType.OBJECTIVE,
     )
@@ -712,7 +712,7 @@ class aomLocationData(enum.IntEnum):
     # FOTT 12: 12. Light Sleeper
     FOTT_12_OBJ_1 = (
         global_location_id(aomScenarioData.FOTT_12.id, 2),
-        "Kill the guards watching over the Laborers mining gold.",
+        "Kill the guards watching the Laborers.",
         aomScenarioData.FOTT_12,
         aomLocationType.OBJECTIVE,
     )
@@ -724,7 +724,7 @@ class aomLocationData(enum.IntEnum):
     )
     FOTT_12_OBJ_3 = (
         global_location_id(aomScenarioData.FOTT_12.id, 4),
-        "Bring the Sword Bearer to the Guardian, before Kemsyt's army reaches it.",
+        "Bring the Sword Bearer to the Guardian.",
         aomScenarioData.FOTT_12,
         aomLocationType.OBJECTIVE,
     )
@@ -738,7 +738,7 @@ class aomLocationData(enum.IntEnum):
     # FOTT 13: 13. Tug of War
     FOTT_13_OBJ_1 = (
         global_location_id(aomScenarioData.FOTT_13.id, 2),
-        "Recover the Osiris Piece Cart and move it into your city before Kemsyt brings it to his.",
+        "Move the Osiris Piece Cart into your city.",
         aomScenarioData.FOTT_13,
         aomLocationType.OBJECTIVE,
     )
@@ -758,13 +758,13 @@ class aomLocationData(enum.IntEnum):
     )
     FOTT_14_OBJ_3 = (
         global_location_id(aomScenarioData.FOTT_14.id, 4),
-        "Send Amanra to the Abydos harbor to convert a navy.",
+        "Bring Amanra to the Abydos harbor.",
         aomScenarioData.FOTT_14,
         aomLocationType.OBJECTIVE,
     )
     FOTT_14_OBJ_4 = (
         global_location_id(aomScenarioData.FOTT_14.id, 5),
-        "Use your navy to break Amanra into the prison.",
+        "Break Amanra into the prison.",
         aomScenarioData.FOTT_14,
         aomLocationType.OBJECTIVE,
     )
@@ -778,7 +778,7 @@ class aomLocationData(enum.IntEnum):
     )
     FOTT_15_OBJ_2 = (
         global_location_id(aomScenarioData.FOTT_15.id, 3),
-        "Use the Transports to move your troops to the flag in the allied purple town to the southwest.",
+        "Move your troops to the allied purple town.",
         aomScenarioData.FOTT_15,
         aomLocationType.OBJECTIVE,
     )
@@ -804,25 +804,25 @@ class aomLocationData(enum.IntEnum):
     )
     FOTT_16_OBJ_3 = (
         global_location_id(aomScenarioData.FOTT_16.id, 4),
-        "Defeat the guardians of the Shrine just ahead.",
+        "Defeat the guardians of the Shrine.",
         aomScenarioData.FOTT_16,
         aomLocationType.OBJECTIVE,
     )
     FOTT_16_OBJ_4 = (
         global_location_id(aomScenarioData.FOTT_16.id, 5),
-        "Destroy the large boulder to escape the Underworld.",
+        "Destroy the large boulder.",
         aomScenarioData.FOTT_16,
         aomLocationType.OBJECTIVE,
     )
     FOTT_16_OBJ_5 = (
         global_location_id(aomScenarioData.FOTT_16.id, 6),
-        "Safely transport Arkantos and Kastor to the beach marked with white flags.",
+        "Transport Arkantos and Kastor to the white flag beach.",
         aomScenarioData.FOTT_16,
         aomLocationType.OBJECTIVE,
     )
     FOTT_16_OBJ_6 = (
         global_location_id(aomScenarioData.FOTT_16.id, 7),
-        "Train an army and destroy the enemy wonder.",
+        "Destroy the enemy wonder.",
         aomScenarioData.FOTT_16,
         aomLocationType.OBJECTIVE,
     )
@@ -844,13 +844,13 @@ class aomLocationData(enum.IntEnum):
     # FOTT 18: 18. A Long Way From Home
     FOTT_18_OBJ_1 = (
         global_location_id(aomScenarioData.FOTT_18.id, 2),
-        "Seek help from the desert nomad camp to the east.",
+        "Reach the desert nomad camp.",
         aomScenarioData.FOTT_18,
         aomLocationType.OBJECTIVE,
     )
     FOTT_18_OBJ_2 = (
         global_location_id(aomScenarioData.FOTT_18.id, 3),
-        "Send Laborers to cut down the Tamarisk tree and recover the head of Osiris.",
+        "Recover the head of Osiris from the Tamarisk tree.",
         aomScenarioData.FOTT_18,
         aomLocationType.OBJECTIVE,
     )
@@ -858,19 +858,19 @@ class aomLocationData(enum.IntEnum):
     # FOTT 19: 19. Watch That First Step
     FOTT_19_OBJ_1 = (
         global_location_id(aomScenarioData.FOTT_19.id, 2),
-        "Capture the Black Sail ships to the east by destroying the forward base that guards them.",
+        "Destroy the forward base to capture the Black Sails.",
         aomScenarioData.FOTT_19,
         aomLocationType.OBJECTIVE,
     )
     FOTT_19_OBJ_2 = (
         global_location_id(aomScenarioData.FOTT_19.id, 3),
-        "Use the Black Sail ships to transport your army past Kamos' defenses and claim a Settlement.",
+        "Claim a Settlement.",
         aomScenarioData.FOTT_19,
         aomLocationType.OBJECTIVE,
     )
     FOTT_19_OBJ_3 = (
         global_location_id(aomScenarioData.FOTT_19.id, 4),
-        "Quickly build up a large force and siege Kamos' base.",
+        "Siege Kamos' base.",
         aomScenarioData.FOTT_19,
         aomLocationType.OBJECTIVE,
     )
@@ -884,13 +884,13 @@ class aomLocationData(enum.IntEnum):
     # FOTT 20: 20. Where They Belong
     FOTT_20_OBJ_1 = (
         global_location_id(aomScenarioData.FOTT_20.id, 2),
-        "Build up and fight toward the Osiris pyramid. Survive until Arkantos arrives with his Osiris piece.",
+        "Survive until Arkantos arrives.",
         aomScenarioData.FOTT_20,
         aomLocationType.OBJECTIVE,
     )
     FOTT_20_OBJ_2 = (
         global_location_id(aomScenarioData.FOTT_20.id, 3),
-        "Arkantos has arrived with the last Osiris piece! Bring all three Osiris pieces to the Obelisk near Osiris' Pyramid.",
+        "Bring all three Osiris pieces to the Obelisk.",
         aomScenarioData.FOTT_20,
         aomLocationType.OBJECTIVE,
     )
@@ -910,7 +910,7 @@ class aomLocationData(enum.IntEnum):
     )
     FOTT_21_OBJ_3 = (
         global_location_id(aomScenarioData.FOTT_21.id, 4),
-        "Build up an army and defeat Circe by destroying the Fortress at the heart of her citadel.",
+        "Destroy Circe's Fortress.",
         aomScenarioData.FOTT_21,
         aomLocationType.OBJECTIVE,
     )
@@ -918,7 +918,7 @@ class aomLocationData(enum.IntEnum):
     # FOTT 22: 22. North
     FOTT_22_OBJ_1 = (
         global_location_id(aomScenarioData.FOTT_22.id, 2),
-        "Reunite your forces and claim a Settlement.",
+        "Claim a Settlement.",
         aomScenarioData.FOTT_22,
         aomLocationType.OBJECTIVE,
     )
@@ -932,13 +932,13 @@ class aomLocationData(enum.IntEnum):
     # FOTT 23: 23. The Dwarven Forge
     FOTT_23_OBJ_1 = (
         global_location_id(aomScenarioData.FOTT_23.id, 2),
-        "Find a Settlement and build a Town Center.",
+        "Build a Town Center.",
         aomScenarioData.FOTT_23,
         aomLocationType.OBJECTIVE,
     )
     FOTT_23_OBJ_2 = (
         global_location_id(aomScenarioData.FOTT_23.id, 3),
-        "Eliminate the Giants and Trolls near the Dwarven Forge to recapture it.",
+        "Eliminate the Giants and Trolls near the Dwarven Forge.",
         aomScenarioData.FOTT_23,
         aomLocationType.OBJECTIVE,
     )
@@ -958,13 +958,13 @@ class aomLocationData(enum.IntEnum):
     )
     FOTT_24_OBJ_2 = (
         global_location_id(aomScenarioData.FOTT_24.id, 3),
-        "Skult and the Folstag Flag Bearer must reach the flagged site in the far north.",
+        "Bring Skult and the Flag Bearer to the far north.",
         aomScenarioData.FOTT_24,
         aomLocationType.OBJECTIVE,
     )
     FOTT_24_OBJ_3 = (
         global_location_id(aomScenarioData.FOTT_24.id, 4),
-        "Build up a defensive base near the boulder wall and advance to the Heroic Age.",
+        "Advance to the Heroic Age.",
         aomScenarioData.FOTT_24,
         aomLocationType.OBJECTIVE,
     )
@@ -976,7 +976,7 @@ class aomLocationData(enum.IntEnum):
     )
     FOTT_24_OBJ_5 = (
         global_location_id(aomScenarioData.FOTT_24.id, 6),
-        "Escape the enemy armies. Move Skult and the Flag Bearer to the flag at the north end of the pass.",
+        "Move Skult and the Flag Bearer to the north end of the pass.",
         aomScenarioData.FOTT_24,
         aomLocationType.OBJECTIVE,
     )
@@ -990,7 +990,7 @@ class aomLocationData(enum.IntEnum):
     )
     FOTT_25_OBJ_2 = (
         global_location_id(aomScenarioData.FOTT_25.id, 3),
-        "Use the Folstag Flag Bearer to lure the clan leaders into an ambush. Eliminate all three leaders.",
+        "Eliminate all three clan leaders.",
         aomScenarioData.FOTT_25,
         aomLocationType.OBJECTIVE,
     )
@@ -1022,7 +1022,7 @@ class aomLocationData(enum.IntEnum):
     )
     FOTT_26_OBJ_5 = (
         global_location_id(aomScenarioData.FOTT_26.id, 6),
-        "Destroy the Watch Tower to free Forkbeard's daughter.",
+        "Destroy the Southern Watch Tower.",
         aomScenarioData.FOTT_26,
         aomLocationType.OBJECTIVE,
     )
@@ -1036,7 +1036,7 @@ class aomLocationData(enum.IntEnum):
     )
     FOTT_27_OBJ_2 = (
         global_location_id(aomScenarioData.FOTT_27.id, 3),
-        "Defeat all of the myth units defending the Well of Urd.",
+        "Defeat all myth units at the Well of Urd.",
         aomScenarioData.FOTT_27,
         aomLocationType.OBJECTIVE,
     )
@@ -1044,7 +1044,7 @@ class aomLocationData(enum.IntEnum):
     # FOTT 28: 28. Beneath the Surface
     FOTT_28_OBJ_1 = (
         global_location_id(aomScenarioData.FOTT_28.id, 2),
-        "Kill the Fire Giants guarding the ram before the gate to Tartarus opens.",
+        "Kill the Fire Giants guarding the ram.",
         aomScenarioData.FOTT_28,
         aomLocationType.OBJECTIVE,
     )
@@ -1064,7 +1064,7 @@ class aomLocationData(enum.IntEnum):
     )
     FOTT_29_OBJ_2 = (
         global_location_id(aomScenarioData.FOTT_29.id, 3),
-        "Finish cutting the haft from the taproot and bring the two pieces of Thor's hammer together.",
+        "Bring the two pieces of Thor's hammer together.",
         aomScenarioData.FOTT_29,
         aomLocationType.OBJECTIVE,
     )
@@ -1072,13 +1072,13 @@ class aomLocationData(enum.IntEnum):
     # FOTT 30: 30. All Is Not Lost
     FOTT_30_OBJ_1 = (
         global_location_id(aomScenarioData.FOTT_30.id, 2),
-        "Find the abandoned mining town and build a Town Center there.",
+        "Build a Town Center in the abandoned mining town.",
         aomScenarioData.FOTT_30,
         aomLocationType.OBJECTIVE,
     )
     FOTT_30_OBJ_2 = (
         global_location_id(aomScenarioData.FOTT_30.id, 3),
-        "You have 10 minutes to build up your defenses before Gargarensis attacks.",
+        "Build up your defenses before Gargarensis attacks.",
         aomScenarioData.FOTT_30,
         aomLocationType.OBJECTIVE,
     )
@@ -1098,13 +1098,13 @@ class aomLocationData(enum.IntEnum):
     # FOTT 31: 31. Welcome Back
     FOTT_31_OBJ_1 = (
         global_location_id(aomScenarioData.FOTT_31.id, 2),
-        "Land your troops on Atlantis' shores. Begin construction of a base by claiming a Settlement.",
+        "Claim a Settlement on Atlantis.",
         aomScenarioData.FOTT_31,
         aomLocationType.OBJECTIVE,
     )
     FOTT_31_OBJ_2 = (
         global_location_id(aomScenarioData.FOTT_31.id, 3),
-        "Rescue and transport 15 Atlantean Prisoners to the flagged island to the west.",
+        "Transport 15 Atlantean Prisoners to the flagged island.",
         aomScenarioData.FOTT_31,
         aomLocationType.OBJECTIVE,
     )
@@ -1112,7 +1112,7 @@ class aomLocationData(enum.IntEnum):
     # FOTT 32: 32. A Place in My Dreams
     FOTT_32_OBJ_1 = (
         global_location_id(aomScenarioData.FOTT_32.id, 2),
-        "Advance to the Mythic Age and construct a Wonder to receive Zeus' blessing.",
+        "Advance to the Mythic Age and construct a Wonder.",
         aomScenarioData.FOTT_32,
         aomLocationType.OBJECTIVE,
     )
@@ -1124,7 +1124,7 @@ class aomLocationData(enum.IntEnum):
     )
     FOTT_32_OBJ_3 = (
         global_location_id(aomScenarioData.FOTT_32.id, 4),
-        "Defeat the Living Statue of Poseidon guarding Gargarensis and the final gate to Tartarus.",
+        "Defeat the Living Statue of Poseidon.",
         aomScenarioData.FOTT_32,
         aomLocationType.OBJECTIVE,
     )

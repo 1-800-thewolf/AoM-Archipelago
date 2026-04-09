@@ -50,7 +50,7 @@ const int cREINFORCEMENT_MERCENARY       = 4003;
 const int cREINFORCEMENT_MERCENARY_CAV   = 4004;
 const int cREINFORCEMENT_AUTOMATON       = 4006;
 const int cREINFORCEMENT_WADJET          = 4007;
-const int cREINFORCEMENT_ULFSARK         = 4008;
+const int cREINFORCEMENT_BERSERK         = 4008;
 const int cREINFORCEMENT_SLINGER         = 4009;
 const int cREINFORCEMENT_TURMA           = 4010;
 const int cREINFORCEMENT_KATASKOPOS      = 4011;
@@ -71,6 +71,7 @@ const int cREINFORCEMENT_LAMPADES        = 4025;
 const int cREINFORCEMENT_PHOENIX         = 4026;
 const int cREINFORCEMENT_COLOSSUS        = 4027;
 const int cREGINLEIF_JOINS               = 4028;
+const int cODYSSEUS_JOINS                = 5015;
 const int cREINFORCEMENT_RELIC_MONKEY    = 4029;
 const int cREINFORCEMENT_PEGASUS         = 4030;
 const int cREINFORCEMENT_HYENA           = 4031;
@@ -94,6 +95,31 @@ const int cNORSE_VILLAGER_CHEAPER        = 5011;
 const int cGREEK_VILLAGER_CHEAPER_2      = 5012;
 const int cEGYPTIAN_VILLAGER_CHEAPER_2   = 5013;
 const int cNORSE_VILLAGER_CHEAPER_2      = 5014;
+// Atlantean unit unlock item IDs (only active when godsanity is enabled)
+const int cCAN_TRAIN_MURMILLO       = 3240;
+const int cCAN_TRAIN_KATAPELTES     = 3241;
+const int cCAN_TRAIN_TURMA          = 3242;
+const int cCAN_TRAIN_CHEIROBALLISTA = 3243;
+const int cCAN_TRAIN_CONTARIUS      = 3244;
+const int cCAN_TRAIN_ARCUS          = 3245;
+const int cCAN_TRAIN_FANATIC        = 3246;
+const int cCAN_TRAIN_DESTROYER      = 3247;
+
+
+const int cATLANTEAN_CLASSICAL_MYTH_UNITS = 5025;
+const int cATLANTEAN_HEROIC_MYTH_UNITS    = 5026;
+const int cATLANTEAN_MYTHIC_MYTH_UNITS    = 5027;
+
+// Myth unit tier unlock item IDs
+const int cGREEK_CLASSICAL_MYTH_UNITS                      = 5016;
+const int cGREEK_HEROIC_MYTH_UNITS                         = 5017;
+const int cGREEK_MYTHIC_MYTH_UNITS                         = 5018;
+const int cEGYPTIAN_CLASSICAL_MYTH_UNITS                   = 5019;
+const int cEGYPTIAN_HEROIC_MYTH_UNITS                      = 5020;
+const int cEGYPTIAN_MYTHIC_MYTH_UNITS                      = 5021;
+const int cNORSE_CLASSICAL_MYTH_UNITS                      = 5022;
+const int cNORSE_HEROIC_MYTH_UNITS                         = 5023;
+const int cNORSE_MYTHIC_MYTH_UNITS                         = 5024;
 
 const int cGREEK_SCENARIOS               = 3500;
 const int cEGYPTIAN_SCENARIOS            = 3501;
@@ -102,15 +128,11 @@ const int cNORSE_SCENARIOS               = 3502;
 const int cATLANTIS_KEY                  = 3510;
 
 // Age unlock item IDs — raw values matching Items.py
-const int cGREEK_AGE_UNLOCK_1            = 1002;
-const int cGREEK_AGE_UNLOCK_2            = 1003;
-const int cGREEK_AGE_UNLOCK_3            = 1004;
-const int cEGYPTIAN_AGE_UNLOCK_1         = 1005;
-const int cEGYPTIAN_AGE_UNLOCK_2         = 1006;
-const int cEGYPTIAN_AGE_UNLOCK_3         = 1007;
-const int cNORSE_AGE_UNLOCK_1            = 1008;
-const int cNORSE_AGE_UNLOCK_2            = 1009;
-const int cNORSE_AGE_UNLOCK_3            = 1010;
+const int cGREEK_AGE_UNLOCK              = 1002;
+const int cEGYPTIAN_AGE_UNLOCK           = 1005;
+const int cNORSE_AGE_UNLOCK              = 1008;
+const int cATLANTEAN_AGE_UNLOCK          = 1011;
+
 
 // -----------------------------------------------------------------------
 // Unit unlock item IDs — raw values matching Items.py
@@ -290,6 +312,10 @@ const int cAPMajorSet       = 6;
 const int cAPMajorOdin      = 7;
 const int cAPMajorThor      = 8;
 const int cAPMajorLoki      = 9;
+const int cAPMajorKronos    = 10;
+const int cAPMajorOranos    = 11;
+const int cAPMajorGaia      = 12;
+
 
 // -----------------------------------------------------------------------
 // Scenario activation helpers
@@ -345,6 +371,127 @@ int APGetMajorGodForScenario(int scenarioId = 0)
     return cAPMajorNone;
 }
 
+void APForceDisableAllGreekAgeTechs()
+{
+    trTechSetStatus(1, cTechClassicalAgeAthena, 0);  trTechSetStatus(1, cTechClassicalAgeHermes, 0);
+    trTechSetStatus(1, cTechClassicalAgeAres, 0);    trTechSetStatus(1, cTechClassicalAgeGreek, 0);
+    trTechSetStatus(1, cTechHeroicAgeApollo, 0);     trTechSetStatus(1, cTechHeroicAgeDionysus, 0);
+    trTechSetStatus(1, cTechHeroicAgeAphrodite, 0);  trTechSetStatus(1, cTechHeroicAgeGreek, 0);
+    trTechSetStatus(1, cTechMythicAgeHera, 0);       trTechSetStatus(1, cTechMythicAgeHephaestus, 0);
+    trTechSetStatus(1, cTechMythicAgeArtemis, 0);    trTechSetStatus(1, cTechMythicAgeGreek, 0);
+}
+
+void APForceDisableAllEgyptianAgeTechs()
+{
+    trTechSetStatus(1, cTechClassicalAgeAnubis, 0);  trTechSetStatus(1, cTechClassicalAgeBast, 0);
+    trTechSetStatus(1, cTechClassicalAgePtah, 0);    trTechSetStatus(1, cTechClassicalAgeEgyptian, 0);
+    trTechSetStatus(1, cTechHeroicAgeSekhmet, 0);    trTechSetStatus(1, cTechHeroicAgeSobek, 0);
+    trTechSetStatus(1, cTechHeroicAgeNephthys, 0);   trTechSetStatus(1, cTechHeroicAgeEgyptian, 0);
+    trTechSetStatus(1, cTechMythicAgeOsiris, 0);     trTechSetStatus(1, cTechMythicAgeHorus, 0);
+    trTechSetStatus(1, cTechMythicAgeThoth, 0);      trTechSetStatus(1, cTechMythicAgeEgyptian, 0);
+}
+
+void APForceDisableAllNorseAgeTechs()
+{
+    trTechSetStatus(1, cTechClassicalAgeFreyja, 0);  trTechSetStatus(1, cTechClassicalAgeForseti, 0);
+    trTechSetStatus(1, cTechClassicalAgeHeimdall, 0); trTechSetStatus(1, cTechClassicalAgeUllr, 0);
+    trTechSetStatus(1, cTechClassicalAgeNorse, 0);
+    trTechSetStatus(1, cTechHeroicAgeBragi, 0);      trTechSetStatus(1, cTechHeroicAgeNjord, 0);
+    trTechSetStatus(1, cTechHeroicAgeSkadi, 0);      trTechSetStatus(1, cTechHeroicAgeAegir, 0);
+    trTechSetStatus(1, cTechHeroicAgeNorse, 0);
+    trTechSetStatus(1, cTechMythicAgeBaldr, 0);      trTechSetStatus(1, cTechMythicAgeTyr, 0);
+    trTechSetStatus(1, cTechMythicAgeHel, 0);        trTechSetStatus(1, cTechMythicAgeVidar, 0);
+    trTechSetStatus(1, cTechMythicAgeNorse, 0);
+}
+
+void APForceDisableAllAtlanteanAgeTechs()
+{
+    trTechSetStatus(1, cTechClassicalAgePrometheus, 0); trTechSetStatus(1, cTechClassicalAgeLeto, 0);
+    trTechSetStatus(1, cTechClassicalAgeOceanus, 0);    trTechSetStatus(1, cTechClassicalAgeAtlantean, 0);
+    trTechSetStatus(1, cTechHeroicAgeHyperion, 0);      trTechSetStatus(1, cTechHeroicAgeRheia, 0);
+    trTechSetStatus(1, cTechHeroicAgeTheia, 0);         trTechSetStatus(1, cTechHeroicAgeAtlantean, 0);
+    trTechSetStatus(1, cTechMythicAgeHelios, 0);         trTechSetStatus(1, cTechMythicAgeAtlas, 0);
+    trTechSetStatus(1, cTechMythicAgeHekate, 0);         trTechSetStatus(1, cTechMythicAgeAtlantean, 0);
+}
+
+void APSetPlayerCiv()
+{
+    // Set civ first, then force-disable all age techs for non-assigned civs.
+    // Force-disable (no guard) clears any pre-set vanilla scenario age techs.
+    if (gAPMajorGod == cAPMajorZeus || gAPMajorGod == cAPMajorPoseidon || gAPMajorGod == cAPMajorHades)
+    {
+        if (gAPMajorGod == cAPMajorZeus)     { trPlayerSetCiv(1, "Zeus"); }
+        if (gAPMajorGod == cAPMajorPoseidon) { trPlayerSetCiv(1, "Poseidon"); }
+        if (gAPMajorGod == cAPMajorHades)    { trPlayerSetCiv(1, "Hades"); }
+        APForceDisableAllEgyptianAgeTechs();
+        APForceDisableAllNorseAgeTechs();
+        APForceDisableAllAtlanteanAgeTechs();
+    }
+    if (gAPMajorGod == cAPMajorIsis || gAPMajorGod == cAPMajorRa || gAPMajorGod == cAPMajorSet)
+    {
+        if (gAPMajorGod == cAPMajorIsis) { trPlayerSetCiv(1, "Isis"); }
+        if (gAPMajorGod == cAPMajorRa)   { trPlayerSetCiv(1, "Ra"); }
+        if (gAPMajorGod == cAPMajorSet)  { trPlayerSetCiv(1, "Set"); }
+        APForceDisableAllGreekAgeTechs();
+        APForceDisableAllNorseAgeTechs();
+        APForceDisableAllAtlanteanAgeTechs();
+    }
+    if (gAPMajorGod == cAPMajorOdin || gAPMajorGod == cAPMajorThor || gAPMajorGod == cAPMajorLoki)
+    {
+        if (gAPMajorGod == cAPMajorOdin) { trPlayerSetCiv(1, "Odin"); }
+        if (gAPMajorGod == cAPMajorThor) { trPlayerSetCiv(1, "Thor"); }
+        if (gAPMajorGod == cAPMajorLoki) { trPlayerSetCiv(1, "Loki"); }
+        APForceDisableAllGreekAgeTechs();
+        APForceDisableAllEgyptianAgeTechs();
+        APForceDisableAllAtlanteanAgeTechs();
+    }
+    if (gAPMajorGod == cAPMajorKronos || gAPMajorGod == cAPMajorOranos || gAPMajorGod == cAPMajorGaia)
+    {
+        if (gAPMajorGod == cAPMajorKronos) { trPlayerSetCiv(1, "Kronos"); }
+        if (gAPMajorGod == cAPMajorOranos) { trPlayerSetCiv(1, "Oranos"); }
+        if (gAPMajorGod == cAPMajorGaia)   { trPlayerSetCiv(1, "Gaia"); }
+        APForceDisableAllGreekAgeTechs();
+        APForceDisableAllEgyptianAgeTechs();
+        APForceDisableAllNorseAgeTechs();
+    }
+}
+
+void APReadRandomGod()
+{
+    if (gAPScenarioId == 1) { int g = trQuestVarGet("APGod1"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 2) { int g = trQuestVarGet("APGod2"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 3) { int g = trQuestVarGet("APGod3"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 4) { int g = trQuestVarGet("APGod4"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 5) { int g = trQuestVarGet("APGod5"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 6) { int g = trQuestVarGet("APGod6"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 7) { int g = trQuestVarGet("APGod7"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 8) { int g = trQuestVarGet("APGod8"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 9) { int g = trQuestVarGet("APGod9"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 10) { int g = trQuestVarGet("APGod10"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 11) { int g = trQuestVarGet("APGod11"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 12) { int g = trQuestVarGet("APGod12"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 13) { int g = trQuestVarGet("APGod13"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 14) { int g = trQuestVarGet("APGod14"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 15) { int g = trQuestVarGet("APGod15"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 16) { int g = trQuestVarGet("APGod16"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 17) { int g = trQuestVarGet("APGod17"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 18) { int g = trQuestVarGet("APGod18"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 19) { int g = trQuestVarGet("APGod19"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 20) { int g = trQuestVarGet("APGod20"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 21) { int g = trQuestVarGet("APGod21"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 22) { int g = trQuestVarGet("APGod22"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 23) { int g = trQuestVarGet("APGod23"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 24) { int g = trQuestVarGet("APGod24"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 25) { int g = trQuestVarGet("APGod25"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 26) { int g = trQuestVarGet("APGod26"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 27) { int g = trQuestVarGet("APGod27"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 28) { int g = trQuestVarGet("APGod28"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 29) { int g = trQuestVarGet("APGod29"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 30) { int g = trQuestVarGet("APGod30"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 31) { int g = trQuestVarGet("APGod31"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 32) { int g = trQuestVarGet("APGod32"); if (g > 0) { gAPMajorGod = g; } }
+}
+
 rule APActivateScenario
 highFrequency
 inactive
@@ -353,28 +500,20 @@ runImmediately
     gAPScenarioId = trQuestVarGet("APScenarioID");
     gAPCampaignId = APGetCampaignForScenario(gAPScenarioId);
     gAPMajorGod = APGetMajorGodForScenario(gAPScenarioId);
+    APInitGods();                // populate APGod1..APGod32 quest vars
+    APReadRandomGod();           // override gAPMajorGod if godsanity is active
+    APSetPlayerCiv();            // change civ + force-clear old civ age techs
+    APForbidVanillaArchaicUnits(); // forbid archaic units from vanilla god/civ if changed
+    APInitStartingAgeTechs();    // grant pre-computed starting age techs for this scenario
+    APForbidItemGatedUnits();    // forbid all units whose unlock items have not been received
 
-    // Forbid all unlockable units at scenario start — unforbidden by received items below
-    trForbidProtounit(1, "Hoplite");
-    trForbidProtounit(1, "Spearman");
-    trForbidProtounit(1, "Berserk");
-    trForbidProtounit(1, "Hirdman");
-    trForbidProtounit(1, "Hypaspist");
-    trForbidProtounit(1, "Peltast");
-    trForbidProtounit(1, "Hippeus");
-    trForbidProtounit(1, "Toxotes");
-    trForbidProtounit(1, "Prodromos");
-    trForbidProtounit(1, "Axeman");
-    trForbidProtounit(1, "Slinger");
-    trForbidProtounit(1, "ChariotArcher");
-    trForbidProtounit(1, "CamelRider");
-    trForbidProtounit(1, "WarElephant");
-    trForbidProtounit(1, "ThrowingAxeman");
-    trForbidProtounit(1, "Huskarl");
-    trForbidProtounit(1, "RaidingCavalry");
-    trForbidProtounit(1, "Jarl");
+    // SPC campaign heroes — never player-trainable regardless of god or items
+    trForbidProtounit(1, "Ajax");
+    trForbidProtounit(1, "Chiron");
+    trForbidProtounit(1, "Odysseus");
 
     xsEnableRule("APApplyItems");
+    trMusicPlayCurrent();
     xsDisableSelf();
 }
 
@@ -393,133 +532,133 @@ int gAPLastProcessedCheckNonce = 0;
 string APGetCheckText(int id = 0)
 {
     if (id == 3876724) { return "Scenario Victory"; }
-    if (id == 3876726) { return "Protect Atlantis by killing the Kraken."; }
-    if (id == 3876727) { return "Train reinforcements to defend the harbor until the Atlantean Army arrives."; }
+    if (id == 3876726) { return "Kill the Kraken."; }
+    if (id == 3876727) { return "Train reinforcements to defend the harbor."; }
     if (id == 3876824) { return "Scenario Victory"; }
-    if (id == 3876826) { return "Advance to the Classical Age and explore the island."; }
+    if (id == 3876826) { return "Advance to the Classical Age."; }
     if (id == 3876827) { return "Gather 400 Food"; }
     if (id == 3876828) { return "Build a House"; }
     if (id == 3876829) { return "Build a Temple"; }
-    if (id == 3876830) { return "Train an army and destroy the pirate Town Center."; }
+    if (id == 3876830) { return "Destroy the pirate Town Center."; }
     if (id == 3876924) { return "Scenario Victory"; }
-    if (id == 3876926) { return "Lead your men to the unclaimed Settlement."; }
+    if (id == 3876926) { return "Reach the unclaimed Settlement."; }
     if (id == 3876927) { return "Build a Town Center."; }
     if (id == 3876928) { return "Destroy the Trojan docks."; }
     if (id == 3876929) { return "Destroy the last Trojan dock."; }
     if (id == 3877024) { return "Scenario Victory"; }
     if (id == 3877026) { return "Find and take a Gold Mine from the Trojans."; }
-    if (id == 3877027) { return "Train an army and destroy the Trojan West Gate."; }
+    if (id == 3877027) { return "Destroy the Trojan West Gate."; }
     if (id == 3877124) { return "Scenario Victory"; }
     if (id == 3877126) { return "Defeat the cavalry attacking Ajax."; }
-    if (id == 3877127) { return "Bring Arkantos and your army to Ajax's Town Center to the southwest."; }
-    if (id == 3877128) { return "Build up a stronger army and destroy all the buildings in the Trojan forward military base area."; }
+    if (id == 3877127) { return "Reach Ajax's Town Center."; }
+    if (id == 3877128) { return "Destroy all buildings in the Trojan forward base."; }
     if (id == 3877224) { return "Scenario Victory"; }
-    if (id == 3877226) { return "Accumulate 1000 Wood to build the Trojan Horse."; }
+    if (id == 3877226) { return "Accumulate 1000 Wood."; }
     if (id == 3877227) { return "Build the Trojan Horse."; }
-    if (id == 3877228) { return "Sneak your Heroes through Troy toward the Trojan gate and find a way to destroy it."; }
-    if (id == 3877229) { return "Defeat Troy by destroying the three Fortresses within its walls."; }
+    if (id == 3877228) { return "Destroy the Trojan gate."; }
+    if (id == 3877229) { return "Destroy the three Fortresses within Troy's walls."; }
     if (id == 3877324) { return "Scenario Victory"; }
-    if (id == 3877326) { return "Bring Arkantos and Ajax to the prison area to rescue the hostages."; }
-    if (id == 3877327) { return "Defeat the bandits guarding the prison to free the prisoners."; }
+    if (id == 3877326) { return "Reach the prison area."; }
+    if (id == 3877327) { return "Defeat the bandits guarding the prison."; }
     if (id == 3877328) { return "Destroy the enemy Watch Tower and Barracks."; }
     if (id == 3877329) { return "Destroy the enemy Watch Tower and Temple."; }
-    if (id == 3877330) { return "Destroy the Migdol Stronghold to free Chiron."; }
+    if (id == 3877330) { return "Destroy the Migdol Stronghold."; }
     if (id == 3877424) { return "Scenario Victory"; }
-    if (id == 3877426) { return "Build up Ajax and Arkantos' bases and fight your way to the mine."; }
+    if (id == 3877426) { return "Fight your way to the mine."; }
     if (id == 3877524) { return "Scenario Victory"; }
     if (id == 3877526) { return "Destroy the ram before it breaks down the Gate."; }
     if (id == 3877624) { return "Scenario Victory"; }
     if (id == 3877626) { return "Seek the Shades."; }
-    if (id == 3877627) { return "Scout forward. Shades are invisible to enemy units and can see farther than your other units."; }
+    if (id == 3877627) { return "Scout forward with the Shades."; }
     if (id == 3877628) { return "Kill the Minotaur."; }
-    if (id == 3877629) { return "Collect the three lost relics of Hades."; }
+    if (id == 3877629) { return "Collect the three relics of Hades."; }
     if (id == 3877630) { return "Bring the three relics to the temple complex."; }
     if (id == 3886724) { return "Scenario Victory"; }
-    if (id == 3886726) { return "Defend against attacks from the three passes long enough for your Laborers to dig out the artifact."; }
+    if (id == 3886726) { return "Dig out the artifact."; }
     if (id == 3886824) { return "Scenario Victory"; }
-    if (id == 3886826) { return "Kill the guards watching over the Laborers mining gold."; }
+    if (id == 3886826) { return "Kill the guards watching the Laborers."; }
     if (id == 3886827) { return "Bring at least five Villagers safely to their Town Center."; }
-    if (id == 3886828) { return "Bring the Sword Bearer to the Guardian, before Kemsyt's army reaches it."; }
+    if (id == 3886828) { return "Bring the Sword Bearer to the Guardian."; }
     if (id == 3886829) { return "Use the Guardian to destroy Kemsyt's army."; }
     if (id == 3886924) { return "Scenario Victory"; }
-    if (id == 3886926) { return "Recover the Osiris Piece Cart and move it into your city before Kemsyt brings it to his."; }
+    if (id == 3886926) { return "Move the Osiris Piece Cart into your city."; }
     if (id == 3887024) { return "Scenario Victory"; }
     if (id == 3887026) { return "Destroy Gargarensis' Migdol Stronghold."; }
     if (id == 3887027) { return "Amanra must reach the Transport Ship."; }
-    if (id == 3887028) { return "Send Amanra to the Abydos harbor to convert a navy."; }
-    if (id == 3887029) { return "Use your navy to break Amanra into the prison."; }
+    if (id == 3887028) { return "Bring Amanra to the Abydos harbor."; }
+    if (id == 3887029) { return "Break Amanra into the prison."; }
     if (id == 3887124) { return "Scenario Victory"; }
     if (id == 3887126) { return "Survive until Setna's transports arrive from the southwest."; }
-    if (id == 3887127) { return "Use the Transports to move your troops to the flag in the allied purple town to the southwest."; }
+    if (id == 3887127) { return "Move your troops to the allied purple town."; }
     if (id == 3887128) { return "Capture the Osiris Piece Cart and move it outside the city's south gate."; }
     if (id == 3887224) { return "Scenario Victory"; }
     if (id == 3887226) { return "Follow Kastor."; }
     if (id == 3887227) { return "Garrison the Relic into the Temple, and defend the Temple."; }
-    if (id == 3887228) { return "Defeat the guardians of the Shrine just ahead."; }
-    if (id == 3887229) { return "Destroy the large boulder to escape the Underworld."; }
-    if (id == 3887230) { return "Safely transport Arkantos and Kastor to the beach marked with white flags."; }
-    if (id == 3887231) { return "Train an army and destroy the enemy wonder."; }
+    if (id == 3887228) { return "Defeat the guardians of the Shrine."; }
+    if (id == 3887229) { return "Destroy the large boulder."; }
+    if (id == 3887230) { return "Transport Arkantos and Kastor to the white flag beach."; }
+    if (id == 3887231) { return "Destroy the enemy wonder."; }
     if (id == 3887324) { return "Scenario Victory"; }
     if (id == 3887326) { return "Bring Amanra to the village."; }
     if (id == 3887327) { return "Bring Amanra to the Osiris Piece Box."; }
     if (id == 3887424) { return "Scenario Victory"; }
-    if (id == 3887426) { return "Seek help from the desert nomad camp to the east."; }
-    if (id == 3887427) { return "Send Laborers to cut down the Tamarisk tree and recover the head of Osiris."; }
+    if (id == 3887426) { return "Reach the desert nomad camp."; }
+    if (id == 3887427) { return "Recover the head of Osiris from the Tamarisk tree."; }
     if (id == 3887524) { return "Scenario Victory"; }
-    if (id == 3887526) { return "Capture the Black Sail ships to the east by destroying the forward base that guards them."; }
-    if (id == 3887527) { return "Use the Black Sail ships to transport your army past Kamos' defenses and claim a Settlement."; }
-    if (id == 3887528) { return "Quickly build up a large force and siege Kamos' base."; }
+    if (id == 3887526) { return "Destroy the forward base to capture the Black Sails."; }
+    if (id == 3887527) { return "Claim a Settlement."; }
+    if (id == 3887528) { return "Siege Kamos' base."; }
     if (id == 3887529) { return "Eliminate Kamos' guards and defeat him."; }
     if (id == 3887624) { return "Scenario Victory"; }
-    if (id == 3887626) { return "Build up and fight toward the Osiris pyramid. Survive until Arkantos arrives with his Osiris piece."; }
-    if (id == 3887627) { return "Arkantos has arrived with the last Osiris piece! Bring all three Osiris pieces to the Obelisk near Osiris' Pyramid."; }
+    if (id == 3887626) { return "Survive until Arkantos arrives."; }
+    if (id == 3887627) { return "Bring all three Osiris pieces to the Obelisk."; }
     if (id == 3896724) { return "Scenario Victory"; }
     if (id == 3896726) { return "Save the pigs from being slaughtered."; }
     if (id == 3896727) { return "Bring the Boars and Pigs past the gates to the Temple of Zeus."; }
-    if (id == 3896728) { return "Build up an army and defeat Circe by destroying the Fortress at the heart of her citadel."; }
+    if (id == 3896728) { return "Destroy Circe's Fortress."; }
     if (id == 3896824) { return "Scenario Victory"; }
-    if (id == 3896826) { return "Reunite your forces and claim a Settlement."; }
+    if (id == 3896826) { return "Claim a Settlement."; }
     if (id == 3896827) { return "Destroy all three enemy Temples."; }
     if (id == 3896924) { return "Scenario Victory"; }
-    if (id == 3896926) { return "Find a Settlement and build a Town Center."; }
-    if (id == 3896927) { return "Eliminate the Giants and Trolls near the Dwarven Forge to recapture it."; }
+    if (id == 3896926) { return "Build a Town Center."; }
+    if (id == 3896927) { return "Eliminate the Giants and Trolls near the Dwarven Forge."; }
     if (id == 3896928) { return "Defend the Dwarven Forge until the Giants retreat!"; }
     if (id == 3897024) { return "Scenario Victory"; }
     if (id == 3897026) { return "Protect Skult and the Folstag Flag Bearer."; }
-    if (id == 3897027) { return "Skult and the Folstag Flag Bearer must reach the flagged site in the far north."; }
-    if (id == 3897028) { return "Build up a defensive base near the boulder wall and advance to the Heroic Age."; }
+    if (id == 3897027) { return "Bring Skult and the Flag Bearer to the far north."; }
+    if (id == 3897028) { return "Advance to the Heroic Age."; }
     if (id == 3897029) { return "Break through the boulder wall."; }
-    if (id == 3897030) { return "Escape the enemy armies. Move Skult and the Flag Bearer to the flag at the north end of the pass."; }
+    if (id == 3897030) { return "Move Skult and the Flag Bearer to the north end of the pass."; }
     if (id == 3897124) { return "Scenario Victory"; }
     if (id == 3897126) { return "Protect Skult and the Folstag Flag Bearer."; }
-    if (id == 3897127) { return "Use the Folstag Flag Bearer to lure the clan leaders into an ambush. Eliminate all three leaders."; }
+    if (id == 3897127) { return "Eliminate all three clan leaders."; }
     if (id == 3897224) { return "Scenario Victory"; }
     if (id == 3897226) { return "Follow the trail to the first Norse clan."; }
     if (id == 3897227) { return "Defeat the Trolls in the mines to the west."; }
     if (id == 3897228) { return "Exit the mines and find two more Norse clans."; }
     if (id == 3897229) { return "Build five towers near the flagged sites around Lothbrok's village."; }
-    if (id == 3897230) { return "Destroy the Watch Tower to free Forkbeard's daughter."; }
+    if (id == 3897230) { return "Destroy the Southern Watch Tower."; }
     if (id == 3897324) { return "Scenario Victory"; }
     if (id == 3897326) { return "Destroy the gate to the Well of Urd."; }
-    if (id == 3897327) { return "Defeat all of the myth units defending the Well of Urd."; }
+    if (id == 3897327) { return "Defeat all myth units at the Well of Urd."; }
     if (id == 3897424) { return "Scenario Victory"; }
-    if (id == 3897426) { return "Kill the Fire Giants guarding the ram before the gate to Tartarus opens."; }
+    if (id == 3897426) { return "Kill the Fire Giants guarding the ram."; }
     if (id == 3897427) { return "The Well of Urd must not be destroyed"; }
     if (id == 3897524) { return "Scenario Victory"; }
     if (id == 3897526) { return "Protect the Dwarves while they cut the hammer haft from the taproot."; }
-    if (id == 3897527) { return "Finish cutting the haft from the taproot and bring the two pieces of Thor's hammer together."; }
+    if (id == 3897527) { return "Bring the two pieces of Thor's hammer together."; }
     if (id == 3897624) { return "Scenario Victory"; }
-    if (id == 3897626) { return "Find the abandoned mining town and build a Town Center there."; }
-    if (id == 3897627) { return "You have 10 minutes to build up your defenses before Gargarensis attacks."; }
+    if (id == 3897626) { return "Build a Town Center in the abandoned mining town."; }
+    if (id == 3897627) { return "Build up your defenses before Gargarensis attacks."; }
     if (id == 3897628) { return "Survive for 20 minutes until help arrives."; }
     if (id == 3897629) { return "Fight your way northward to Gargarensis."; }
     if (id == 3906724) { return "Scenario Victory"; }
-    if (id == 3906726) { return "Land your troops on Atlantis' shores. Begin construction of a base by claiming a Settlement."; }
-    if (id == 3906727) { return "Rescue and transport 15 Atlantean Prisoners to the flagged island to the west."; }
+    if (id == 3906726) { return "Claim a Settlement on Atlantis."; }
+    if (id == 3906727) { return "Transport 15 Atlantean Prisoners to the flagged island."; }
     if (id == 3906824) { return "Scenario Victory"; }
-    if (id == 3906826) { return "Advance to the Mythic Age and construct a Wonder to receive Zeus' blessing."; }
+    if (id == 3906826) { return "Advance to the Mythic Age and construct a Wonder."; }
     if (id == 3906827) { return "Use the Blessing of Zeus God Power on Arkantos."; }
-    if (id == 3906828) { return "Defeat the Living Statue of Poseidon guarding Gargarensis and the final gate to Tartarus."; }
+    if (id == 3906828) { return "Defeat the Living Statue of Poseidon."; }
     return "Unknown Location";
 }
 
@@ -764,20 +903,103 @@ void APApplyNorseMinorGods(int majorGod = 0, int ageCount = 0)
     }
 }
 
+void APDisableAllAtlanteanAgeTechs()
+{
+    if (trTechStatusActive(1, cTechClassicalAgeAtlantean) == false) { trTechSetStatus(1, cTechClassicalAgeAtlantean, 0); }
+    if (trTechStatusActive(1, cTechClassicalAgePrometheus) == false) { trTechSetStatus(1, cTechClassicalAgePrometheus, 0); }
+    if (trTechStatusActive(1, cTechClassicalAgeLeto) == false) { trTechSetStatus(1, cTechClassicalAgeLeto, 0); }
+    if (trTechStatusActive(1, cTechClassicalAgeOceanus) == false) { trTechSetStatus(1, cTechClassicalAgeOceanus, 0); }
+    if (trTechStatusActive(1, cTechHeroicAgeAtlantean) == false) { trTechSetStatus(1, cTechHeroicAgeAtlantean, 0); }
+    if (trTechStatusActive(1, cTechHeroicAgeHyperion) == false) { trTechSetStatus(1, cTechHeroicAgeHyperion, 0); }
+    if (trTechStatusActive(1, cTechHeroicAgeRheia) == false) { trTechSetStatus(1, cTechHeroicAgeRheia, 0); }
+    if (trTechStatusActive(1, cTechHeroicAgeTheia) == false) { trTechSetStatus(1, cTechHeroicAgeTheia, 0); }
+    if (trTechStatusActive(1, cTechMythicAgeAtlantean) == false) { trTechSetStatus(1, cTechMythicAgeAtlantean, 0); }
+    if (trTechStatusActive(1, cTechMythicAgeHelios) == false) { trTechSetStatus(1, cTechMythicAgeHelios, 0); }
+    if (trTechStatusActive(1, cTechMythicAgeAtlas) == false) { trTechSetStatus(1, cTechMythicAgeAtlas, 0); }
+    if (trTechStatusActive(1, cTechMythicAgeHekate) == false) { trTechSetStatus(1, cTechMythicAgeHekate, 0); }
+}
+
+void APApplyAtlanteanMinorGods(int majorGod = 0, int ageCount = 0)
+{
+    APDisableAllAtlanteanAgeTechs();
+    if (ageCount >= 1)
+    {
+        if (trTechStatusActive(1, cTechClassicalAgeAtlantean) == false) { trTechSetStatus(1, cTechClassicalAgeAtlantean, 1); }
+        if (majorGod == cAPMajorKronos) { if (trTechStatusActive(1, cTechClassicalAgePrometheus) == false) { trTechSetStatus(1, cTechClassicalAgePrometheus, 1); } if (trTechStatusActive(1, cTechClassicalAgeLeto) == false) { trTechSetStatus(1, cTechClassicalAgeLeto, 1); } }
+        if (majorGod == cAPMajorOranos) { if (trTechStatusActive(1, cTechClassicalAgePrometheus) == false) { trTechSetStatus(1, cTechClassicalAgePrometheus, 1); } if (trTechStatusActive(1, cTechClassicalAgeOceanus) == false) { trTechSetStatus(1, cTechClassicalAgeOceanus, 1); } }
+        if (majorGod == cAPMajorGaia)   { if (trTechStatusActive(1, cTechClassicalAgeLeto) == false) { trTechSetStatus(1, cTechClassicalAgeLeto, 1); } if (trTechStatusActive(1, cTechClassicalAgeOceanus) == false) { trTechSetStatus(1, cTechClassicalAgeOceanus, 1); } }
+    }
+    if (ageCount >= 2)
+    {
+        if (trTechStatusActive(1, cTechHeroicAgeAtlantean) == false) { trTechSetStatus(1, cTechHeroicAgeAtlantean, 1); }
+        if (majorGod == cAPMajorKronos) { if (trTechStatusActive(1, cTechHeroicAgeHyperion) == false) { trTechSetStatus(1, cTechHeroicAgeHyperion, 1); } if (trTechStatusActive(1, cTechHeroicAgeRheia) == false) { trTechSetStatus(1, cTechHeroicAgeRheia, 1); } }
+        if (majorGod == cAPMajorOranos) { if (trTechStatusActive(1, cTechHeroicAgeHyperion) == false) { trTechSetStatus(1, cTechHeroicAgeHyperion, 1); } if (trTechStatusActive(1, cTechHeroicAgeTheia) == false) { trTechSetStatus(1, cTechHeroicAgeTheia, 1); } }
+        if (majorGod == cAPMajorGaia)   { if (trTechStatusActive(1, cTechHeroicAgeRheia) == false) { trTechSetStatus(1, cTechHeroicAgeRheia, 1); } if (trTechStatusActive(1, cTechHeroicAgeTheia) == false) { trTechSetStatus(1, cTechHeroicAgeTheia, 1); } }
+    }
+    if (ageCount >= 3)
+    {
+        if (trTechStatusActive(1, cTechMythicAgeAtlantean) == false) { trTechSetStatus(1, cTechMythicAgeAtlantean, 1); }
+        if (majorGod == cAPMajorKronos) { if (trTechStatusActive(1, cTechMythicAgeHelios) == false) { trTechSetStatus(1, cTechMythicAgeHelios, 1); } if (trTechStatusActive(1, cTechMythicAgeAtlas) == false) { trTechSetStatus(1, cTechMythicAgeAtlas, 1); } }
+        if (majorGod == cAPMajorOranos) { if (trTechStatusActive(1, cTechMythicAgeHelios) == false) { trTechSetStatus(1, cTechMythicAgeHelios, 1); } if (trTechStatusActive(1, cTechMythicAgeHekate) == false) { trTechSetStatus(1, cTechMythicAgeHekate, 1); } }
+        if (majorGod == cAPMajorGaia)   { if (trTechStatusActive(1, cTechMythicAgeAtlas) == false) { trTechSetStatus(1, cTechMythicAgeAtlas, 1); } if (trTechStatusActive(1, cTechMythicAgeHekate) == false) { trTechSetStatus(1, cTechMythicAgeHekate, 1); } }
+    }
+}
+
+int APGetStartingAgeCount(int scenarioId = 0)
+{
+    if (scenarioId == 1) { return 1; }
+    if (scenarioId == 2) { return 0; }
+    if (scenarioId == 3) { return 0; }
+    if (scenarioId == 4) { return 1; }
+    if (scenarioId == 5) { return 2; }
+    if (scenarioId == 6) { return 2; }
+    if (scenarioId == 7) { return 2; }
+    if (scenarioId == 8) { return 1; }
+    if (scenarioId == 9) { return 3; }
+    if (scenarioId == 10) { return 0; }
+    if (scenarioId == 11) { return 0; }
+    if (scenarioId == 12) { return 0; }
+    if (scenarioId == 13) { return 2; }
+    if (scenarioId == 14) { return 2; }
+    if (scenarioId == 15) { return 1; }
+    if (scenarioId == 16) { return 3; }
+    if (scenarioId == 17) { return 2; }
+    if (scenarioId == 18) { return 1; }
+    if (scenarioId == 19) { return 2; }
+    if (scenarioId == 20) { return 2; }
+    if (scenarioId == 21) { return 0; }
+    if (scenarioId == 22) { return 0; }
+    if (scenarioId == 23) { return 1; }
+    if (scenarioId == 24) { return 1; }
+    if (scenarioId == 25) { return 0; }
+    if (scenarioId == 26) { return 1; }
+    if (scenarioId == 27) { return 1; }
+    if (scenarioId == 28) { return 2; }
+    if (scenarioId == 29) { return 1; }
+    if (scenarioId == 30) { return 1; }
+    if (scenarioId == 31) { return 2; }
+    if (scenarioId == 32) { return 2; }
+    return 0;
+}
+
+
+
 void APApplyAgeUnlocks()
 {
-    int greekCount = 0;
-    int egyptianCount = 0;
-    int norseCount = 0;
+    int greekCount     = 0;
+    int egyptianCount  = 0;
+    int norseCount     = 0;
+    int atlanteanCount = 0;
     int i = 0;
     int id = 0;
 
     for (i = 5; i < gAPItemCount; i++)
     {
         id = gAPItems[i];
-        if (id == cGREEK_AGE_UNLOCK_1 || id == cGREEK_AGE_UNLOCK_2 || id == cGREEK_AGE_UNLOCK_3) { greekCount++; }
-        if (id == cEGYPTIAN_AGE_UNLOCK_1 || id == cEGYPTIAN_AGE_UNLOCK_2 || id == cEGYPTIAN_AGE_UNLOCK_3) { egyptianCount++; }
-        if (id == cNORSE_AGE_UNLOCK_1 || id == cNORSE_AGE_UNLOCK_2 || id == cNORSE_AGE_UNLOCK_3) { norseCount++; }
+        if (id == cGREEK_AGE_UNLOCK)      { greekCount++;     }
+        if (id == cEGYPTIAN_AGE_UNLOCK)   { egyptianCount++;  }
+        if (id == cNORSE_AGE_UNLOCK)      { norseCount++;     }
+        if (id == cATLANTEAN_AGE_UNLOCK)  { atlanteanCount++; }
     }
 
     if (gAPMajorGod == cAPMajorZeus || gAPMajorGod == cAPMajorPoseidon || gAPMajorGod == cAPMajorHades)
@@ -798,6 +1020,15 @@ void APApplyAgeUnlocks()
         APDisableAllGreekAgeTechs();
         APDisableAllEgyptianAgeTechs();
     }
+    if (gAPMajorGod == cAPMajorKronos || gAPMajorGod == cAPMajorOranos || gAPMajorGod == cAPMajorGaia)
+    {
+        APApplyAtlanteanMinorGods(gAPMajorGod, atlanteanCount);
+        APDisableAllGreekAgeTechs();
+        APDisableAllEgyptianAgeTechs();
+        APDisableAllNorseAgeTechs();
+    }
+
+
 }
 
 
@@ -995,8 +1226,10 @@ void APApplyHeroBoosts()
     // Ajax: Smiting Strikes (HandAttack, MaxHP modifier + VisualScale)
     if (ajxSmitingStrikes == true)
     {
+        //HAX HP
         trProtounitActionSpecialEffectModifier("AjaxSPC", "HandAttack", 1, 1, "Unit", 0.5, 1, -1);
-        trProtounitActionSpecialEffectModifier("AjaxSPC", "HandAttack", 1, 1, "Unit", 0.5, 49, 0.5);
+        //VISUAL SCALE
+        trProtounitActionSpecialEffectModifier("AjaxSPC", "HandAttack", 1, 1, "Unit", -0.3, 49, 0);
     }
     // Ajax: Shield Bash AOE (Gore, DamageArea +10)
     if (ajxShieldBashAOE == true)
@@ -1197,11 +1430,11 @@ runImmediately
                 trUnitCreateFromSource("Wadjet", gReinforcementSpawnID, gReinforcementSpawnID, 1);
             }
         }
-        if (itemId == cREINFORCEMENT_ULFSARK)
+        if (itemId == cREINFORCEMENT_BERSERK)
         {
             for (j = 0; j < 2; j++)
             {
-                trUnitCreateFromSource("Ulfsark", gReinforcementSpawnID, gReinforcementSpawnID, 1);
+                trUnitCreateFromSource("Berserk", gReinforcementSpawnID, gReinforcementSpawnID, 1);
             }
         }
         if (itemId == cREINFORCEMENT_SLINGER)
@@ -1332,48 +1565,18 @@ runImmediately
         }
         if (itemId == cREGINLEIF_JOINS)
         {
-            trUnitCreateFromSource("Reginleif", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-        }
-        if (itemId == cREINFORCEMENT_RELIC_MONKEY)
-        {
-            for (j = 0; j < 2; j++)
+            // Reginleif joins naturally on scenarios 26-30; skip spawn there
+            if (gAPScenarioId < 26 || gAPScenarioId > 30)
             {
-                trUnitCreateFromSource("RelicMonkey", gReinforcementSpawnID, gReinforcementSpawnID, 1);
+                trUnitCreateFromSource("Reginleif", gReinforcementSpawnID, gReinforcementSpawnID, 1);
             }
         }
-        if (itemId == cREINFORCEMENT_PEGASUS)
+        if (itemId == cODYSSEUS_JOINS)
         {
-            for (j = 0; j < 2; j++)
+            // Odysseus joins naturally on scenarios 4, 5, 6, 30; skip spawn there
+            if (gAPScenarioId != 4 && gAPScenarioId != 5 && gAPScenarioId != 6 && gAPScenarioId != 30)
             {
-                trUnitCreateFromSource("Pegasus", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-            }
-        }
-        if (itemId == cREINFORCEMENT_HYENA)
-        {
-            for (j = 0; j < 2; j++)
-            {
-                trUnitCreateFromSource("HyenaOfSet", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-            }
-        }
-        if (itemId == cREINFORCEMENT_HIPPO)
-        {
-            for (j = 0; j < 2; j++)
-            {
-                trUnitCreateFromSource("HippopotamusOfSet", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-            }
-        }
-        if (itemId == cREINFORCEMENT_GOLDEN_LION)
-        {
-            for (j = 0; j < 2; j++)
-            {
-                trUnitCreateFromSource("RelicGoldenLion", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-            }
-        }
-        if (itemId == cREINFORCEMENT_NORSE_GATHERER)
-        {
-            for (j = 0; j < 2; j++)
-            {
-                trUnitCreateFromSource("Gatherer", gReinforcementSpawnID, gReinforcementSpawnID, 1);
+                trUnitCreateFromSource("OdysseusSPC", gReinforcementSpawnID, gReinforcementSpawnID, 1);
             }
         }
         if (itemId == cREINFORCEMENT_RELIC_MONKEY)
@@ -1419,25 +1622,6 @@ runImmediately
             }
         }
 
-        // Unit unlocks
-        if (itemId == cCAN_TRAIN_HOPLITE)         { trUnforbidProtounit(1, "Hoplite"); }
-        if (itemId == cCAN_TRAIN_SPEARMAN)        { trUnforbidProtounit(1, "Spearman"); }
-        if (itemId == cCAN_TRAIN_BERSERK)         { trUnforbidProtounit(1, "Berserk"); }
-        if (itemId == cCAN_TRAIN_HIRDMAN)         { trUnforbidProtounit(1, "Hirdman"); }
-        if (itemId == cCAN_TRAIN_HYPASPIST)       { trUnforbidProtounit(1, "Hypaspist"); }
-        if (itemId == cCAN_TRAIN_PELTAST)         { trUnforbidProtounit(1, "Peltast"); }
-        if (itemId == cCAN_TRAIN_HIPPEUS)         { trUnforbidProtounit(1, "Hippeus"); }
-        if (itemId == cCAN_TRAIN_TOXOTES)         { trUnforbidProtounit(1, "Toxotes"); }
-        if (itemId == cCAN_TRAIN_PRODROMOS)       { trUnforbidProtounit(1, "Prodromos"); }
-        if (itemId == cCAN_TRAIN_AXEMAN)          { trUnforbidProtounit(1, "Axeman"); }
-        if (itemId == cCAN_TRAIN_SLINGER)         { trUnforbidProtounit(1, "Slinger"); }
-        if (itemId == cCAN_TRAIN_CHARIOT_ARCHER)  { trUnforbidProtounit(1, "ChariotArcher"); }
-        if (itemId == cCAN_TRAIN_CAMEL_RIDER)     { trUnforbidProtounit(1, "CamelRider"); }
-        if (itemId == cCAN_TRAIN_WAR_ELEPHANT)    { trUnforbidProtounit(1, "WarElephant"); }
-        if (itemId == cCAN_TRAIN_THROWING_AXEMAN) { trUnforbidProtounit(1, "ThrowingAxeman"); }
-        if (itemId == cCAN_TRAIN_HUSKARL)         { trUnforbidProtounit(1, "Huskarl"); }
-        if (itemId == cCAN_TRAIN_RAIDING_CAVALRY) { trUnforbidProtounit(1, "RaidingCavalry"); }
-        if (itemId == cCAN_TRAIN_JARL)            { trUnforbidProtounit(1, "Jarl"); }
 
         // Villager carry capacity
         if (itemId == cGREEK_CARRY_FOOD)    { grkCarryFood++; }
@@ -1457,6 +1641,7 @@ runImmediately
         if (itemId == cEGYPTIAN_VILLAGER_CHEAPER_2) { egyCheaper2++; }
         if (itemId == cNORSE_VILLAGER_CHEAPER_2)    { norCheaper2++; }
     }
+
 
     if (wood  > 0) { trPlayerGrantResources(1, "Wood",  wood);  }
     if (food  > 0) { trPlayerGrantResources(1, "Food",  food);  }

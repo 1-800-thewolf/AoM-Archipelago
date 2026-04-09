@@ -5,8 +5,36 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from ..locations.Locations import aomLocationData, aomLocationType, location_id_to_name
+from ..items.Items import (
+    aomItemData,
+    AtlanteanMythUnitUnlock,
+    AtlanteanUnitUnlockProgression,
+    AtlanteanUnitUnlockUseful,
+    MythUnitUnlockFiller,
+    MythUnitUnlockProgression,
+    MythUnitUnlockUseful,
+    UnitUnlockProgression,
+    UnitUnlockUseful,
+)
 
 logger = logging.getLogger("Client")
+
+# -----------------------------------------------------------------------
+# Item → proto unit name mapping
+# Used by write_aom_state to generate APForbidItemGatedUnits().
+# Only items that gate trainable units are included; resource/hero/etc.
+# items have no entry here.
+# -----------------------------------------------------------------------
+
+_ITEM_TO_UNITS: dict[int, list[str]] = {}
+for _item in aomItemData:
+    _t = _item.type
+    if isinstance(_t, (UnitUnlockProgression, UnitUnlockUseful,
+                       AtlanteanUnitUnlockProgression, AtlanteanUnitUnlockUseful)):
+        _ITEM_TO_UNITS[_item.id] = [_t.unit_name]
+    elif isinstance(_t, (MythUnitUnlockProgression, MythUnitUnlockUseful,
+                         MythUnitUnlockFiller, AtlanteanMythUnitUnlock)):
+        _ITEM_TO_UNITS[_item.id] = list(_t.units)
 
 # -----------------------------------------------------------------------
 # Constants
@@ -39,6 +67,10 @@ class AoMGameContext:
     # Slot data cached on connect for state file logic
     final_mode: int = -1           # 0=beat_x, 1=always_open, 2=atlantis_key
     x_scenarios_threshold: int = 0  # only used when final_mode == 0
+    godsanity: bool = False
+    god_assignments: dict = None         # scenario_id (int) → major_god int
+    minor_god_assignments: dict = None   # scenario_id (int) → [tech_name, ...]
+    archaic_forbids: dict = None         # scenario_id (int) → [unit_name, ...]
 
     @property
     def trigger_folder(self) -> Path:
@@ -191,6 +223,62 @@ def write_aom_state(ctx: AoMGameContext) -> None:
         lines.append(f"    gAPItems[{i}] = {item_id};")
     lines.append("}")
 
+    # Godsanity — APInitGods() sets quest vars for /gods command
+    lines.append("")
+    lines.append("void APInitGods()")
+    lines.append("{")
+    for scenario_id in range(1, 33):
+        if ctx.godsanity and ctx.god_assignments and scenario_id in ctx.god_assignments:
+            god_val = ctx.god_assignments[scenario_id]
+        else:
+            god_val = 0
+        lines.append(f"    trQuestVarSet(\"APGod{scenario_id}\", {god_val});")
+    lines.append("}")
+
+    # Godsanity — APInitStartingAgeTechs() grants starting age techs per scenario
+    lines.append("")
+    lines.append("void APInitStartingAgeTechs()")
+    lines.append("{")
+    lines.append("    int scenId = trQuestVarGet(\"APScenarioID\");")
+    if ctx.godsanity and ctx.minor_god_assignments:
+        for scenario_id in range(1, 33):
+            techs = ctx.minor_god_assignments.get(scenario_id) or []
+            if not techs:
+                continue
+            lines.append(f"    if (scenId == {scenario_id})")
+            lines.append("    {")
+            for tech in techs:
+                lines.append(f"        trTechSetStatus(1, {tech}, 2);")
+            lines.append("    }")
+    lines.append("}")
+
+    # APForbidVanillaArchaicUnits — forbids units from vanilla god/civ
+    # that should not be available when the assigned god differs.
+    lines.append("")
+    lines.append("void APForbidVanillaArchaicUnits()")
+    lines.append("{")
+    lines.append("    int scenId = trQuestVarGet(\"APScenarioID\");")
+    if ctx.archaic_forbids:
+        for scenario_id, units in ctx.archaic_forbids.items():
+            lines.append(f"    if (scenId == {scenario_id})")
+            lines.append("    {")
+            for unit in units:
+                lines.append(f"        trForbidProtounit(1, \"{unit}\");")
+            lines.append("    }")
+    lines.append("}")
+
+    # APForbidItemGatedUnits — forbids every unit whose unlock item has not yet
+    # been received.  Units whose items HAVE been received are not touched at
+    # all, so the game's natural civ / age / minor-god prerequisites still apply.
+    lines.append("")
+    lines.append("void APForbidItemGatedUnits()")
+    lines.append("{")
+    for item_id, units in _ITEM_TO_UNITS.items():
+        if item_id not in received_set:
+            for unit in units:
+                lines.append(f"    trForbidProtounit(1, \"{unit}\");")
+    lines.append("}")
+
     content = "\n".join(lines) + "\n"
 
     try:
@@ -277,8 +365,11 @@ async def game_loop(ctx: AoMGameContext) -> None:
     logger.info("AoMR game loop started. Watching for scenario completions...")
     logger.info(f"Watching file: {ctx.ai_output_file}")
     logger.info("Age of Mythology: Retold client commands:")
-    logger.info("  /status    — show connection info and Atlantis Key progress")
-    logger.info("  /scenarios — list beaten, in-progress, and untouched scenarios")
+    logger.info("  /status              — show connection info and Atlantis Key progress")
+    logger.info("  /scenarios (/progress) — list beaten, in-progress, and untouched scenarios")
+    logger.info("  /gods                  — show randomized god per scenario (godsanity only)")
+    logger.info("  /greek /egypt /norse /atlantean — show unit/myth/age unlock items for that civ")
+    logger.info("  /generic               — show all other received items (heroes, resources, etc.)")
 
     # Seed mtime so we only react to writes that happen AFTER client starts.
     ai_file = ctx.ai_output_file

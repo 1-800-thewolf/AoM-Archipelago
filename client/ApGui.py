@@ -85,8 +85,8 @@ class AoMManager(GameManager):
         logging.getLogger(__name__).addHandler(LogtoUI(self.log_panels["All"].on_log))
         logger = logging.getLogger("Client")
         logger.info("Age of Mythology: Retold client commands:")
-        logger.info("  /status    — show connection info and Atlantis Key progress")
-        logger.info("  /scenarios — list beaten, in-progress, and untouched scenarios")
+        logger.info("  /status              — show connection info and Atlantis Key progress")
+        logger.info("  /scenarios (/progress) — list beaten, in-progress, and untouched scenarios")
 
     @staticmethod
     def start_ap_ui(ctx: "AoMContext") -> None:
