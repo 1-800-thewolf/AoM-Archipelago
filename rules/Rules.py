@@ -143,7 +143,7 @@ def _unlock_names_for_god(god_id: int) -> list[str]:
 # --------------------------------------------------
 
 _SCENARIO_DATA: dict[int, tuple[int, int, float, bool, bool]] = {
-    1:  (1, 0,  0.0,  True,  False),
+    1:  (2, 0,  0.0,  True,  False),   # Classical start, exempt
     2:  (1, 1,  4.0,  False, False),
     3:  (1, 2,  9.0,  False, False),
     4:  (2, 3, 16.0,  False, False),
@@ -167,7 +167,7 @@ _SCENARIO_DATA: dict[int, tuple[int, int, float, bool, bool]] = {
     22: (1, 2,  9.0,  False, False),
     23: (2, 3, 16.0,  False, False),
     24: (2, 2,  9.0,  False, False),
-    25: (1, 3,  0.0,  True,  False),
+    25: (2, 3,  0.0,  True,  False),   # Classical start
     26: (2, 3, 16.0,  False, False),
     27: (2, 3, 16.0,  False, False),
     28: (3, 3, 16.0,  False, False),
