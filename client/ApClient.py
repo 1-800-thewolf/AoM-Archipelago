@@ -218,11 +218,24 @@ def _get_atlantis_status(ctx: "AoMContext") -> tuple[str, bool]:
 
 
 def _update_atlantis_ui(ctx: "AoMContext") -> None:
-    """Push the current Atlantis status to the UI label if the UI is ready."""
+    """Push the current Atlantis and shop status to the UI labels if the UI is ready."""
     if not (hasattr(ctx, "ui") and ctx.ui and hasattr(ctx.ui, "update_atlantis_status")):
         return
     text, green = _get_atlantis_status(ctx)
     ctx.ui.update_atlantis_status(text, green)
+
+    if hasattr(ctx.ui, "update_shop_status"):
+        from .GameClient import GEM_ITEM_ID, VICTORY_LOCATION_IDS
+        gems_earned = sum(1 for i in ctx.game_ctx.received_items if i == GEM_ITEM_ID)
+        gems_spent  = len(ctx.game_ctx.purchased_slots)
+        gems_avail  = max(0, gems_earned - gems_spent)
+        threshold   = ctx.game_ctx.wins_to_open_shop
+        beaten      = len(ctx.game_ctx.sent_checks & VICTORY_LOCATION_IDS)
+        if threshold == 0:
+            shops_open = 4
+        else:
+            shops_open = 1 + min(3, beaten // threshold)
+        ctx.ui.update_shop_status(gems_avail, shops_open)
 
 
 def _format_progress(ctx: "AoMContext") -> str:
@@ -703,6 +716,13 @@ class AoMContext(CommonContext):
         self.game_ctx.archaic_forbids = (
             {int(k): v for k, v in raw_forbids.items()} if raw_forbids else {}
         )
+        self.game_ctx.starting_gems     = int(slot_data.get("starting_gems", 0))
+        self.game_ctx.wins_to_open_shop = int(slot_data.get("wins_to_open_shop", 5))
+        self.game_ctx.shop_items        = slot_data.get("shop_items", {})
+        self.game_ctx.shop_hints        = slot_data.get("shop_hints", {})
+        # Build canonical slot order from Locations so XS indices are consistent
+        from ..locations.Locations import SHOP_SLOT_ORDER
+        self.game_ctx.shop_slot_order = list(SHOP_SLOT_ORDER)
         _update_atlantis_ui(self)
         # Install trigger files from apworld bundle to user's trigger folder
         _install_trigger_files(self.game_ctx.user_folder)
@@ -710,7 +730,8 @@ class AoMContext(CommonContext):
         _ensure_user_cfg(self.game_ctx.user_folder)
         mods_local = _resolve_mods_local_dir(self.game_ctx.user_folder)
         generate_ap_ai_xs(self.game_ctx, mods_local)
-        from .GameClient import write_aom_state
+        from .GameClient import write_aom_state, load_shop_state
+        load_shop_state(self.game_ctx)
         write_aom_state(self.game_ctx)
         self._start_game_loop()
 
@@ -739,6 +760,47 @@ class AoMContext(CommonContext):
             combined = self.game_ctx.received_items + item_ids
             on_items_received(self.game_ctx, combined)
         _update_atlantis_ui(self)
+
+    def request_hint(self, target_player: int, classification: str, count: int = 1) -> None:
+        """
+        Scout unchecked shop item locations for target_player whose items match the
+        given classification (or below), creating hints visible to target_player.
+        The AP server deduplicates hints that already exist, so we don't filter
+        sent_checks here — we just send all matching candidates and let the server
+        handle already-hinted or already-collected items.
+        """
+        import random
+        from ..locations.Locations import SHOP_ITEM_LOCATIONS
+
+        cls_rank = {"filler": 0, "useful": 1, "progression": 2}
+        max_rank  = cls_rank.get(classification, 2)
+
+        candidates = []
+        for sl in SHOP_ITEM_LOCATIONS:
+            if sl.slot_id in self.game_ctx.purchased_slots:
+                continue  # slot already bought, skip
+            placements = self.game_ctx.shop_items.get(sl.slot_id, [])
+            for p in placements:
+                if p.get("location_id") == sl.id and p.get("player") == target_player:
+                    item_rank = cls_rank.get(p.get("classification", "filler"), 0)
+                    if item_rank <= max_rank:
+                        candidates.append(sl.id)
+                        break
+
+        if not candidates:
+            logger.info(f"No hint candidates available for player {target_player} ({classification})")
+            return
+
+        chosen = random.sample(candidates, min(count, len(candidates)))
+        if len(chosen) < count:
+            logger.info(f"Only {len(chosen)} hint candidate(s) available (requested {count}) for player {target_player} ({classification})")
+
+        asyncio.ensure_future(self.send_msgs([{
+            "cmd": "LocationScouts",
+            "locations": chosen,
+            "create_as_hint": 2,
+        }]))
+        logger.info(f"Hinted {len(chosen)} location(s) for player {target_player} ({classification})")
 
     def on_location_received(self, location_id: int) -> None:
         from ..locations.Locations import aomLocationData, aomLocationType

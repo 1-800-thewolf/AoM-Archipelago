@@ -10,6 +10,74 @@
 extern int gAPItemCount = 0;
 extern int[] gAPItems = default;
 
+// Shop globals — declared before include so aom_state.xs (APShopStateInit) can reference them
+extern int    gAPShopAvailableGems        = 0;
+extern int    gAPShopTierThreshold        = 5;
+extern bool   gAPShopPurchased_A_ITEM_1   = false;
+extern bool   gAPShopPurchased_A_ITEM_2   = false;
+extern bool   gAPShopPurchased_A_ITEM_3   = false;
+extern bool   gAPShopPurchased_A_ITEM_4   = false;
+extern bool   gAPShopPurchased_A_ITEM_5   = false;
+extern bool   gAPShopPurchased_A_ITEM_6   = false;
+extern bool   gAPShopPurchased_A_ITEM_7   = false;
+extern bool   gAPShopPurchased_B_ITEM_1   = false;
+extern bool   gAPShopPurchased_B_ITEM_2   = false;
+extern bool   gAPShopPurchased_B_ITEM_3   = false;
+extern bool   gAPShopPurchased_B_ITEM_4   = false;
+extern bool   gAPShopPurchased_B_ITEM_5   = false;
+extern bool   gAPShopPurchased_B_ITEM_6   = false;
+extern bool   gAPShopPurchased_C_ITEM_1   = false;
+extern bool   gAPShopPurchased_C_ITEM_2   = false;
+extern bool   gAPShopPurchased_C_ITEM_3   = false;
+extern bool   gAPShopPurchased_D_ITEM_1   = false;
+extern bool   gAPShopPurchased_D_ITEM_2   = false;
+extern bool   gAPShopPurchased_A_HINT_1   = false;
+extern bool   gAPShopPurchased_A_HINT_2   = false;
+extern bool   gAPShopPurchased_A_HINT_3   = false;
+extern bool   gAPShopPurchased_A_HINT_4   = false;
+extern bool   gAPShopPurchased_A_HINT_5   = false;
+extern bool   gAPShopPurchased_B_HINT_1   = false;
+extern bool   gAPShopPurchased_B_HINT_2   = false;
+extern bool   gAPShopPurchased_B_HINT_3   = false;
+extern bool   gAPShopPurchased_B_HINT_4   = false;
+extern bool   gAPShopPurchased_C_HINT_1   = false;
+extern bool   gAPShopPurchased_C_HINT_2   = false;
+extern bool   gAPShopPurchased_C_HINT_3   = false;
+extern bool   gAPShopPurchased_D_HINT_1   = false;
+extern bool   gAPShopPurchased_D_HINT_2   = false;
+extern string gAPShopLabel_A_ITEM_1       = "Loading...";
+extern string gAPShopLabel_A_ITEM_2       = "Loading...";
+extern string gAPShopLabel_A_ITEM_3       = "Loading...";
+extern string gAPShopLabel_A_ITEM_4       = "Loading...";
+extern string gAPShopLabel_A_ITEM_5       = "Loading...";
+extern string gAPShopLabel_A_ITEM_6       = "Loading...";
+extern string gAPShopLabel_A_ITEM_7       = "Loading...";
+extern string gAPShopLabel_B_ITEM_1       = "Loading...";
+extern string gAPShopLabel_B_ITEM_2       = "Loading...";
+extern string gAPShopLabel_B_ITEM_3       = "Loading...";
+extern string gAPShopLabel_B_ITEM_4       = "Loading...";
+extern string gAPShopLabel_B_ITEM_5       = "Loading...";
+extern string gAPShopLabel_B_ITEM_6       = "Loading...";
+extern string gAPShopLabel_C_ITEM_1       = "Loading...";
+extern string gAPShopLabel_C_ITEM_2       = "Loading...";
+extern string gAPShopLabel_C_ITEM_3       = "Loading...";
+extern string gAPShopLabel_D_ITEM_1       = "Loading...";
+extern string gAPShopLabel_D_ITEM_2       = "Loading...";
+extern string gAPShopLabel_A_HINT_1       = "Loading...";
+extern string gAPShopLabel_A_HINT_2       = "Loading...";
+extern string gAPShopLabel_A_HINT_3       = "Loading...";
+extern string gAPShopLabel_A_HINT_4       = "Loading...";
+extern string gAPShopLabel_A_HINT_5       = "Loading...";
+extern string gAPShopLabel_B_HINT_1       = "Loading...";
+extern string gAPShopLabel_B_HINT_2       = "Loading...";
+extern string gAPShopLabel_B_HINT_3       = "Loading...";
+extern string gAPShopLabel_B_HINT_4       = "Loading...";
+extern string gAPShopLabel_C_HINT_1       = "Loading...";
+extern string gAPShopLabel_C_HINT_2       = "Loading...";
+extern string gAPShopLabel_C_HINT_3       = "Loading...";
+extern string gAPShopLabel_D_HINT_1       = "Loading...";
+extern string gAPShopLabel_D_HINT_2       = "Loading...";
+
 include "aom_state.xs";
 
 // -----------------------------------------------------------------------
@@ -95,6 +163,20 @@ const int cNORSE_VILLAGER_CHEAPER        = 5011;
 const int cGREEK_VILLAGER_CHEAPER_2      = 5012;
 const int cEGYPTIAN_VILLAGER_CHEAPER_2   = 5013;
 const int cNORSE_VILLAGER_CHEAPER_2      = 5014;
+// Atlantean unit unlock item IDs (only active when godsanity is enabled)
+const int cCAN_TRAIN_MURMILLO       = 3240;
+const int cCAN_TRAIN_KATAPELTES     = 3241;
+const int cCAN_TRAIN_TURMA          = 3242;
+const int cCAN_TRAIN_CHEIROBALLISTA = 3243;
+const int cCAN_TRAIN_CONTARIUS      = 3244;
+const int cCAN_TRAIN_ARCUS          = 3245;
+const int cCAN_TRAIN_FANATIC        = 3246;
+const int cCAN_TRAIN_DESTROYER      = 3247;
+
+
+const int cATLANTEAN_CLASSICAL_MYTH_UNITS = 5025;
+const int cATLANTEAN_HEROIC_MYTH_UNITS    = 5026;
+const int cATLANTEAN_MYTHIC_MYTH_UNITS    = 5027;
 
 // Myth unit tier unlock item IDs
 const int cGREEK_CLASSICAL_MYTH_UNITS                      = 5016;
@@ -119,6 +201,7 @@ const int cEGYPTIAN_AGE_UNLOCK           = 1005;
 const int cNORSE_AGE_UNLOCK              = 1008;
 const int cATLANTEAN_AGE_UNLOCK          = 1011;
 
+
 // -----------------------------------------------------------------------
 // Unit unlock item IDs — raw values matching Items.py
 // -----------------------------------------------------------------------
@@ -127,7 +210,7 @@ const int cATLANTEAN_AGE_UNLOCK          = 1011;
 const int cCAN_TRAIN_HOPLITE          = 3200;
 const int cCAN_TRAIN_SPEARMAN         = 3201;
 const int cCAN_TRAIN_BERSERK          = 3202;
-const int cCAN_TRAIN_HIRDMAN          = 3234;
+const int cCAN_TRAIN_HIRDMAN          = 3203;
 // Greek useful
 const int cCAN_TRAIN_HYPASPIST        = 3210;
 const int cCAN_TRAIN_PELTAST          = 3212;
@@ -277,6 +360,7 @@ void APFindReinforcementSpawn()
 int gAPScenarioId  = 0;
 int gAPCampaignId  = 0;
 int gAPMajorGod    = 0;
+bool gAPGodsanity  = false;
 bool gHasGreek     = false;
 bool gHasEgyptian  = false;
 bool gHasNorse     = false;
@@ -300,6 +384,7 @@ const int cAPMajorLoki      = 9;
 const int cAPMajorKronos    = 10;
 const int cAPMajorOranos    = 11;
 const int cAPMajorGaia      = 12;
+
 
 // -----------------------------------------------------------------------
 // Scenario activation helpers
@@ -355,43 +440,6 @@ int APGetMajorGodForScenario(int scenarioId = 0)
     return cAPMajorNone;
 }
 
-int APGetStartingAgeCount(int scenarioId = 0)
-{
-    if (scenarioId == 1)  { return 1; }
-    if (scenarioId == 2)  { return 0; }
-    if (scenarioId == 3)  { return 0; }
-    if (scenarioId == 4)  { return 1; }
-    if (scenarioId == 5)  { return 2; }
-    if (scenarioId == 6)  { return 2; }
-    if (scenarioId == 7)  { return 2; }
-    if (scenarioId == 8)  { return 1; }
-    if (scenarioId == 9)  { return 3; }
-    if (scenarioId == 10) { return 0; }
-    if (scenarioId == 11) { return 0; }
-    if (scenarioId == 12) { return 0; }
-    if (scenarioId == 13) { return 2; }
-    if (scenarioId == 14) { return 2; }
-    if (scenarioId == 15) { return 1; }
-    if (scenarioId == 16) { return 3; }
-    if (scenarioId == 17) { return 2; }
-    if (scenarioId == 18) { return 1; }
-    if (scenarioId == 19) { return 2; }
-    if (scenarioId == 20) { return 2; }
-    if (scenarioId == 21) { return 0; }
-    if (scenarioId == 22) { return 0; }
-    if (scenarioId == 23) { return 1; }
-    if (scenarioId == 24) { return 1; }
-    if (scenarioId == 25)  { return 1; }
-    if (scenarioId == 26) { return 1; }
-    if (scenarioId == 27) { return 1; }
-    if (scenarioId == 28) { return 2; }
-    if (scenarioId == 29) { return 1; }
-    if (scenarioId == 30) { return 1; }
-    if (scenarioId == 31) { return 2; }
-    if (scenarioId == 32) { return 2; }
-    return 0;
-}
-
 void APForceDisableAllGreekAgeTechs()
 {
     trTechSetStatus(1, cTechClassicalAgeAthena, 0);  trTechSetStatus(1, cTechClassicalAgeHermes, 0);
@@ -431,12 +479,14 @@ void APForceDisableAllAtlanteanAgeTechs()
     trTechSetStatus(1, cTechClassicalAgeOceanus, 0);    trTechSetStatus(1, cTechClassicalAgeAtlantean, 0);
     trTechSetStatus(1, cTechHeroicAgeHyperion, 0);      trTechSetStatus(1, cTechHeroicAgeRheia, 0);
     trTechSetStatus(1, cTechHeroicAgeTheia, 0);         trTechSetStatus(1, cTechHeroicAgeAtlantean, 0);
-    trTechSetStatus(1, cTechMythicAgeHelios, 0);        trTechSetStatus(1, cTechMythicAgeAtlas, 0);
-    trTechSetStatus(1, cTechMythicAgeHekate, 0);        trTechSetStatus(1, cTechMythicAgeAtlantean, 0);
+    trTechSetStatus(1, cTechMythicAgeHelios, 0);         trTechSetStatus(1, cTechMythicAgeAtlas, 0);
+    trTechSetStatus(1, cTechMythicAgeHekate, 0);         trTechSetStatus(1, cTechMythicAgeAtlantean, 0);
 }
 
 void APSetPlayerCiv()
 {
+    // Set civ first, then force-disable all age techs for non-assigned civs.
+    // Force-disable (no guard) clears any pre-set vanilla scenario age techs.
     if (gAPMajorGod == cAPMajorZeus || gAPMajorGod == cAPMajorPoseidon || gAPMajorGod == cAPMajorHades)
     {
         if (gAPMajorGod == cAPMajorZeus)     { trPlayerSetCiv(1, "Zeus"); }
@@ -472,15 +522,6 @@ void APSetPlayerCiv()
         APForceDisableAllGreekAgeTechs();
         APForceDisableAllEgyptianAgeTechs();
         APForceDisableAllNorseAgeTechs();
-    }
-}
-    if (gAPMajorGod == cAPMajorIsis || gAPMajorGod == cAPMajorRa || gAPMajorGod == cAPMajorSet)
-    {
-        trPlayerSetCiv(1, "Egyptians");
-    }
-    if (gAPMajorGod == cAPMajorOdin || gAPMajorGod == cAPMajorThor || gAPMajorGod == cAPMajorLoki)
-    {
-        trPlayerSetCiv(1, "Norse");
     }
 }
 
@@ -520,86 +561,381 @@ void APReadRandomGod()
     if (gAPScenarioId == 32) { int g = trQuestVarGet("APGod32"); if (g > 0) { gAPMajorGod = g; } }
 }
 
+// ── Static shop functions (available at trigger-compile time) ───────────
+// All shop globals (gAPShopAvailableGems, gAPShopPurchased_*, gAPShopLabel_*)
+// are declared as extern before the include at the top of this file so they
+// are visible to aom_state.xs when it compiles APShopStateInit.
+
+int APGetAvailableGems()
+{
+    return gAPShopAvailableGems;
+}
+
+bool APIsSlotPurchased(string slotId = "")
+{
+    if (slotId == "A_ITEM_1") { return gAPShopPurchased_A_ITEM_1; }
+    if (slotId == "A_ITEM_2") { return gAPShopPurchased_A_ITEM_2; }
+    if (slotId == "A_ITEM_3") { return gAPShopPurchased_A_ITEM_3; }
+    if (slotId == "A_ITEM_4") { return gAPShopPurchased_A_ITEM_4; }
+    if (slotId == "A_ITEM_5") { return gAPShopPurchased_A_ITEM_5; }
+    if (slotId == "A_ITEM_6") { return gAPShopPurchased_A_ITEM_6; }
+    if (slotId == "A_ITEM_7") { return gAPShopPurchased_A_ITEM_7; }
+    if (slotId == "B_ITEM_1") { return gAPShopPurchased_B_ITEM_1; }
+    if (slotId == "B_ITEM_2") { return gAPShopPurchased_B_ITEM_2; }
+    if (slotId == "B_ITEM_3") { return gAPShopPurchased_B_ITEM_3; }
+    if (slotId == "B_ITEM_4") { return gAPShopPurchased_B_ITEM_4; }
+    if (slotId == "B_ITEM_5") { return gAPShopPurchased_B_ITEM_5; }
+    if (slotId == "B_ITEM_6") { return gAPShopPurchased_B_ITEM_6; }
+    if (slotId == "C_ITEM_1") { return gAPShopPurchased_C_ITEM_1; }
+    if (slotId == "C_ITEM_2") { return gAPShopPurchased_C_ITEM_2; }
+    if (slotId == "C_ITEM_3") { return gAPShopPurchased_C_ITEM_3; }
+    if (slotId == "D_ITEM_1") { return gAPShopPurchased_D_ITEM_1; }
+    if (slotId == "D_ITEM_2") { return gAPShopPurchased_D_ITEM_2; }
+    if (slotId == "A_HINT_1") { return gAPShopPurchased_A_HINT_1; }
+    if (slotId == "A_HINT_2") { return gAPShopPurchased_A_HINT_2; }
+    if (slotId == "A_HINT_3") { return gAPShopPurchased_A_HINT_3; }
+    if (slotId == "A_HINT_4") { return gAPShopPurchased_A_HINT_4; }
+    if (slotId == "A_HINT_5") { return gAPShopPurchased_A_HINT_5; }
+    if (slotId == "B_HINT_1") { return gAPShopPurchased_B_HINT_1; }
+    if (slotId == "B_HINT_2") { return gAPShopPurchased_B_HINT_2; }
+    if (slotId == "B_HINT_3") { return gAPShopPurchased_B_HINT_3; }
+    if (slotId == "B_HINT_4") { return gAPShopPurchased_B_HINT_4; }
+    if (slotId == "C_HINT_1") { return gAPShopPurchased_C_HINT_1; }
+    if (slotId == "C_HINT_2") { return gAPShopPurchased_C_HINT_2; }
+    if (slotId == "C_HINT_3") { return gAPShopPurchased_C_HINT_3; }
+    if (slotId == "D_HINT_1") { return gAPShopPurchased_D_HINT_1; }
+    if (slotId == "D_HINT_2") { return gAPShopPurchased_D_HINT_2; }
+    return false;
+}
+
+string APShopGetLabel(string slotId = "")
+{
+    if (slotId == "A_ITEM_1") { return gAPShopLabel_A_ITEM_1; }
+    if (slotId == "A_ITEM_2") { return gAPShopLabel_A_ITEM_2; }
+    if (slotId == "A_ITEM_3") { return gAPShopLabel_A_ITEM_3; }
+    if (slotId == "A_ITEM_4") { return gAPShopLabel_A_ITEM_4; }
+    if (slotId == "A_ITEM_5") { return gAPShopLabel_A_ITEM_5; }
+    if (slotId == "A_ITEM_6") { return gAPShopLabel_A_ITEM_6; }
+    if (slotId == "A_ITEM_7") { return gAPShopLabel_A_ITEM_7; }
+    if (slotId == "B_ITEM_1") { return gAPShopLabel_B_ITEM_1; }
+    if (slotId == "B_ITEM_2") { return gAPShopLabel_B_ITEM_2; }
+    if (slotId == "B_ITEM_3") { return gAPShopLabel_B_ITEM_3; }
+    if (slotId == "B_ITEM_4") { return gAPShopLabel_B_ITEM_4; }
+    if (slotId == "B_ITEM_5") { return gAPShopLabel_B_ITEM_5; }
+    if (slotId == "B_ITEM_6") { return gAPShopLabel_B_ITEM_6; }
+    if (slotId == "C_ITEM_1") { return gAPShopLabel_C_ITEM_1; }
+    if (slotId == "C_ITEM_2") { return gAPShopLabel_C_ITEM_2; }
+    if (slotId == "C_ITEM_3") { return gAPShopLabel_C_ITEM_3; }
+    if (slotId == "D_ITEM_1") { return gAPShopLabel_D_ITEM_1; }
+    if (slotId == "D_ITEM_2") { return gAPShopLabel_D_ITEM_2; }
+    if (slotId == "A_HINT_1") { return gAPShopLabel_A_HINT_1; }
+    if (slotId == "A_HINT_2") { return gAPShopLabel_A_HINT_2; }
+    if (slotId == "A_HINT_3") { return gAPShopLabel_A_HINT_3; }
+    if (slotId == "A_HINT_4") { return gAPShopLabel_A_HINT_4; }
+    if (slotId == "A_HINT_5") { return gAPShopLabel_A_HINT_5; }
+    if (slotId == "B_HINT_1") { return gAPShopLabel_B_HINT_1; }
+    if (slotId == "B_HINT_2") { return gAPShopLabel_B_HINT_2; }
+    if (slotId == "B_HINT_3") { return gAPShopLabel_B_HINT_3; }
+    if (slotId == "B_HINT_4") { return gAPShopLabel_B_HINT_4; }
+    if (slotId == "C_HINT_1") { return gAPShopLabel_C_HINT_1; }
+    if (slotId == "C_HINT_2") { return gAPShopLabel_C_HINT_2; }
+    if (slotId == "C_HINT_3") { return gAPShopLabel_C_HINT_3; }
+    if (slotId == "D_HINT_1") { return gAPShopLabel_D_HINT_1; }
+    if (slotId == "D_HINT_2") { return gAPShopLabel_D_HINT_2; }
+    return "Unknown Slot";
+}
+
+void APShopPurchase(string slotId = "")
+{
+    if (APIsSlotPurchased(slotId)) { return; }
+    if (APGetAvailableGems() < 1)  { return; }
+    if (slotId == "A_ITEM_1") { trExecuteOnAI(12, "APShopFire_A_ITEM_1"); }
+    if (slotId == "A_ITEM_2") { trExecuteOnAI(12, "APShopFire_A_ITEM_2"); }
+    if (slotId == "A_ITEM_3") { trExecuteOnAI(12, "APShopFire_A_ITEM_3"); }
+    if (slotId == "A_ITEM_4") { trExecuteOnAI(12, "APShopFire_A_ITEM_4"); }
+    if (slotId == "A_ITEM_5") { trExecuteOnAI(12, "APShopFire_A_ITEM_5"); }
+    if (slotId == "A_ITEM_6") { trExecuteOnAI(12, "APShopFire_A_ITEM_6"); }
+    if (slotId == "A_ITEM_7") { trExecuteOnAI(12, "APShopFire_A_ITEM_7"); }
+    if (slotId == "B_ITEM_1") { trExecuteOnAI(12, "APShopFire_B_ITEM_1"); }
+    if (slotId == "B_ITEM_2") { trExecuteOnAI(12, "APShopFire_B_ITEM_2"); }
+    if (slotId == "B_ITEM_3") { trExecuteOnAI(12, "APShopFire_B_ITEM_3"); }
+    if (slotId == "B_ITEM_4") { trExecuteOnAI(12, "APShopFire_B_ITEM_4"); }
+    if (slotId == "B_ITEM_5") { trExecuteOnAI(12, "APShopFire_B_ITEM_5"); }
+    if (slotId == "B_ITEM_6") { trExecuteOnAI(12, "APShopFire_B_ITEM_6"); }
+    if (slotId == "C_ITEM_1") { trExecuteOnAI(12, "APShopFire_C_ITEM_1"); }
+    if (slotId == "C_ITEM_2") { trExecuteOnAI(12, "APShopFire_C_ITEM_2"); }
+    if (slotId == "C_ITEM_3") { trExecuteOnAI(12, "APShopFire_C_ITEM_3"); }
+    if (slotId == "D_ITEM_1") { trExecuteOnAI(12, "APShopFire_D_ITEM_1"); }
+    if (slotId == "D_ITEM_2") { trExecuteOnAI(12, "APShopFire_D_ITEM_2"); }
+    if (slotId == "A_HINT_1") { trExecuteOnAI(12, "APShopFire_A_HINT_1"); }
+    if (slotId == "A_HINT_2") { trExecuteOnAI(12, "APShopFire_A_HINT_2"); }
+    if (slotId == "A_HINT_3") { trExecuteOnAI(12, "APShopFire_A_HINT_3"); }
+    if (slotId == "A_HINT_4") { trExecuteOnAI(12, "APShopFire_A_HINT_4"); }
+    if (slotId == "A_HINT_5") { trExecuteOnAI(12, "APShopFire_A_HINT_5"); }
+    if (slotId == "B_HINT_1") { trExecuteOnAI(12, "APShopFire_B_HINT_1"); }
+    if (slotId == "B_HINT_2") { trExecuteOnAI(12, "APShopFire_B_HINT_2"); }
+    if (slotId == "B_HINT_3") { trExecuteOnAI(12, "APShopFire_B_HINT_3"); }
+    if (slotId == "B_HINT_4") { trExecuteOnAI(12, "APShopFire_B_HINT_4"); }
+    if (slotId == "C_HINT_1") { trExecuteOnAI(12, "APShopFire_C_HINT_1"); }
+    if (slotId == "C_HINT_2") { trExecuteOnAI(12, "APShopFire_C_HINT_2"); }
+    if (slotId == "C_HINT_3") { trExecuteOnAI(12, "APShopFire_C_HINT_3"); }
+    if (slotId == "D_HINT_1") { trExecuteOnAI(12, "APShopFire_D_HINT_1"); }
+    if (slotId == "D_HINT_2") { trExecuteOnAI(12, "APShopFire_D_HINT_2"); }
+    trPlayerGrantResources(1, "Gold", -1);
+}
+
+void APShopScenarioInit()
+{
+    // APShopStateInit() is generated by the client into aom_state.xs.
+    // It sets gAPShop* globals AND sets APPurchased_* quest variables (1=purchased, 0=not).
+    // Each obelisk has a kill trigger in the scenario with condition:
+    //   Quest Variable Value  "APPurchased_SLOT_ID"  >= 1
+    // That trigger handles destruction on reload — no XS unit ID reading needed.
+    APShopStateInit();
+    trPlayerGrantResources(1, "Gold", APGetAvailableGems());
+
+    // Show labels above surviving obelisks.
+    if (gAPShopPurchased_A_ITEM_1) { trWorldSpacePromptHide("APLabel_A_ITEM_1"); }
+    else { trWorldSpacePrompt("APLabel_A_ITEM_1", trQuestVarGet("APOb_A_ITEM_1"), false, APShopGetLabel("A_ITEM_1"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_A_ITEM_2) { trWorldSpacePromptHide("APLabel_A_ITEM_2"); }
+    else { trWorldSpacePrompt("APLabel_A_ITEM_2", trQuestVarGet("APOb_A_ITEM_2"), false, APShopGetLabel("A_ITEM_2"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_A_ITEM_3) { trWorldSpacePromptHide("APLabel_A_ITEM_3"); }
+    else { trWorldSpacePrompt("APLabel_A_ITEM_3", trQuestVarGet("APOb_A_ITEM_3"), false, APShopGetLabel("A_ITEM_3"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_A_ITEM_4) { trWorldSpacePromptHide("APLabel_A_ITEM_4"); }
+    else { trWorldSpacePrompt("APLabel_A_ITEM_4", trQuestVarGet("APOb_A_ITEM_4"), false, APShopGetLabel("A_ITEM_4"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_A_ITEM_5) { trWorldSpacePromptHide("APLabel_A_ITEM_5"); }
+    else { trWorldSpacePrompt("APLabel_A_ITEM_5", trQuestVarGet("APOb_A_ITEM_5"), false, APShopGetLabel("A_ITEM_5"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_A_ITEM_6) { trWorldSpacePromptHide("APLabel_A_ITEM_6"); }
+    else { trWorldSpacePrompt("APLabel_A_ITEM_6", trQuestVarGet("APOb_A_ITEM_6"), false, APShopGetLabel("A_ITEM_6"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_A_ITEM_7) { trWorldSpacePromptHide("APLabel_A_ITEM_7"); }
+    else { trWorldSpacePrompt("APLabel_A_ITEM_7", trQuestVarGet("APOb_A_ITEM_7"), false, APShopGetLabel("A_ITEM_7"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_A_HINT_1) { trWorldSpacePromptHide("APLabel_A_HINT_1"); }
+    else { trWorldSpacePrompt("APLabel_A_HINT_1", trQuestVarGet("APOb_A_HINT_1"), false, APShopGetLabel("A_HINT_1"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_A_HINT_2) { trWorldSpacePromptHide("APLabel_A_HINT_2"); }
+    else { trWorldSpacePrompt("APLabel_A_HINT_2", trQuestVarGet("APOb_A_HINT_2"), false, APShopGetLabel("A_HINT_2"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_A_HINT_3) { trWorldSpacePromptHide("APLabel_A_HINT_3"); }
+    else { trWorldSpacePrompt("APLabel_A_HINT_3", trQuestVarGet("APOb_A_HINT_3"), false, APShopGetLabel("A_HINT_3"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_A_HINT_4) { trWorldSpacePromptHide("APLabel_A_HINT_4"); }
+    else { trWorldSpacePrompt("APLabel_A_HINT_4", trQuestVarGet("APOb_A_HINT_4"), false, APShopGetLabel("A_HINT_4"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_A_HINT_5) { trWorldSpacePromptHide("APLabel_A_HINT_5"); }
+    else { trWorldSpacePrompt("APLabel_A_HINT_5", trQuestVarGet("APOb_A_HINT_5"), false, APShopGetLabel("A_HINT_5"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_B_ITEM_1) { trWorldSpacePromptHide("APLabel_B_ITEM_1"); }
+    else { trWorldSpacePrompt("APLabel_B_ITEM_1", trQuestVarGet("APOb_B_ITEM_1"), false, APShopGetLabel("B_ITEM_1"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_B_ITEM_2) { trWorldSpacePromptHide("APLabel_B_ITEM_2"); }
+    else { trWorldSpacePrompt("APLabel_B_ITEM_2", trQuestVarGet("APOb_B_ITEM_2"), false, APShopGetLabel("B_ITEM_2"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_B_ITEM_3) { trWorldSpacePromptHide("APLabel_B_ITEM_3"); }
+    else { trWorldSpacePrompt("APLabel_B_ITEM_3", trQuestVarGet("APOb_B_ITEM_3"), false, APShopGetLabel("B_ITEM_3"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_B_ITEM_4) { trWorldSpacePromptHide("APLabel_B_ITEM_4"); }
+    else { trWorldSpacePrompt("APLabel_B_ITEM_4", trQuestVarGet("APOb_B_ITEM_4"), false, APShopGetLabel("B_ITEM_4"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_B_ITEM_5) { trWorldSpacePromptHide("APLabel_B_ITEM_5"); }
+    else { trWorldSpacePrompt("APLabel_B_ITEM_5", trQuestVarGet("APOb_B_ITEM_5"), false, APShopGetLabel("B_ITEM_5"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_B_ITEM_6) { trWorldSpacePromptHide("APLabel_B_ITEM_6"); }
+    else { trWorldSpacePrompt("APLabel_B_ITEM_6", trQuestVarGet("APOb_B_ITEM_6"), false, APShopGetLabel("B_ITEM_6"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_B_HINT_1) { trWorldSpacePromptHide("APLabel_B_HINT_1"); }
+    else { trWorldSpacePrompt("APLabel_B_HINT_1", trQuestVarGet("APOb_B_HINT_1"), false, APShopGetLabel("B_HINT_1"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_B_HINT_2) { trWorldSpacePromptHide("APLabel_B_HINT_2"); }
+    else { trWorldSpacePrompt("APLabel_B_HINT_2", trQuestVarGet("APOb_B_HINT_2"), false, APShopGetLabel("B_HINT_2"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_B_HINT_3) { trWorldSpacePromptHide("APLabel_B_HINT_3"); }
+    else { trWorldSpacePrompt("APLabel_B_HINT_3", trQuestVarGet("APOb_B_HINT_3"), false, APShopGetLabel("B_HINT_3"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_B_HINT_4) { trWorldSpacePromptHide("APLabel_B_HINT_4"); }
+    else { trWorldSpacePrompt("APLabel_B_HINT_4", trQuestVarGet("APOb_B_HINT_4"), false, APShopGetLabel("B_HINT_4"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_C_ITEM_1) { trWorldSpacePromptHide("APLabel_C_ITEM_1"); }
+    else { trWorldSpacePrompt("APLabel_C_ITEM_1", trQuestVarGet("APOb_C_ITEM_1"), false, APShopGetLabel("C_ITEM_1"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_C_ITEM_2) { trWorldSpacePromptHide("APLabel_C_ITEM_2"); }
+    else { trWorldSpacePrompt("APLabel_C_ITEM_2", trQuestVarGet("APOb_C_ITEM_2"), false, APShopGetLabel("C_ITEM_2"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_C_ITEM_3) { trWorldSpacePromptHide("APLabel_C_ITEM_3"); }
+    else { trWorldSpacePrompt("APLabel_C_ITEM_3", trQuestVarGet("APOb_C_ITEM_3"), false, APShopGetLabel("C_ITEM_3"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_C_HINT_1) { trWorldSpacePromptHide("APLabel_C_HINT_1"); }
+    else { trWorldSpacePrompt("APLabel_C_HINT_1", trQuestVarGet("APOb_C_HINT_1"), false, APShopGetLabel("C_HINT_1"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_C_HINT_2) { trWorldSpacePromptHide("APLabel_C_HINT_2"); }
+    else { trWorldSpacePrompt("APLabel_C_HINT_2", trQuestVarGet("APOb_C_HINT_2"), false, APShopGetLabel("C_HINT_2"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_C_HINT_3) { trWorldSpacePromptHide("APLabel_C_HINT_3"); }
+    else { trWorldSpacePrompt("APLabel_C_HINT_3", trQuestVarGet("APOb_C_HINT_3"), false, APShopGetLabel("C_HINT_3"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_D_ITEM_1) { trWorldSpacePromptHide("APLabel_D_ITEM_1"); }
+    else { trWorldSpacePrompt("APLabel_D_ITEM_1", trQuestVarGet("APOb_D_ITEM_1"), false, APShopGetLabel("D_ITEM_1"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_D_ITEM_2) { trWorldSpacePromptHide("APLabel_D_ITEM_2"); }
+    else { trWorldSpacePrompt("APLabel_D_ITEM_2", trQuestVarGet("APOb_D_ITEM_2"), false, APShopGetLabel("D_ITEM_2"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_D_HINT_1) { trWorldSpacePromptHide("APLabel_D_HINT_1"); }
+    else { trWorldSpacePrompt("APLabel_D_HINT_1", trQuestVarGet("APOb_D_HINT_1"), false, APShopGetLabel("D_HINT_1"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_D_HINT_2) { trWorldSpacePromptHide("APLabel_D_HINT_2"); }
+    else { trWorldSpacePrompt("APLabel_D_HINT_2", trQuestVarGet("APOb_D_HINT_2"), false, APShopGetLabel("D_HINT_2"), vector(0,0,0), "vfx_top", true); }
+}
+
+
 rule APActivateScenario
 highFrequency
 inactive
 runImmediately
 {
     gAPScenarioId = trQuestVarGet("APScenarioID");
+
+    // Shop scenario (ID 0) — skip campaign setup, just init the shop
+    if (gAPScenarioId == 0)
+    {
+        APInitItems();
+        APShopScenarioInit();
+        xsEnableRule("APProcessShopBuy");
+        xsEnableRule("APShopTierCheck");
+        trMusicPlayCurrent();
+        xsDisableSelf();
+        return;
+    }
+
     gAPCampaignId = APGetCampaignForScenario(gAPScenarioId);
     gAPMajorGod = APGetMajorGodForScenario(gAPScenarioId);
+    APInitItems();               // populate gAPItems array first — needed by reads below
     APInitGods();                // populate APGod1..APGod32 quest vars
     APReadRandomGod();           // override gAPMajorGod if godsanity is active
     APSetPlayerCiv();            // change civ + force-clear old civ age techs
     APForbidVanillaArchaicUnits(); // forbid archaic units from vanilla god/civ if changed
     APInitStartingAgeTechs();    // grant pre-computed starting age techs for this scenario
+    APForbidItemGatedUnits();    // forbid all units whose unlock items have not been received
 
-    // Forbid all unlockable units at scenario start — unforbidden by received items below
-    trForbidProtounit(1, "Hoplite");
-    trForbidProtounit(1, "Spearman");
-    trForbidProtounit(1, "Berserk");
-    trForbidProtounit(1, "Hirdman");
-    trForbidProtounit(1, "Hypaspist");
-    trForbidProtounit(1, "Peltast");
-    trForbidProtounit(1, "Hippeus");
-    trForbidProtounit(1, "Toxotes");
-    trForbidProtounit(1, "Prodromos");
-    trForbidProtounit(1, "Axeman");
-    trForbidProtounit(1, "Slinger");
-    trForbidProtounit(1, "ChariotArcher");
-    trForbidProtounit(1, "CamelRider");
-    trForbidProtounit(1, "WarElephant");
-    trForbidProtounit(1, "ThrowingAxeman");
-    trForbidProtounit(1, "Huskarl");
-    trForbidProtounit(1, "RaidingCavalry");
-    trForbidProtounit(1, "Jarl");
+    // SPC campaign heroes — never player-trainable regardless of god or items
+    trForbidProtounit(1, "Ajax");
+    trForbidProtounit(1, "Chiron");
+    trForbidProtounit(1, "Odysseus");
 
-    // Myth units — all forbidden at start, unlocked by item
-    trForbidProtounit(1, "Centaur");
-    trForbidProtounit(1, "Minotaur");
-    trForbidProtounit(1, "Cyclops");
-    trForbidProtounit(1, "Lykaon");
-    trForbidProtounit(1, "Pegasus");
-    trForbidProtounit(1, "Hydra");
-    trForbidProtounit(1, "Manticore");
-    trForbidProtounit(1, "NemeanLion");
-    trForbidProtounit(1, "Hamadryad");
-    trForbidProtounit(1, "Scylla");
-    trForbidProtounit(1, "Medusa");
-    trForbidProtounit(1, "Colossus");
-    trForbidProtounit(1, "Chimera");
-    trForbidProtounit(1, "Siren");
-    trForbidProtounit(1, "Harpy");
-    trForbidProtounit(1, "Carcinos");
-    trForbidProtounit(1, "Sphinx");
-    trForbidProtounit(1, "Wadjet");
-    trForbidProtounit(1, "Anubite");
-    trForbidProtounit(1, "Petsuchos");
-    trForbidProtounit(1, "Scarab");
-    trForbidProtounit(1, "ScorpionMan");
-    trForbidProtounit(1, "Roc");
-    trForbidProtounit(1, "Leviathan");
-    trForbidProtounit(1, "Mummy");
-    trForbidProtounit(1, "Avenger");
-    trForbidProtounit(1, "Phoenix");
-    trForbidProtounit(1, "WarTurtle");
-    trForbidProtounit(1, "Valkyrie");
-    trForbidProtounit(1, "Troll");
-    trForbidProtounit(1, "Einherjar");
-    trForbidProtounit(1, "Draugr");
-    trForbidProtounit(1, "FrostGiant");
-    trForbidProtounit(1, "BattleBoar");
-    trForbidProtounit(1, "MountainGiant");
-    trForbidProtounit(1, "RockGiant");
-    trForbidProtounit(1, "Kraken");
-    trForbidProtounit(1, "FireGiant");
-    trForbidProtounit(1, "FenrisWolfBrood");
-    trForbidProtounit(1, "Fafnir");
-    trForbidProtounit(1, "JormunElver");
+    // Scenario 12: Roc causes a game-breaking bug — always forbidden here
+    if (gAPScenarioId == 12) { trForbidProtounit(1, "Roc"); }
 
     xsEnableRule("APApplyItems");
     trMusicPlayCurrent();
     xsDisableSelf();
+}
+
+// -----------------------------------------------------------------------
+// God announcement — called from APApplyItems when godsanity is on.
+// Fires at the same time as APCheckCampaignLock, after the cinematic ends.
+// -----------------------------------------------------------------------
+
+void APAnnounceGod()
+{
+    if (gAPGodsanity == false) { return; }
+
+    string godName   = "";
+    string colorOpen = "";
+
+    if (gAPMajorGod == cAPMajorZeus)     { godName = "Zeus";     colorOpen = "<color0,0,255>"; }
+    if (gAPMajorGod == cAPMajorPoseidon) { godName = "Poseidon"; colorOpen = "<color0,0,255>"; }
+    if (gAPMajorGod == cAPMajorHades)    { godName = "Hades";    colorOpen = "<color0,0,255>"; }
+    if (gAPMajorGod == cAPMajorIsis)     { godName = "Isis";     colorOpen = "<color255,255,0>"; }
+    if (gAPMajorGod == cAPMajorRa)       { godName = "Ra";       colorOpen = "<color255,255,0>"; }
+    if (gAPMajorGod == cAPMajorSet)      { godName = "Set";      colorOpen = "<color255,255,0>"; }
+    if (gAPMajorGod == cAPMajorOdin)     { godName = "Odin";     colorOpen = "<color136,8,8>"; }
+    if (gAPMajorGod == cAPMajorThor)     { godName = "Thor";     colorOpen = "<color136,8,8>"; }
+    if (gAPMajorGod == cAPMajorLoki)     { godName = "Loki";     colorOpen = "<color136,8,8>"; }
+    if (gAPMajorGod == cAPMajorKronos)   { godName = "Kronos";   colorOpen = "<color0,255,255>"; }
+    if (gAPMajorGod == cAPMajorOranos)   { godName = "Oranos";   colorOpen = "<color0,255,255>"; }
+    if (gAPMajorGod == cAPMajorGaia)     { godName = "Gaia";     colorOpen = "<color0,255,255>"; }
+
+    if (godName != "")
+    {
+        trMessageSetText("Major God:\n" + colorOpen + godName + "</color>", 5);
+        trSoundPlayFN("ui\\thunder3.wav");
+    }
+}
+
+// -----------------------------------------------------------------------
+// Shop system — static definitions
+//
+// These functions are called directly from trigger XS code, so they MUST
+// be defined here in the static file. Trigger XS code is compiled at
+// scenario load before any trIncludeFile effects run, meaning functions
+// defined only in the generated aom_state.xs are not available at parse time.
+//
+// All dynamic data (purchased state, gem count, labels) is stored in global
+// variables below. APShopStateInit() in aom_state.xs sets them at runtime
+// after the include chain runs. APShopScenarioInit() calls APShopStateInit()
+// then grants the player their available gems as gold.
+// -----------------------------------------------------------------------
+
+// -----------------------------------------------------------------------
+// Shop purchase polling rule
+// Purchase triggers set APShopBuySlot (slot index) and increment
+// APShopBuyNonce. This rule detects the nonce change and dispatches
+// to APShopPurchase — same pattern as APProcessQueuedCheck.
+// Slot index → slot ID mapping mirrors SHOP_SLOT_ORDER in Locations.py.
+// -----------------------------------------------------------------------
+
+int gAPLastShopBuyNonce = 0;
+
+string APShopSlotFromIndex(int idx = 0)
+{
+    if (idx ==  1) { return "A_ITEM_1"; }
+    if (idx ==  2) { return "A_ITEM_2"; }
+    if (idx ==  3) { return "A_ITEM_3"; }
+    if (idx ==  4) { return "A_ITEM_4"; }
+    if (idx ==  5) { return "A_ITEM_5"; }
+    if (idx ==  6) { return "A_ITEM_6"; }
+    if (idx ==  7) { return "A_ITEM_7"; }
+    if (idx ==  8) { return "B_ITEM_1"; }
+    if (idx ==  9) { return "B_ITEM_2"; }
+    if (idx == 10) { return "B_ITEM_3"; }
+    if (idx == 11) { return "B_ITEM_4"; }
+    if (idx == 12) { return "B_ITEM_5"; }
+    if (idx == 13) { return "B_ITEM_6"; }
+    if (idx == 14) { return "C_ITEM_1"; }
+    if (idx == 15) { return "C_ITEM_2"; }
+    if (idx == 16) { return "C_ITEM_3"; }
+    if (idx == 17) { return "D_ITEM_1"; }
+    if (idx == 18) { return "D_ITEM_2"; }
+    if (idx == 19) { return "A_HINT_1"; }
+    if (idx == 20) { return "A_HINT_2"; }
+    if (idx == 21) { return "A_HINT_3"; }
+    if (idx == 22) { return "A_HINT_4"; }
+    if (idx == 23) { return "A_HINT_5"; }
+    if (idx == 24) { return "B_HINT_1"; }
+    if (idx == 25) { return "B_HINT_2"; }
+    if (idx == 26) { return "B_HINT_3"; }
+    if (idx == 27) { return "B_HINT_4"; }
+    if (idx == 28) { return "C_HINT_1"; }
+    if (idx == 29) { return "C_HINT_2"; }
+    if (idx == 30) { return "C_HINT_3"; }
+    if (idx == 31) { return "D_HINT_1"; }
+    if (idx == 32) { return "D_HINT_2"; }
+    return "";
+}
+
+rule APProcessShopBuy
+highFrequency
+inactive
+{
+    int nonce = trQuestVarGet("APShopBuyNonce");
+    if (nonce > gAPLastShopBuyNonce)
+    {
+        gAPLastShopBuyNonce = nonce;
+        int idx     = trQuestVarGet("APShopBuySlot");
+        string slotId = APShopSlotFromIndex(idx);
+        if (slotId != "") { APShopPurchase(slotId); }
+    }
+}
+
+// -----------------------------------------------------------------------
+// Shop tier unlock polling rule
+// Sets quest variable "APShopTier" to 1/2/3/4 as the player beats more
+// scenarios. In the shop scenario editor, create triggers with condition:
+//   Quest Variable Value  "APShopTier"  >=  2   (for Shop B opening)
+//   Quest Variable Value  "APShopTier"  >=  3   (for Shop C opening)
+//   Quest Variable Value  "APShopTier"  >=  4   (for Shop D opening)
+// Effects on those triggers: remove walls, convert revealers, etc.
+// APShopTierThreshold is written by the client into aom_state.xs as a
+// generated global from the wins_to_open_shop option.
+// -----------------------------------------------------------------------
+
+rule APShopTierCheck
+highFrequency
+inactive
+{
+    int beaten = trQuestVarGet("APBeatenScenarios");
+    int tier   = 1;
+    if (gAPShopTierThreshold > 0)
+    {
+        if (beaten >= gAPShopTierThreshold * 3) { tier = 4; }
+        else if (beaten >= gAPShopTierThreshold * 2) { tier = 3; }
+        else if (beaten >= gAPShopTierThreshold) { tier = 2; }
+    }
+    trQuestVarSet("APShopTier", tier);
 }
 
 // -----------------------------------------------------------------------
@@ -988,16 +1324,97 @@ void APApplyNorseMinorGods(int majorGod = 0, int ageCount = 0)
     }
 }
 
+void APDisableAllAtlanteanAgeTechs()
+{
+    if (trTechStatusActive(1, cTechClassicalAgeAtlantean) == false) { trTechSetStatus(1, cTechClassicalAgeAtlantean, 0); }
+    if (trTechStatusActive(1, cTechClassicalAgePrometheus) == false) { trTechSetStatus(1, cTechClassicalAgePrometheus, 0); }
+    if (trTechStatusActive(1, cTechClassicalAgeLeto) == false) { trTechSetStatus(1, cTechClassicalAgeLeto, 0); }
+    if (trTechStatusActive(1, cTechClassicalAgeOceanus) == false) { trTechSetStatus(1, cTechClassicalAgeOceanus, 0); }
+    if (trTechStatusActive(1, cTechHeroicAgeAtlantean) == false) { trTechSetStatus(1, cTechHeroicAgeAtlantean, 0); }
+    if (trTechStatusActive(1, cTechHeroicAgeHyperion) == false) { trTechSetStatus(1, cTechHeroicAgeHyperion, 0); }
+    if (trTechStatusActive(1, cTechHeroicAgeRheia) == false) { trTechSetStatus(1, cTechHeroicAgeRheia, 0); }
+    if (trTechStatusActive(1, cTechHeroicAgeTheia) == false) { trTechSetStatus(1, cTechHeroicAgeTheia, 0); }
+    if (trTechStatusActive(1, cTechMythicAgeAtlantean) == false) { trTechSetStatus(1, cTechMythicAgeAtlantean, 0); }
+    if (trTechStatusActive(1, cTechMythicAgeHelios) == false) { trTechSetStatus(1, cTechMythicAgeHelios, 0); }
+    if (trTechStatusActive(1, cTechMythicAgeAtlas) == false) { trTechSetStatus(1, cTechMythicAgeAtlas, 0); }
+    if (trTechStatusActive(1, cTechMythicAgeHekate) == false) { trTechSetStatus(1, cTechMythicAgeHekate, 0); }
+}
+
+void APApplyAtlanteanMinorGods(int majorGod = 0, int ageCount = 0)
+{
+    APDisableAllAtlanteanAgeTechs();
+    if (ageCount >= 1)
+    {
+        if (trTechStatusActive(1, cTechClassicalAgeAtlantean) == false) { trTechSetStatus(1, cTechClassicalAgeAtlantean, 1); }
+        if (majorGod == cAPMajorKronos) { if (trTechStatusActive(1, cTechClassicalAgePrometheus) == false) { trTechSetStatus(1, cTechClassicalAgePrometheus, 1); } if (trTechStatusActive(1, cTechClassicalAgeLeto) == false) { trTechSetStatus(1, cTechClassicalAgeLeto, 1); } }
+        if (majorGod == cAPMajorOranos) { if (trTechStatusActive(1, cTechClassicalAgePrometheus) == false) { trTechSetStatus(1, cTechClassicalAgePrometheus, 1); } if (trTechStatusActive(1, cTechClassicalAgeOceanus) == false) { trTechSetStatus(1, cTechClassicalAgeOceanus, 1); } }
+        if (majorGod == cAPMajorGaia)   { if (trTechStatusActive(1, cTechClassicalAgeLeto) == false) { trTechSetStatus(1, cTechClassicalAgeLeto, 1); } if (trTechStatusActive(1, cTechClassicalAgeOceanus) == false) { trTechSetStatus(1, cTechClassicalAgeOceanus, 1); } }
+    }
+    if (ageCount >= 2)
+    {
+        if (trTechStatusActive(1, cTechHeroicAgeAtlantean) == false) { trTechSetStatus(1, cTechHeroicAgeAtlantean, 1); }
+        if (majorGod == cAPMajorKronos) { if (trTechStatusActive(1, cTechHeroicAgeHyperion) == false) { trTechSetStatus(1, cTechHeroicAgeHyperion, 1); } if (trTechStatusActive(1, cTechHeroicAgeRheia) == false) { trTechSetStatus(1, cTechHeroicAgeRheia, 1); } }
+        if (majorGod == cAPMajorOranos) { if (trTechStatusActive(1, cTechHeroicAgeHyperion) == false) { trTechSetStatus(1, cTechHeroicAgeHyperion, 1); } if (trTechStatusActive(1, cTechHeroicAgeTheia) == false) { trTechSetStatus(1, cTechHeroicAgeTheia, 1); } }
+        if (majorGod == cAPMajorGaia)   { if (trTechStatusActive(1, cTechHeroicAgeRheia) == false) { trTechSetStatus(1, cTechHeroicAgeRheia, 1); } if (trTechStatusActive(1, cTechHeroicAgeTheia) == false) { trTechSetStatus(1, cTechHeroicAgeTheia, 1); } }
+    }
+    if (ageCount >= 3)
+    {
+        if (trTechStatusActive(1, cTechMythicAgeAtlantean) == false) { trTechSetStatus(1, cTechMythicAgeAtlantean, 1); }
+        if (majorGod == cAPMajorKronos) { if (trTechStatusActive(1, cTechMythicAgeHelios) == false) { trTechSetStatus(1, cTechMythicAgeHelios, 1); } if (trTechStatusActive(1, cTechMythicAgeAtlas) == false) { trTechSetStatus(1, cTechMythicAgeAtlas, 1); } }
+        if (majorGod == cAPMajorOranos) { if (trTechStatusActive(1, cTechMythicAgeHelios) == false) { trTechSetStatus(1, cTechMythicAgeHelios, 1); } if (trTechStatusActive(1, cTechMythicAgeHekate) == false) { trTechSetStatus(1, cTechMythicAgeHekate, 1); } }
+        if (majorGod == cAPMajorGaia)   { if (trTechStatusActive(1, cTechMythicAgeAtlas) == false) { trTechSetStatus(1, cTechMythicAgeAtlas, 1); } if (trTechStatusActive(1, cTechMythicAgeHekate) == false) { trTechSetStatus(1, cTechMythicAgeHekate, 1); } }
+    }
+}
+
+int APGetStartingAgeCount(int scenarioId = 0)
+{
+    if (scenarioId == 1) { return 1; }
+    if (scenarioId == 2) { return 0; }
+    if (scenarioId == 3) { return 0; }
+    if (scenarioId == 4) { return 1; }
+    if (scenarioId == 5) { return 2; }
+    if (scenarioId == 6) { return 2; }
+    if (scenarioId == 7) { return 2; }
+    if (scenarioId == 8) { return 1; }
+    if (scenarioId == 9) { return 3; }
+    if (scenarioId == 10) { return 0; }
+    if (scenarioId == 11) { return 0; }
+    if (scenarioId == 12) { return 0; }
+    if (scenarioId == 13) { return 2; }
+    if (scenarioId == 14) { return 2; }
+    if (scenarioId == 15) { return 1; }
+    if (scenarioId == 16) { return 3; }
+    if (scenarioId == 17) { return 2; }
+    if (scenarioId == 18) { return 1; }
+    if (scenarioId == 19) { return 2; }
+    if (scenarioId == 20) { return 2; }
+    if (scenarioId == 21) { return 0; }
+    if (scenarioId == 22) { return 0; }
+    if (scenarioId == 23) { return 1; }
+    if (scenarioId == 24) { return 1; }
+    if (scenarioId == 25) { return 0; }
+    if (scenarioId == 26) { return 1; }
+    if (scenarioId == 27) { return 1; }
+    if (scenarioId == 28) { return 2; }
+    if (scenarioId == 29) { return 1; }
+    if (scenarioId == 30) { return 1; }
+    if (scenarioId == 31) { return 2; }
+    if (scenarioId == 32) { return 2; }
+    return 0;
+}
+
+
+
 void APApplyAgeUnlocks()
 {
-    int greekCount = 0;
-    int egyptianCount = 0;
-    int norseCount = 0;
+    int greekCount     = 0;
+    int egyptianCount  = 0;
+    int norseCount     = 0;
     int atlanteanCount = 0;
     int i = 0;
     int id = 0;
 
-    for (i = 5; i < gAPItemCount; i++)
+    for (i = 6; i < gAPItemCount; i++)
     {
         id = gAPItems[i];
         if (id == cGREEK_AGE_UNLOCK)      { greekCount++;     }
@@ -1031,6 +1448,8 @@ void APApplyAgeUnlocks()
         APDisableAllEgyptianAgeTechs();
         APDisableAllNorseAgeTechs();
     }
+
+
 }
 
 
@@ -1067,8 +1486,8 @@ void APApplyHeroBoosts()
     bool regFrostStrike       = false;
     bool regProjectile        = false;
 
-    // Start at 5 — indices 0-4 are flags/campaign ID
-    for (i = 5; i < gAPItemCount; i++)
+    // Start at 6 — indices 0-5 are flags (campaign unlocks, campaign ID, godsanity)
+    for (i = 6; i < gAPItemCount; i++)
     {
         id = gAPItems[i];
 
@@ -1317,21 +1736,25 @@ runImmediately
     //   [2]: 9003 = has Norse Scenarios,    9000 = no
     //   [3]: 9004 = has Atlantis Key,       9000 = no
     //   [4]: 9100 + campaign_id (for age unlock logic)
+    //   [5]: 9010 = godsanity on,           9000 = no
     gHasGreek    = false;
     gHasEgyptian = false;
     gHasNorse    = false;
     gHasAtlantis = false;
-    if (gAPItemCount > 4)
+    gAPGodsanity = false;
+    if (gAPItemCount > 5)
     {
         if (gAPItems[0] == 9001) { gHasGreek    = true; }
         if (gAPItems[1] == 9002) { gHasEgyptian = true; }
         if (gAPItems[2] == 9003) { gHasNorse    = true; }
         if (gAPItems[3] == 9004) { gHasAtlantis = true; }
+        if (gAPItems[5] == 9010) { gAPGodsanity = true; }
         // Scenario identity is driven by APScenarioID + APActivateScenario.
         // Keep slot 4 for compatibility, but do not overwrite gAPCampaignId here.
     }
 
     APCheckCampaignLock();
+    APAnnounceGod();
     APFindReinforcementSpawn();
     APApplyAgeUnlocks();
     APApplyHeroBoosts();
@@ -1352,8 +1775,8 @@ runImmediately
     int itemId = 0;
     int i = 0;
     int j = 0;
-    // Start at 5 — indices 0-4 are flags/campaign ID
-    for (i = 5; i < gAPItemCount; i++)
+    // Start at 6 — indices 0-5 are flags (campaign unlocks, campaign ID, godsanity)
+    for (i = 6; i < gAPItemCount; i++)
     {
         itemId = gAPItems[i];
 
@@ -1401,7 +1824,7 @@ runImmediately
         {
             for (j = 0; j < 2; j++)
             {
-                trUnitCreateFromSource("VillagerDwarf", gReinforcementSpawnID, gReinforcementSpawnID, 1);
+                trUnitCreateFromSource("Dwarf", gReinforcementSpawnID, gReinforcementSpawnID, 1);
             }
         }
         if (itemId == cREINFORCEMENT_MERCENARY)
@@ -1432,7 +1855,7 @@ runImmediately
                 trUnitCreateFromSource("Wadjet", gReinforcementSpawnID, gReinforcementSpawnID, 1);
             }
         }
-        if (itemId == cREINFORCEMENT_ULFSARK)
+        if (itemId == cREINFORCEMENT_BERSERK)
         {
             for (j = 0; j < 2; j++)
             {
@@ -1490,7 +1913,6 @@ runImmediately
         }
         if (itemId == cREINFORCEMENT_ROC)
         {
-            // Scenario 12: Rocs cause a game-breaking bug — skip spawning
             if (gAPScenarioId != 12)
             {
                 for (j = 0; j < 2; j++)
@@ -1587,48 +2009,6 @@ runImmediately
         }
         if (itemId == cREINFORCEMENT_RELIC_MONKEY)
         {
-            for (j = 0; j < 1; j++)
-            {
-                trUnitCreateFromSource("RelicMonkey", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-            }
-        }
-        if (itemId == cREINFORCEMENT_PEGASUS)
-        {
-            for (j = 0; j < 2; j++)
-            {
-                trUnitCreateFromSource("Pegasus", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-            }
-        }
-        if (itemId == cREINFORCEMENT_HYENA)
-        {
-            for (j = 0; j < 2; j++)
-            {
-                trUnitCreateFromSource("HyenaOfSet", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-            }
-        }
-        if (itemId == cREINFORCEMENT_HIPPO)
-        {
-            for (j = 0; j < 2; j++)
-            {
-                trUnitCreateFromSource("HippopotamusOfSet", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-            }
-        }
-        if (itemId == cREINFORCEMENT_GOLDEN_LION)
-        {
-            for (j = 0; j < 1; j++)
-            {
-                trUnitCreateFromSource("RelicGoldenLion", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-            }
-        }
-        if (itemId == cREINFORCEMENT_NORSE_GATHERER)
-        {
-            for (j = 0; j < 2; j++)
-            {
-                trUnitCreateFromSource("Gatherer", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-            }
-        }
-        if (itemId == cREINFORCEMENT_RELIC_MONKEY)
-        {
             for (j = 0; j < 2; j++)
             {
                 trUnitCreateFromSource("RelicMonkey", gReinforcementSpawnID, gReinforcementSpawnID, 1);
@@ -1670,25 +2050,6 @@ runImmediately
             }
         }
 
-        // Unit unlocks
-        if (itemId == cCAN_TRAIN_HOPLITE)         { trUnforbidProtounit(1, "Hoplite"); }
-        if (itemId == cCAN_TRAIN_SPEARMAN)        { trUnforbidProtounit(1, "Spearman"); }
-        if (itemId == cCAN_TRAIN_BERSERK)         { trUnforbidProtounit(1, "Berserk"); }
-        if (itemId == cCAN_TRAIN_HIRDMAN)         { trUnforbidProtounit(1, "Hirdman"); }
-        if (itemId == cCAN_TRAIN_HYPASPIST)       { trUnforbidProtounit(1, "Hypaspist"); }
-        if (itemId == cCAN_TRAIN_PELTAST)         { trUnforbidProtounit(1, "Peltast"); }
-        if (itemId == cCAN_TRAIN_HIPPEUS)         { trUnforbidProtounit(1, "Hippeus"); }
-        if (itemId == cCAN_TRAIN_TOXOTES)         { trUnforbidProtounit(1, "Toxotes"); }
-        if (itemId == cCAN_TRAIN_PRODROMOS)       { trUnforbidProtounit(1, "Prodromos"); }
-        if (itemId == cCAN_TRAIN_AXEMAN)          { trUnforbidProtounit(1, "Axeman"); }
-        if (itemId == cCAN_TRAIN_SLINGER)         { trUnforbidProtounit(1, "Slinger"); }
-        if (itemId == cCAN_TRAIN_CHARIOT_ARCHER)  { trUnforbidProtounit(1, "ChariotArcher"); }
-        if (itemId == cCAN_TRAIN_CAMEL_RIDER)     { trUnforbidProtounit(1, "CamelRider"); }
-        if (itemId == cCAN_TRAIN_WAR_ELEPHANT)    { trUnforbidProtounit(1, "WarElephant"); }
-        if (itemId == cCAN_TRAIN_THROWING_AXEMAN) { trUnforbidProtounit(1, "ThrowingAxeman"); }
-        if (itemId == cCAN_TRAIN_HUSKARL)         { trUnforbidProtounit(1, "Huskarl"); }
-        if (itemId == cCAN_TRAIN_RAIDING_CAVALRY) { trUnforbidProtounit(1, "RaidingCavalry"); }
-        if (itemId == cCAN_TRAIN_JARL)            { trUnforbidProtounit(1, "Jarl"); }
 
         // Villager carry capacity
         if (itemId == cGREEK_CARRY_FOOD)    { grkCarryFood++; }
@@ -1707,84 +2068,15 @@ runImmediately
         if (itemId == cGREEK_VILLAGER_CHEAPER_2)    { grkCheaper2++; }
         if (itemId == cEGYPTIAN_VILLAGER_CHEAPER_2) { egyCheaper2++; }
         if (itemId == cNORSE_VILLAGER_CHEAPER_2)    { norCheaper2++; }
-
-        // Myth unit tier unlocks
-        if (itemId == cGREEK_CLASSICAL_MYTH_UNITS)
-        {
-            trUnforbidProtounit(1, "Centaur");
-            trUnforbidProtounit(1, "Minotaur");
-            trUnforbidProtounit(1, "Cyclops");
-            trUnforbidProtounit(1, "Lykaon");
-            trUnforbidProtounit(1, "Pegasus");
-        }
-        if (itemId == cGREEK_HEROIC_MYTH_UNITS)
-        {
-            trUnforbidProtounit(1, "Hydra");
-            trUnforbidProtounit(1, "Manticore");
-            trUnforbidProtounit(1, "NemeanLion");
-            trUnforbidProtounit(1, "Hamadryad");
-            trUnforbidProtounit(1, "Scylla");
-        }
-        if (itemId == cGREEK_MYTHIC_MYTH_UNITS)
-        {
-            trUnforbidProtounit(1, "Medusa");
-            trUnforbidProtounit(1, "Colossus");
-            trUnforbidProtounit(1, "Chimera");
-            trUnforbidProtounit(1, "Siren");
-            trUnforbidProtounit(1, "Harpy");
-            trUnforbidProtounit(1, "Carcinos");
-        }
-        if (itemId == cEGYPTIAN_CLASSICAL_MYTH_UNITS)
-        {
-            trUnforbidProtounit(1, "Sphinx");
-            trUnforbidProtounit(1, "Wadjet");
-            trUnforbidProtounit(1, "Anubite");
-        }
-        if (itemId == cEGYPTIAN_HEROIC_MYTH_UNITS)
-        {
-            trUnforbidProtounit(1, "Petsuchos");
-            trUnforbidProtounit(1, "Scarab");
-            trUnforbidProtounit(1, "ScorpionMan");
-            // Scenario 12: Rocs cause a game-breaking bug — never unforbid
-            if (gAPScenarioId != 12) { trUnforbidProtounit(1, "Roc"); }
-            trUnforbidProtounit(1, "Leviathan");
-        }
-        if (itemId == cEGYPTIAN_MYTHIC_MYTH_UNITS)
-        {
-            trUnforbidProtounit(1, "Mummy");
-            trUnforbidProtounit(1, "Avenger");
-            trUnforbidProtounit(1, "Phoenix");
-            trUnforbidProtounit(1, "WarTurtle");
-        }
-        if (itemId == cNORSE_CLASSICAL_MYTH_UNITS)
-        {
-            trUnforbidProtounit(1, "Valkyrie");
-            trUnforbidProtounit(1, "Troll");
-            trUnforbidProtounit(1, "Einherjar");
-            trUnforbidProtounit(1, "Draugr");
-        }
-        if (itemId == cNORSE_HEROIC_MYTH_UNITS)
-        {
-            trUnforbidProtounit(1, "FrostGiant");
-            trUnforbidProtounit(1, "BattleBoar");
-            trUnforbidProtounit(1, "MountainGiant");
-            trUnforbidProtounit(1, "RockGiant");
-            trUnforbidProtounit(1, "Kraken");
-        }
-        if (itemId == cNORSE_MYTHIC_MYTH_UNITS)
-        {
-            trUnforbidProtounit(1, "FireGiant");
-            trUnforbidProtounit(1, "FenrisWolfBrood");
-            trUnforbidProtounit(1, "Fafnir");
-            trUnforbidProtounit(1, "JormunElver");
-        }
     }
+
 
     if (wood  > 0) { trPlayerGrantResources(1, "Wood",  wood);  }
     if (food  > 0) { trPlayerGrantResources(1, "Food",  food);  }
     if (gold  > 0) { trPlayerGrantResources(1, "Gold",  gold);  }
     if (favor > 0) { trPlayerGrantResources(1, "Favor", favor); }
 
+    // Villager carry capacity — cXSPUResourceEffectCarryCapacity=1
     if (grkCarryFood > 0) { trModifyProtounitResource("VillagerGreek",    "food", 1, 1, 10.0 * grkCarryFood, 0); }
     if (grkCarryWood > 0) { trModifyProtounitResource("VillagerGreek",    "wood", 1, 1, 10.0 * grkCarryWood, 0); }
     if (grkCarryGold > 0) { trModifyProtounitResource("VillagerGreek",    "gold", 1, 1, 10.0 * grkCarryGold, 0); }

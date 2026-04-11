@@ -39,6 +39,12 @@ class FinalUnlock:
 
 
 @dataclass
+class Gem:
+    """Currency earned by beating scenarios, spent in the shop."""
+    pass
+
+
+@dataclass
 class StartingResources:
     type: "Resource"
     amount: int
@@ -227,6 +233,7 @@ item_type_to_classification: dict[type, ItemClassification] = {
     Campaign:               ItemClassification.progression,
     AgeUnlock:              ItemClassification.progression,
     FinalUnlock:            ItemClassification.progression,
+    Gem:                    ItemClassification.filler,
     UnitUnlockProgression:  ItemClassification.progression,
     StartingResources:      ItemClassification.filler,
     PassiveIncome:          ItemClassification.filler,
@@ -294,6 +301,7 @@ class aomItemData(enum.IntEnum):
     # Victory — locked to FOTT_32's Victory location by Rules.py
     # -----------------------------------------------------------------------
     VICTORY = 9999, "Victory", Victory()
+    GEM     = 9998, "Gem",     Gem()
 
     # -----------------------------------------------------------------------
     # Campaign / Section unlocks (progression)
@@ -398,7 +406,7 @@ class aomItemData(enum.IntEnum):
     # -----------------------------------------------------------------------
     REINFORCEMENT_ANUBITES        = 4000, f"{REINFORCEMENT_AMOUNT} Anubites",          Reinforcement("Anubite",          REINFORCEMENT_AMOUNT)
     REINFORCEMENT_HOPLITE         = 4001, f"{REINFORCEMENT_AMOUNT} Hoplites",          Reinforcement("Hoplite",          REINFORCEMENT_AMOUNT)
-    REINFORCEMENT_DWARF           = 4002, f"{REINFORCEMENT_AMOUNT} Dwarves",           Reinforcement("VillagerDwarf",    REINFORCEMENT_AMOUNT)
+    REINFORCEMENT_DWARF           = 4002, f"{REINFORCEMENT_AMOUNT} Dwarves",           Reinforcement("Dwarf",            REINFORCEMENT_AMOUNT)
     REINFORCEMENT_MERCENARY       = 4003, f"{REINFORCEMENT_AMOUNT} Mercenaries",       Reinforcement("Mercenary",        REINFORCEMENT_AMOUNT)
     REINFORCEMENT_MERCENARY_CAV   = 4004, f"{REINFORCEMENT_AMOUNT} Mercenary Cavalry", Reinforcement("MercenaryCavalry", REINFORCEMENT_AMOUNT)
     REINFORCEMENT_AUTOMATON       = 4006, f"{REINFORCEMENT_AMOUNT} Automatons",        Reinforcement("Automaton",        REINFORCEMENT_AMOUNT)

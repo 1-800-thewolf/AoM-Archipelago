@@ -139,3 +139,11 @@ def create_regions(multiworld: MultiWorld, player: int) -> None:
             REGION_TO_LOCATIONS.get(scenario, []),
         )
         connect_regions(campaign_regions[scenario.campaign], scenario_region)
+    # Shop region — always reachable from Menu (gem/wins requirements enforced in Rules.py).
+    from ..locations.Locations import SHOP_ITEM_LOCATIONS as _SHOP_LOCS
+    from BaseClasses import Location as _ShopLocation
+    shop_region = create_region(multiworld, player, "Shop")
+    for _sl in _SHOP_LOCS:
+        _loc = _ShopLocation(player, _sl.name, _sl.id, shop_region)
+        shop_region.locations.append(_loc)
+    connect_regions(menu_region, shop_region)

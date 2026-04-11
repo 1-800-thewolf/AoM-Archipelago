@@ -186,6 +186,37 @@ class MythUnitSanity(Toggle):
     default = 1
 
 
+class StartingGems(Range):
+    """
+    Number of Gems to start with.
+    Gems are earned by beating scenarios (1 per scenario, up to 31).
+    They are spent in the shop to receive items and hints.
+    """
+    internal_name = "starting_gems"
+    display_name  = "Starting Gems"
+    range_start   = 0
+    range_end     = 10
+    default       = 3
+
+
+class WinsToOpenShop(Range):
+    """
+    Number of scenario victories required to open each additional shop tier.
+    Shop A is always open (no requirement).
+    Shop B opens after this many wins.
+    Shop C opens after 2x this many wins.
+    Shop D opens after 3x this many wins.
+
+    Set to 0 to open all shops immediately.
+    At the maximum of 10: Shop B at 10 wins, Shop C at 20 wins, Shop D at 30 wins.
+    """
+    internal_name = "wins_to_open_shop"
+    display_name  = "Wins to Open Shop"
+    range_start   = 0
+    range_end     = 10
+    default       = 5
+
+
 class HeroAbilities(Toggle):
 
 
@@ -253,6 +284,8 @@ class AomOptions(PerGameCommonOptions):
     final_scenarios:                 FinalScenarios
     x_scenarios:                     XScenarios
     extra_final_mission_age_unlocks: ExtraFinalMissionAgeUnlocks
+    starting_gems:                   StartingGems
+    wins_to_open_shop:               WinsToOpenShop
     godsanity:                       Godsanity
     god_force_change:                GodForceChange
     myth_unit_sanity:                MythUnitSanity

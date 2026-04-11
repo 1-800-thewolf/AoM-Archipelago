@@ -310,6 +310,16 @@ class aomWorld(World):
         self.minor_god_assignments: dict[int, list] = self._generate_minor_god_assignments()
         # Archaic unit forbids — units to suppress when god changes
         self.archaic_forbids: dict[int, list] = self._generate_archaic_forbids()
+        # Shop hint targets — one random player assigned per hint slot
+        self.hint_targets: dict[str, int] = self._assign_hint_targets()
+
+    def _assign_hint_targets(self) -> dict[str, int]:
+        """Assigns a random multiworld player to each hint slot at generation time."""
+        all_players = list(range(1, self.multiworld.players + 1))
+        return {
+            f"{tier}_{slot}": self.random.choice(all_players)
+            for tier, slot, _ in Locations.SHOP_HINT_SLOTS
+        }
 
     def _generate_god_assignments(self) -> dict[int, int]:
         """Randomly assign a major god to each scenario using the world seed."""
@@ -424,8 +434,10 @@ class aomWorld(World):
             item_type = item.type_data
             classification = Items.item_type_to_classification[item_type]
 
-            # Victory is locked to FOTT_32's Victory location by Rules.py
-            if item_type == Items.Victory:
+            # Victory is locked to FOTT_32's Victory location by Rules.py.
+            # Gem is locked to Victory locations 1-31 by Rules.py.
+            # Neither belongs in the random item pool.
+            if item_type in (Items.Victory, Items.Gem):
                 continue
 
             # Section unlock items
@@ -508,13 +520,16 @@ class aomWorld(World):
                     progression_pool.append(ap_item)
 
         # Visible location count:
-        #   All non-COMPLETION locations, minus the locked Victory location,
-        #   plus "The Way to Atlantis" ONLY when the key is in the pool
-        #   (in beat_x mode the key is locked there separately and not pooled).
-        visible_location_count = sum(
-            1 for loc in Locations.aomLocationData
-            if loc.type != Locations.aomLocationType.COMPLETION
-        ) - 1  # FOTT_32 Victory is locked
+        #   All non-COMPLETION locations
+        #   Minus 32 locked Victory locations (31 Gems at scenarios 1-31 + Victory item at 32)
+        #   Plus 68 shop item locations (always in the pool)
+        #   Plus "The Way to Atlantis" ONLY when the key is in the pool
+        visible_location_count = (
+            sum(1 for loc in Locations.aomLocationData
+                if loc.type != Locations.aomLocationType.COMPLETION)
+            - 32                              # all Victory locations are locked
+            + len(Locations.SHOP_ITEM_LOCATIONS)  # shop item slots need pool items
+        )
 
         if final_mode != FinalScenarios.option_beat_x_scenarios:
             visible_location_count += 1  # Way to Atlantis is a free fill slot
@@ -587,6 +602,10 @@ class aomWorld(World):
                 f"items in pool: {len(itempool)}."
             )
 
+        # Pre-collect starting gems — currency for the shop
+        for _ in range(int(self.options.starting_gems.value)):
+            self.multiworld.push_precollected(self.create_item(Items.aomItemData.GEM.item_name))
+
         self.multiworld.itempool += itempool
 
     def set_rules(self) -> None:
@@ -608,17 +627,50 @@ class aomWorld(World):
         data: dict = {
             "version_public": 0,
             "version_major": 2,
-            "version_minor": 0,
+            "version_minor": 1,
             "world_id": ((time.time_ns() >> 17) + self.player) & 0x7FFF_FFFF,
             "final_mode":  int(self.options.final_scenarios.value),
             "x_scenarios": int(self.options.x_scenarios.value),
             "godsanity":   bool(self.options.godsanity.value),
+            "starting_gems":    int(self.options.starting_gems.value),
+            "wins_to_open_shop": int(self.options.wins_to_open_shop.value),
         }
         if self.options.godsanity:
             data["god_assignments"] = self.god_assignments
         # Always send minor_god_assignments so vanilla seeds also get starting ages
         data["minor_god_assignments"] = self.minor_god_assignments
         data["archaic_forbids"]       = self.archaic_forbids
+
+        # Shop hint targets — slot_id → player_id
+        data["hint_targets"] = self.hint_targets
+
+        # Shop item placements — slot_id → [(location_id, player_id, item_name, classification), ...]
+        shop_items: dict[str, list] = {}
+        for sl in Locations.SHOP_ITEM_LOCATIONS:
+            location = self.multiworld.get_location(sl.name, self.player)
+            if location.item is not None:
+                entry = {
+                    "location_id":     sl.id,
+                    "player":          location.item.player,
+                    "player_name":     self.multiworld.get_player_name(location.item.player),
+                    "item_name":       location.item.name,
+                    "classification":  sl.classification,
+                }
+                shop_items.setdefault(sl.slot_id, []).append(entry)
+        data["shop_items"] = shop_items
+
+        # Shop hint slot specs — slot_id → {target_player, player_name, hints: [(cls, count)]}
+        shop_hints: dict[str, dict] = {}
+        for tier, slot_name, spec in Locations.SHOP_HINT_SLOTS:
+            slot_id = f"{tier}_{slot_name}"
+            target  = self.hint_targets.get(slot_id, self.player)
+            shop_hints[slot_id] = {
+                "target_player": target,
+                "player_name":   self.multiworld.get_player_name(target),
+                "hints":         spec,
+            }
+        data["shop_hints"] = shop_hints
+
         return data
 
 

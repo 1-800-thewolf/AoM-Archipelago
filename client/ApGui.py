@@ -33,8 +33,9 @@ class AoMManager(GameManager):
         # We bind to self.tabs.y so it tracks the actual tab bar position
         # rather than relying on hardcoded pixel offsets.
         container = BoxLayout(
+            orientation="vertical",
             size_hint=(None, None),
-            size=(dp(250), dp(26)),
+            size=(dp(250), dp(60)),
             padding=(dp(6), 0),
         )
         with container.canvas.before:
@@ -45,16 +46,21 @@ class AoMManager(GameManager):
             size=lambda inst, val: setattr(self._label_bg, "size", val),
         )
 
-        self._atlantis_label = Label(
-            text="",
-            markup=True,
-            halign="right",
-            valign="middle",
-            font_size=dp(12),
-        )
-        self._atlantis_label.bind(size=self._atlantis_label.setter("text_size"))
+        def _make_label():
+            lbl = Label(
+                text="", markup=True, halign="right", valign="middle",
+                font_size=dp(12), size_hint_y=None, height=dp(20),
+            )
+            lbl.bind(size=lbl.setter("text_size"))
+            return lbl
+
+        self._atlantis_label = _make_label()
+        self._gems_label     = _make_label()
+        self._shops_label    = _make_label()
 
         container.add_widget(self._atlantis_label)
+        container.add_widget(self._gems_label)
+        container.add_widget(self._shops_label)
         root.add_widget(container)
 
         # Bind position so the label tracks the bottom of the tab bar
@@ -79,6 +85,13 @@ class AoMManager(GameManager):
                 return
             color = "44FF44" if green else "FFD700"
             self._atlantis_label.text = f"[b][color={color}]{text}[/b]"
+        Clock.schedule_once(_update)
+
+    def update_shop_status(self, gems: int, shops_open: int) -> None:
+        """Update gems and shops open labels from any thread."""
+        def _update(dt):
+            self._gems_label.text  = f"[b][color=44FF44]Gems: {gems}[/color][/b]"
+            self._shops_label.text = f"[b][color=AAAAFF]Shops open: {shops_open}[/color][/b]"
         Clock.schedule_once(_update)
 
     def on_start(self) -> None:

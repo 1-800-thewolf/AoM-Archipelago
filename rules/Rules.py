@@ -30,6 +30,9 @@ from ..locations.Locations import (
     aomLocationData,
     aomLocationType,
     WAY_TO_ATLANTIS_LOCATION_NAME,
+    SHOP_ITEM_LOCATIONS,
+    SHOP_TIER_TO_LOCATIONS,
+    VICTORY_LOCATIONS,
 )
 from ..locations.Scenarios import aomScenarioData
 from ..Options import FinalScenarios
@@ -143,7 +146,7 @@ def _unlock_names_for_god(god_id: int) -> list[str]:
 # --------------------------------------------------
 
 _SCENARIO_DATA: dict[int, tuple[int, int, float, bool, bool]] = {
-    1:  (2, 0,  0.0,  True,  False),   # Classical start, exempt
+    1:  (1, 0,  0.0,  True,  False),
     2:  (1, 1,  4.0,  False, False),
     3:  (1, 2,  9.0,  False, False),
     4:  (2, 3, 16.0,  False, False),
@@ -167,7 +170,7 @@ _SCENARIO_DATA: dict[int, tuple[int, int, float, bool, bool]] = {
     22: (1, 2,  9.0,  False, False),
     23: (2, 3, 16.0,  False, False),
     24: (2, 2,  9.0,  False, False),
-    25: (2, 3,  0.0,  True,  False),   # Classical start
+    25: (1, 3,  0.0,  True,  False),
     26: (2, 3, 16.0,  False, False),
     27: (2, 3, 16.0,  False, False),
     28: (3, 3, 16.0,  False, False),
@@ -578,12 +581,56 @@ def set_completion_rule(world) -> None:
 # Entry point
 # --------------------------------------------------
 
+
+
+def place_gems(world) -> None:
+    """Lock a Gem item at each Victory location for scenarios 1-31."""
+    player     = world.player
+    multiworld = world.multiworld
+    for scenario in aomScenarioData:
+        if scenario == aomScenarioData.FOTT_32:
+            continue  # scenario 32 Victory holds the goal item, not a Gem
+        loc = multiworld.get_location(VICTORY_LOCATIONS[scenario].global_name(), player)
+        gem = world.create_item(aomItemData.GEM.item_name)
+        loc.place_locked_item(gem)
+
+
+def set_shop_rules(world) -> None:
+    """Set access rules and item classification constraints for shop locations."""
+    player     = world.player
+    multiworld = world.multiworld
+    threshold  = int(world.options.wins_to_open_shop.value)
+
+    # Tier access rules
+    for tier, multiplier in (("B", 1), ("C", 2), ("D", 3)):
+        required = threshold * multiplier
+        if required == 0:
+            continue
+        for sl in SHOP_TIER_TO_LOCATIONS.get(tier, []):
+            loc = multiworld.get_location(sl.name, player)
+            set_rule(loc, lambda state, r=required: count_completed_scenarios(state, player) >= r)
+
+    # Item classification constraints — each slot only accepts items up to its classification level.
+    # "filler"      → filler only
+    # "useful"      → useful or filler
+    # "progression" → any classification
+    for sl in SHOP_ITEM_LOCATIONS:
+        loc = multiworld.get_location(sl.name, player)
+        if sl.classification == "filler":
+            loc.item_rule = lambda item: item.classification == ItemClassification.filler
+        elif sl.classification == "useful":
+            loc.item_rule = lambda item: item.classification in (
+                ItemClassification.filler, ItemClassification.useful
+            )
+
 def set_rules(world) -> None:
     point_table = build_point_table()
     exclude_scenario_32_locations(world)
     place_completion_events(world)
+    place_gems(world)
     place_atlantis_key(world)
     set_section_rules(world)
     set_scenario_age_and_point_rules(world, point_table)
     set_item_placement_restrictions(world)
+    set_shop_rules(world)
     set_completion_rule(world)

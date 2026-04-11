@@ -1181,3 +1181,109 @@ COMPLETION_LOCATIONS: dict[aomScenarioData, aomLocationData] = {
 # Register the special meta-location in the global lookup tables
 location_name_to_id[WAY_TO_ATLANTIS_LOCATION_NAME] = WAY_TO_ATLANTIS_LOCATION_ID
 location_id_to_name[WAY_TO_ATLANTIS_LOCATION_ID]   = WAY_TO_ATLANTIS_LOCATION_NAME
+
+# -----------------------------------------------------------------------
+# Shop system
+# -----------------------------------------------------------------------
+
+from dataclasses import dataclass as _dataclass
+from BaseClasses import ItemClassification as _IC
+
+SHOP_BASE_ID = 3920000
+
+# Canonical slot definitions — (tier, slot_name, [(classification, count), ...])
+# Item slots become AP locations; hint slots are handled client-side only.
+SHOP_ITEM_SLOTS: list[tuple[str, str, list[tuple[str, int]]]] = [
+    ("A", "ITEM_1", [("filler", 6)]),
+    ("A", "ITEM_2", [("filler", 2), ("useful", 1)]),
+    ("A", "ITEM_3", [("filler", 5)]),
+    ("A", "ITEM_4", [("filler", 3), ("useful", 1)]),
+    ("A", "ITEM_5", [("filler", 3)]),
+    ("A", "ITEM_6", [("filler", 1), ("useful", 2)]),
+    ("A", "ITEM_7", [("progression", 1)]),
+    ("B", "ITEM_1", [("filler", 4), ("useful", 1)]),
+    ("B", "ITEM_2", [("filler", 2), ("useful", 2)]),
+    ("B", "ITEM_3", [("filler", 1), ("useful", 2)]),
+    ("B", "ITEM_4", [("useful", 3)]),
+    ("B", "ITEM_5", [("filler", 2), ("useful", 3)]),
+    ("B", "ITEM_6", [("filler", 1), ("progression", 1)]),
+    ("C", "ITEM_1", [("filler", 7)]),
+    ("C", "ITEM_2", [("useful", 4)]),
+    ("C", "ITEM_3", [("progression", 2)]),
+    ("D", "ITEM_1", [("useful", 5)]),
+    ("D", "ITEM_2", [("progression", 3)]),
+]
+
+SHOP_HINT_SLOTS: list[tuple[str, str, list[tuple[str, int]]]] = [
+    ("A", "HINT_1", [("filler", 7)]),
+    ("A", "HINT_2", [("useful", 4)]),
+    ("A", "HINT_3", [("filler", 3), ("useful", 2)]),
+    ("A", "HINT_4", [("useful", 2), ("progression", 2)]),
+    ("A", "HINT_5", [("progression", 2)]),
+    ("B", "HINT_1", [("filler", 5), ("useful", 2)]),
+    ("B", "HINT_2", [("useful", 3), ("progression", 1)]),
+    ("B", "HINT_3", [("filler", 2), ("useful", 3), ("progression", 1)]),
+    ("B", "HINT_4", [("useful", 1), ("progression", 2)]),
+    ("C", "HINT_1", [("filler", 8)]),
+    ("C", "HINT_2", [("useful", 5)]),
+    ("C", "HINT_3", [("progression", 3)]),
+    ("D", "HINT_1", [("useful", 8)]),
+    ("D", "HINT_2", [("progression", 5)]),
+]
+
+# Canonical ordered list of all 32 slot IDs — index+1 is the quest var signal value
+SHOP_SLOT_ORDER: list[str] = (
+    [f"{t}_{s}" for t, s, _ in SHOP_ITEM_SLOTS] +
+    [f"{t}_{s}" for t, s, _ in SHOP_HINT_SLOTS]
+)
+SHOP_SLOT_TO_INDEX: dict[str, int] = {slot: i + 1 for i, slot in enumerate(SHOP_SLOT_ORDER)}
+
+
+@_dataclass
+class ShopItemLocation:
+    id:             int
+    name:           str   # e.g. "Shop A: Slot 1 Item a"
+    slot_id:        str   # e.g. "A_ITEM_1"
+    shop_tier:      str   # "A", "B", "C", "D"
+    classification: str   # "filler", "useful", "progression"
+
+
+def _build_shop_item_locations() -> list[ShopItemLocation]:
+    _letters = "abcdefghijklmnopqrstuvwxyz"
+    locs: list[ShopItemLocation] = []
+    next_id = SHOP_BASE_ID
+    for tier, slot_name, spec in SHOP_ITEM_SLOTS:
+        slot_id = f"{tier}_{slot_name}"
+        slot_num = slot_name.split("_")[1]
+        idx = 0
+        for cls, count in spec:
+            for _ in range(count):
+                next_id += 1
+                letter = _letters[idx]
+                locs.append(ShopItemLocation(
+                    id=next_id,
+                    name=f"Shop {tier}: Slot {slot_num} Item {letter}",
+                    slot_id=slot_id,
+                    shop_tier=tier,
+                    classification=cls,
+                ))
+                idx += 1
+    return locs
+
+
+SHOP_ITEM_LOCATIONS: list[ShopItemLocation] = _build_shop_item_locations()
+
+# slot_id → [ShopItemLocation, ...]
+SHOP_SLOT_TO_LOCATIONS: dict[str, list[ShopItemLocation]] = {}
+for _sl in SHOP_ITEM_LOCATIONS:
+    SHOP_SLOT_TO_LOCATIONS.setdefault(_sl.slot_id, []).append(_sl)
+
+# tier → [ShopItemLocation, ...]
+SHOP_TIER_TO_LOCATIONS: dict[str, list[ShopItemLocation]] = {}
+for _sl in SHOP_ITEM_LOCATIONS:
+    SHOP_TIER_TO_LOCATIONS.setdefault(_sl.shop_tier, []).append(_sl)
+
+# Register shop item locations in the global lookup tables
+for _sl in SHOP_ITEM_LOCATIONS:
+    location_name_to_id[_sl.name] = _sl.id
+    location_id_to_name[_sl.id]   = _sl.name
