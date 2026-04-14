@@ -45,6 +45,12 @@ class Gem:
 
 
 @dataclass
+class ProgressiveShopInfo:
+    """Unlocks additional label detail in the Gem Shop. One per shop tier."""
+    pass
+
+
+@dataclass
 class StartingResources:
     type: "Resource"
     amount: int
@@ -234,6 +240,7 @@ item_type_to_classification: dict[type, ItemClassification] = {
     AgeUnlock:              ItemClassification.progression,
     FinalUnlock:            ItemClassification.progression,
     Gem:                    ItemClassification.filler,
+    ProgressiveShopInfo:    ItemClassification.useful,
     UnitUnlockProgression:  ItemClassification.progression,
     StartingResources:      ItemClassification.filler,
     PassiveIncome:          ItemClassification.filler,
@@ -301,7 +308,8 @@ class aomItemData(enum.IntEnum):
     # Victory — locked to FOTT_32's Victory location by Rules.py
     # -----------------------------------------------------------------------
     VICTORY = 9999, "Victory", Victory()
-    GEM     = 9998, "Gem",     Gem()
+    GEM                  = 9998, "Gem",                  Gem()
+    PROGRESSIVE_SHOP_INFO = 9997, "Progressive Shop Info", ProgressiveShopInfo()
 
     # -----------------------------------------------------------------------
     # Campaign / Section unlocks (progression)

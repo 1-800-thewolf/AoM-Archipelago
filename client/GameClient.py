@@ -1,10 +1,11 @@
 import asyncio
 import logging
 import os
+from importlib import resources
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from ..locations.Locations import aomLocationData, aomLocationType, location_id_to_name
+from ..locations.Locations import aomLocationData, aomLocationType, location_id_to_name, SHOP_SLOT_ORDER
 from ..items.Items import (
     aomItemData,
     AtlanteanMythUnitUnlock,
@@ -87,10 +88,13 @@ class AoMGameContext:
     # Shop state
     starting_gems: int = 0
     wins_to_open_shop: int = 5
-    purchased_slots: set = field(default_factory=set)   # slot_id strings
-    shop_items: dict = field(default_factory=dict)       # slot_id → [placement dicts]
-    shop_hints: dict = field(default_factory=dict)       # slot_id → hint config dict
-    shop_slot_order: list = field(default_factory=list)  # canonical slot order
+    world_id: int = 0
+    gem_shop_enabled: bool = True
+    purchased_slots: set  = field(default_factory=set)
+    shop_obelisk_assignments: dict = field(default_factory=dict)  # obelisk_id → [loc_id,...]
+    shop_item_details: dict = field(default_factory=dict)         # loc_id → {player, name, cls}
+    shop_hint_config: dict  = field(default_factory=dict)         # slot_id → {type, ...}
+    shop_slot_order: list   = field(default_factory=list)
 
     @property
     def trigger_folder(self) -> Path:
@@ -117,55 +121,106 @@ class AoMGameContext:
 # apai.xs generation
 # -----------------------------------------------------------------------
 
+def _load_ap_ai_template_text() -> str:
+    """
+    Load the canonical static ap_ai.xs template from the packaged world.
+    This keeps startup / heartbeat / helper logic in one place.
+    """
+    package_root = (__package__ or "aom.client").split(".")[0]
+    try:
+        template = resources.files(package_root).joinpath("triggers").joinpath(APAI_FILENAME)
+        return template.read_text(encoding="utf-8")
+    except Exception as ex:
+        logger.error(f"Failed to load packaged {APAI_FILENAME} template: {ex}")
+        # Safe fallback so the player still gets a working AI bridge.
+        return (
+            'extern int gAPCategory = -1;\n\n'
+            'void main()\n'
+            '{\n'
+            '   gAPCategory = aiAddEchoCategory("Archipelago");\n'
+            '   aiEcho("APAI startup.");\n'
+            '}\n\n'
+            'rule APHeartbeat\n'
+            'minInterval 30\n'
+            'active\n'
+            '{\n'
+            '   aiEcho("APAI heartbeat.");\n'
+            '}\n'
+        )
+
+
+def _strip_generated_ap_functions(template_text: str) -> str:
+    """
+    Remove old generated AP bridge functions so the template can safely be
+    regenerated without duplicate symbol definitions.
+    """
+    stripped_lines: list[str] = []
+    for line in template_text.splitlines():
+        s = line.strip()
+        if s.startswith("void APCheck_"):
+            continue
+        if s.startswith("void APLocked_"):
+            continue
+        if s.startswith("void APShop_"):
+            continue
+        if s.startswith("void APShopSignal("):
+            continue
+        stripped_lines.append(line.rstrip())
+    return "\n".join(stripped_lines).rstrip() + "\n"
+
+
 def generate_ap_ai_xs(ctx: AoMGameContext, mods_local_dir: Path) -> None:
     """
-    Generate apai.xs from all non-completion location IDs.
-    One function per location: APCheck_XXXXXXX() { aiEcho("AP_CHECK:XXXXXXX"); }
-    Called once at client startup.
+    Generate Game\\AI\\ap_ai.xs from the packaged triggers/ap_ai.xs template, then
+    append generated AP bridge functions for Player 12.
+    Called on every client connect so the file is always current.
     """
-    lines = []
-    lines.append("void main()")
-    lines.append("{")
-    lines.append('    aiEcho("APAI startup.");')
-    lines.append("}")
-    lines.append("")
-    lines.append("rule APHeartbeat")
-    lines.append("minInterval 30")
-    lines.append("active")
-    lines.append("{")
-    lines.append('    aiEcho("APAI heartbeat.");')
-    lines.append("}")
-    lines.append("")
+    # mods_local_dir is kept for call-site compatibility.
+    _ = mods_local_dir
+
+    template_text = _strip_generated_ap_functions(_load_ap_ai_template_text())
+
+    lines = [
+        template_text.rstrip(),
+        "",
+        "// -----------------------------------------------------------------------",
+        "// AUTO-GENERATED AP BRIDGE FUNCTIONS",
+        "// -----------------------------------------------------------------------",
+        "",
+    ]
+
+    generated_count = 0
 
     for location in aomLocationData:
         if location.type == aomLocationType.COMPLETION:
             continue
         loc_id = location.id
-        lines.append(f"void APCheck_{loc_id}() {{ aiEcho(\"{AP_CHECK_PREFIX}{loc_id}\"); }}")
+        lines.append(f'void APCheck_{loc_id}() {{ aiEcho("{AP_CHECK_PREFIX}{loc_id}"); }}')
+        generated_count += 1
 
-    # Locked campaign notification functions
-    for campaign in ["Greek", "Egyptian", "Norse", "Final"]:
-        lines.append(f'void APLocked_{campaign}() {{ aiEcho("AP_LOCKED:{campaign}"); }}')
-
-    # Shop purchase signals — one function per slot, same pattern as APCheck_XXXXX
     lines.append("")
-    from ..locations.Locations import SHOP_ITEM_SLOTS, SHOP_HINT_SLOTS
-    for tier, slot_name, _ in SHOP_ITEM_SLOTS + SHOP_HINT_SLOTS:
-        slot_id = f"{tier}_{slot_name}"
-        lines.append(f'void APShopFire_{slot_id}() {{ aiEcho("{AP_SHOP_PREFIX}{slot_id}"); }}')
 
+    for campaign in ["Greek", "Egyptian", "Norse", "Final"]:
+        lines.append(f'void APLocked_{campaign}() {{ aiEcho("{AP_LOCKED_PREFIX}{campaign}"); }}')
+        generated_count += 1
 
-    content = "\n".join(lines) + "\n"
+    lines.append("")
+
+    for slot_index in range(1, len(SHOP_SLOT_ORDER) + 1):
+        lines.append(f'void APShop_{slot_index}() {{ aiEcho("{AP_SHOP_PREFIX}IDX:{slot_index}"); }}')
+        generated_count += 1
+
+    lines.append("")
+    content = "\n".join(lines)
 
     apai_path = ctx.apai_file(mods_local_dir)
     apai_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
         apai_path.write_text(content, encoding="utf-8")
-        logger.info(f"Generated {apai_path} with {len(lines) - 4} check functions.")
+        logger.info(f"Generated {apai_path} with {generated_count} AP bridge functions.")
     except Exception as ex:
-        logger.error(f"Failed to write apai.xs: {ex}")
-
+        logger.error(f"Failed to write {APAI_FILENAME}: {ex}")
 
 # -----------------------------------------------------------------------
 # aom_state.xs writing
@@ -227,7 +282,8 @@ def write_aom_state(ctx: AoMGameContext) -> None:
     #   [3] = 9004 if Atlantis Key in items,       else 9000
     #   [4] = 9100 + campaign_id
     #   [5] = 9010 if godsanity is on,             else 9000
-    # Real items start at index 6.
+    #   [6] = 9010 if gem_shop is enabled,          else 9000
+    # Real items start at index 7.
     GREEK_SCENARIOS    = 3500
     EGYPTIAN_SCENARIOS = 3501
     NORSE_SCENARIOS    = 3502
@@ -238,8 +294,9 @@ def write_aom_state(ctx: AoMGameContext) -> None:
         9002 if EGYPTIAN_SCENARIOS in received_set else 9000,
         9003 if NORSE_SCENARIOS    in received_set else 9000,
         _get_has_atlantis(ctx, received_set),
-        9100 + campaign_id,  # index 4: campaign ID for age unlock logic
-        9010 if ctx.godsanity else 9000,  # index 5: godsanity flag
+        9100 + campaign_id,                      # index 4: campaign ID
+        9010 if ctx.godsanity else 9000,         # index 5: godsanity flag
+        9010 if ctx.gem_shop_enabled else 9000,  # index 6: gem_shop flag
     ]
     items_with_flags = flags + list(ctx.received_items)
     total = len(items_with_flags)
@@ -310,51 +367,63 @@ def write_aom_state(ctx: AoMGameContext) -> None:
     lines.append("}")
 
     # ----------------------------------------------------------------
-    # APShopStateInit — sets all shop globals in aom_state.xs.
-    # The static archipelago.xs owns APIsSlotPurchased, APGetAvailableGems,
-    # APShopGetLabel, and APShopPurchase; they read from these globals.
+    # APShopStateInit — sets shop globals and per-obelisk labels.
     # ----------------------------------------------------------------
 
+    PROG_INFO_ID   = 9997
+    info_level     = sum(1 for i in ctx.received_items if i == PROG_INFO_ID)
     gems_earned    = sum(1 for i in ctx.received_items if i == GEM_ITEM_ID)
-    gems_spent     = len(ctx.purchased_slots)
-    available_gems = max(0, gems_earned - gems_spent)
+    available_gems = max(0, gems_earned - len(ctx.purchased_slots))
 
-    lines.append("")
-    lines.append("void APShopStateInit()")
-    lines.append("{")
-    lines.append(f"    gAPShopAvailableGems = {available_gems};")
-    lines.append(f"    gAPShopTierThreshold = {ctx.wins_to_open_shop};")
-    beaten = len(ctx.sent_checks & VICTORY_LOCATION_IDS)
-    lines.append(f"    trQuestVarSet(\"APBeatenScenarios\", {beaten});")
-    for slot_id in ctx.shop_slot_order:
-        purchased = "true" if slot_id in ctx.purchased_slots else "false"
-        lines.append(f"    gAPShopPurchased_{slot_id} = {purchased};")
-        # Also set quest variable for trigger condition-based kill-on-reload
-        lines.append(f"    trQuestVarSet(\"APPurchased_{slot_id}\", {'1' if slot_id in ctx.purchased_slots else '0'});")
-    for slot_id, placements in ctx.shop_items.items():
-        if placements:
-            # Group by player_name, then by classification within each player
-            from collections import defaultdict
-            player_cls: dict = defaultdict(lambda: defaultdict(int))
-            for p in placements:
-                player_cls[p["player_name"]][p["classification"]] += 1
-            parts = []
-            for player_name, cls_counts in player_cls.items():
-                for cls, count in cls_counts.items():
-                    parts.append(f"{count} {cls} item(s) for {player_name}")
-            label = "\\n".join(parts)
+    def _xs(s): lines.append(s)
+    def _cls_rank(c): return {"filler":0,"useful":1,"progression":2}.get(c,0)
+    def _cls_disp(c): return {"filler":"Filler","useful":"Useful","progression":"Progression"}.get(c,"?")
+
+    _xs("")
+    _xs("void APShopStateInit()")
+    _xs("{")
+    _xs(f"    gAPShopAvailableGems = {available_gems};")
+    _xs(f"    gAPShopTierThreshold = {ctx.wins_to_open_shop};")
+    _beaten = len(ctx.sent_checks & VICTORY_LOCATION_IDS)
+    _xs('    trQuestVarSet("APBeatenScenarios", ' + str(_beaten) + ");")
+    _xs('    trQuestVarSet("APGodsanity", ' + ('1' if ctx.godsanity else '0') + ");")
+
+    for _sid in ctx.shop_slot_order:
+        _pv = "true" if _sid in ctx.purchased_slots else "false"
+        _xs(f"    gAPShopPurchased_{_sid} = {_pv};")
+        _xs('    trQuestVarSet("APPurchased_' + _sid + '", ' + ('1' if _sid in ctx.purchased_slots else '0') + ");")
+
+    for _oid, _lids in ctx.shop_obelisk_assignments.items():
+        _det = [ctx.shop_item_details.get(_l) for _l in _lids if ctx.shop_item_details.get(_l)]
+        _n   = len(_det)
+        if not _det or info_level == 0:
+            _lbl = "? items\\nHighest rarity: ?\\nFor ?"
+        elif info_level == 1:
+            _lbl = str(_n) + " items\\nHighest rarity: ?\\nFor ?"
+        elif info_level == 2:
+            _top = _cls_disp(max((_d.get("classification","filler") for _d in _det), key=_cls_rank))
+            _lbl = str(_n) + " items\\nHighest rarity: " + _top + "\\nFor ?"
+        elif info_level == 3:
+            _top = _cls_disp(max((_d.get("classification","filler") for _d in _det), key=_cls_rank))
+            _pl  = _det[0].get("player_name","?")
+            _lbl = str(_n) + " items\\nHighest rarity: " + _top + "\\nFor " + _pl
         else:
-            label = "Unknown"
-        lines.append(f'    gAPShopLabel_{slot_id} = "{label}";')
-    for slot_id, hint_cfg in ctx.shop_hints.items():
-        player_name = hint_cfg.get("player_name", "?")
-        hints_spec  = hint_cfg.get("hints", [])
-        parts = []
-        for cls, count in hints_spec:
-            parts.append(f"{count} {cls} hint(s) for {player_name}")
-        label = "\\n".join(parts)
-        lines.append(f'    gAPShopLabel_{slot_id} = "{label}";')
-    lines.append("}")
+            # Level 4: cap at level 3 display — the 4th upgrade sends mission hints instead
+            _top = _cls_disp(max((_d.get("classification","filler") for _d in _det), key=_cls_rank))
+            _pl  = _det[0].get("player_name","?")
+            _lbl = str(_n) + " items\\nHighest rarity: " + _top + "\\nFor " + _pl
+        _lbl = _lbl.replace('"', '\\\\"')
+        _xs('    gAPShopLabel_' + _oid + ' = "' + _lbl + '";')
+
+    for _sid, _hcfg in ctx.shop_hint_config.items():
+        if _hcfg.get("type") == "progressive_info":
+            _lbl = "Progressive Shop Info\\nUpgrades shop labels"
+        else:
+            _rng = _hcfg.get("missions_range", (1,2))
+            _lbl = "Hints for " + str(_rng[0]) + "-" + str(_rng[1]) + " missions"
+        _xs('    gAPShopLabel_' + _sid + ' = "' + _lbl + '";')
+
+    _xs("}")
 
     content = "\n".join(lines) + "\n"
 
@@ -371,26 +440,30 @@ def write_aom_state(ctx: AoMGameContext) -> None:
 # -----------------------------------------------------------------------
 
 def save_shop_state(ctx: AoMGameContext) -> None:
-    """Persist purchased_slots to a JSON sidecar so state survives client restarts."""
+    """Persist purchased_slots to a per-seed JSON sidecar."""
     import json
     try:
-        path = ctx.trigger_folder / "ap_shop_state.json"
+        path = ctx.trigger_folder / f"ap_shop_state_{ctx.world_id}.json"
         path.write_text(json.dumps({"purchased_slots": list(ctx.purchased_slots)}), encoding="utf-8")
     except Exception as ex:
         logger.warning(f"Failed to save shop state: {ex}")
 
 
 def load_shop_state(ctx: AoMGameContext) -> None:
-    """Load persisted purchased_slots from JSON sidecar if it exists."""
+    """Load persisted purchased_slots for the current seed. Ignores other seeds."""
     import json
     try:
-        path = ctx.trigger_folder / "ap_shop_state.json"
+        path = ctx.trigger_folder / f"ap_shop_state_{ctx.world_id}.json"
         if path.exists():
             data = json.loads(path.read_text(encoding="utf-8"))
             ctx.purchased_slots = set(data.get("purchased_slots", []))
-            logger.info(f"Loaded shop state: {len(ctx.purchased_slots)} purchased slot(s).")
+            logger.info(f"Loaded shop state (world {ctx.world_id}): {len(ctx.purchased_slots)} purchased slot(s).")
+        else:
+            ctx.purchased_slots = set()
+            logger.info(f"No shop state found for world {ctx.world_id} — starting fresh.")
     except Exception as ex:
         logger.warning(f"Failed to load shop state: {ex}")
+        ctx.purchased_slots = set()
 
 
 def _resolve_shop_signal(ctx: AoMGameContext, slot_id: str) -> list[int]:
@@ -418,8 +491,7 @@ def _resolve_shop_signal(ctx: AoMGameContext, slot_id: str) -> list[int]:
         _update_atlantis_ui(ctx.client_interface)
 
     if "ITEM" in slot_id:
-        placements = ctx.shop_items.get(slot_id, [])
-        loc_ids = [p["location_id"] for p in placements]
+        loc_ids = ctx.shop_obelisk_assignments.get(slot_id, [])
         logger.info(f"  → checking {len(loc_ids)} item location(s)")
         return loc_ids
 
@@ -431,14 +503,23 @@ def _resolve_shop_signal(ctx: AoMGameContext, slot_id: str) -> list[int]:
 
 
 def _send_shop_hints(ctx: AoMGameContext, slot_id: str) -> None:
-    """Send hint requests to the AP server for a purchased hint slot."""
-    hint_cfg = ctx.shop_hints.get(slot_id)
+    """Send mission hints or fire Progressive Shop Info check for a purchased hint slot."""
+    hint_cfg = ctx.shop_hint_config.get(slot_id)
     if not hint_cfg or ctx.client_interface is None:
         return
-    target_player = hint_cfg.get("target_player", 1)
-    hints_spec    = hint_cfg.get("hints", [])
-    for classification, count in hints_spec:
-        ctx.client_interface.request_hint(target_player, classification, count)
+
+    if hint_cfg.get("type") == "progressive_info":
+        # This is a Progressive Shop Info purchase — fire the location check
+        loc_id = hint_cfg.get("loc_id")
+        if loc_id and loc_id not in ctx.sent_checks:
+            ctx.sent_checks.add(loc_id)
+            ctx.client_interface.on_location_received(loc_id)
+            logger.info(f"Progressive Shop Info purchased: {slot_id} → location {loc_id}")
+        return
+
+    if hint_cfg.get("type") == "mission_hints":
+        missions_range = hint_cfg.get("missions_range", (1, 2))
+        ctx.client_interface.send_mission_hints(missions_range)
 
 
 def read_new_checks(ctx: AoMGameContext) -> list[int]:
@@ -472,8 +553,22 @@ def read_new_checks(ctx: AoMGameContext) -> list[int]:
                 logger.warning(f"Archipelago: You need the {campaign} Scenarios item to play this campaign.")
                 continue
             if AP_SHOP_PREFIX in line:
-                idx      = line.find(AP_SHOP_PREFIX)
-                slot_id  = line[idx + len(AP_SHOP_PREFIX):].strip()
+                idx_pos  = line.find(AP_SHOP_PREFIX)
+                raw      = line[idx_pos + len(AP_SHOP_PREFIX):].strip()
+                # New format: "AP_SHOP:IDX:N" where N is the slot index (1-based)
+                # Legacy format: "AP_SHOP:A_ITEM_1" (slot ID directly)
+                if raw.startswith("IDX:"):
+                    try:
+                        slot_num = int(raw[4:])
+                        from ..locations.Locations import SHOP_SLOT_ORDER
+                        slot_id = SHOP_SLOT_ORDER[slot_num - 1] if 1 <= slot_num <= len(SHOP_SLOT_ORDER) else ""
+                    except (ValueError, IndexError):
+                        slot_id = ""
+                else:
+                    slot_id = raw  # legacy format
+                if not slot_id:
+                    logger.warning(f"Unrecognised shop signal: {raw}")
+                    continue
                 shop_checks = _resolve_shop_signal(ctx, slot_id)
                 for loc_id in shop_checks:
                     if loc_id not in ctx.sent_checks:

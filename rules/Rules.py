@@ -4,6 +4,7 @@ from BaseClasses import CollectionState, Item, ItemClassification, LocationProgr
 from worlds.generic.Rules import add_rule, forbid_item, set_rule
 
 from ..items.Items import (
+    ProgressiveShopInfo,
     aomItemData,
     AgeUnlock,
     MythUnitUnlockFiller,
@@ -30,9 +31,13 @@ from ..locations.Locations import (
     aomLocationData,
     aomLocationType,
     WAY_TO_ATLANTIS_LOCATION_NAME,
-    SHOP_ITEM_LOCATIONS,
-    SHOP_TIER_TO_LOCATIONS,
     VICTORY_LOCATIONS,
+    ALL_SHOP_ITEM_IDS,
+    ALL_PROGRESSIVE_INFO_IDS,
+    SHOP_TIER_CONFIGS,
+    TIER_ITEM_IDS,
+    PROGRESSIVE_INFO_IDS,
+    location_id_to_name,
 )
 from ..locations.Scenarios import aomScenarioData
 from ..Options import FinalScenarios
@@ -40,6 +45,7 @@ from ..Options import FinalScenarios
 # Atlantean types — only available when godsanity Items.py is packaged
 try:
     from ..items.Items import (
+    ProgressiveShopInfo,
         AtlanteanMythUnitUnlock,
         AtlanteanUnitUnlockProgression,
         AtlanteanUnitUnlockUseful,
@@ -584,41 +590,80 @@ def set_completion_rule(world) -> None:
 
 
 def place_gems(world) -> None:
-    """Lock a Gem item at each Victory location for scenarios 1-31."""
+    """Lock Gems at Victory locations 1-31 when gem_shop is on; otherwise leave them for pool fill."""
+    if not world.gem_shop_enabled:
+        return  # victories hold random pool items when shop is disabled
     player     = world.player
     multiworld = world.multiworld
     for scenario in aomScenarioData:
         if scenario == aomScenarioData.FOTT_32:
-            continue  # scenario 32 Victory holds the goal item, not a Gem
+            continue
         loc = multiworld.get_location(VICTORY_LOCATIONS[scenario].global_name(), player)
         gem = world.create_item(aomItemData.GEM.item_name)
         loc.place_locked_item(gem)
 
 
+def place_progressive_shop_info(world) -> None:
+    """Lock one Progressive Shop Info item at each shop's hint slot 1 location."""
+    if not world.gem_shop_enabled:
+        return
+    player     = world.player
+    multiworld = world.multiworld
+    for tier, display, *_ in SHOP_TIER_CONFIGS:
+        loc_id = PROGRESSIVE_INFO_IDS[tier]
+        name   = location_id_to_name.get(loc_id)
+        if name:
+            loc  = multiworld.get_location(name, player)
+            item = world.create_item(aomItemData.PROGRESSIVE_SHOP_INFO.item_name)
+            loc.place_locked_item(item)
+
+
 def set_shop_rules(world) -> None:
     """Set access rules and item classification constraints for shop locations."""
+    if not world.gem_shop_enabled:
+        return
     player     = world.player
     multiworld = world.multiworld
     threshold  = int(world.options.wins_to_open_shop.value)
 
-    # Tier access rules
-    for tier, multiplier in (("B", 1), ("C", 2), ("D", 3)):
+    # Tier access rules — Desert/Grass/Hades require N/2N/3N wins
+    tier_multipliers = {"B": 1, "C": 2, "D": 3}
+    for tier_name, _disp, _item_obs, _hint_obs in SHOP_TIER_CONFIGS:
+        multiplier = tier_multipliers.get(tier_name, 0)
+        if multiplier == 0:
+            continue  # Marsh is always open
         required = threshold * multiplier
         if required == 0:
             continue
-        for sl in SHOP_TIER_TO_LOCATIONS.get(tier, []):
-            loc = multiworld.get_location(sl.name, player)
+        for loc_id in TIER_ITEM_IDS[tier_name]:
+            name = location_id_to_name.get(loc_id)
+            if name:
+                loc = multiworld.get_location(name, player)
+                set_rule(loc, lambda state, r=required: count_completed_scenarios(state, player) >= r)
+        # Also gate the progressive info location for this tier
+        pi_id = PROGRESSIVE_INFO_IDS[tier_name]
+        pi_name = location_id_to_name.get(pi_id)
+        if pi_name:
+            loc = multiworld.get_location(pi_name, player)
             set_rule(loc, lambda state, r=required: count_completed_scenarios(state, player) >= r)
 
-    # Item classification constraints — each slot only accepts items up to its classification level.
-    # "filler"      → filler only
-    # "useful"      → useful or filler
-    # "progression" → any classification
-    for sl in SHOP_ITEM_LOCATIONS:
-        loc = multiworld.get_location(sl.name, player)
-        if sl.classification == "filler":
+    # Item classification per location:
+    #   - exactly 1 progression slot per shop (no restriction)
+    #   - ~half of the rest are filler-only
+    #   - remainder accept filler or useful (not progression)
+    prog_slots   = getattr(world, "shop_progression_slots", {})
+    filler_only  = getattr(world, "shop_filler_only", set())
+    for loc_id in ALL_SHOP_ITEM_IDS:
+        name = location_id_to_name.get(loc_id)
+        if not name:
+            continue
+        loc = multiworld.get_location(name, player)
+        is_prog_slot = any(loc_id == prog_slots.get(tier) for tier, *_ in SHOP_TIER_CONFIGS)
+        if is_prog_slot:
+            pass  # no restriction — this slot gets exactly 1 progression item
+        elif loc_id in filler_only:
             loc.item_rule = lambda item: item.classification == ItemClassification.filler
-        elif sl.classification == "useful":
+        else:
             loc.item_rule = lambda item: item.classification in (
                 ItemClassification.filler, ItemClassification.useful
             )
@@ -628,6 +673,7 @@ def set_rules(world) -> None:
     exclude_scenario_32_locations(world)
     place_completion_events(world)
     place_gems(world)
+    place_progressive_shop_info(world)
     place_atlantis_key(world)
     set_section_rules(world)
     set_scenario_age_and_point_rules(world, point_table)

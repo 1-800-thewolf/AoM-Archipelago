@@ -1,6 +1,7 @@
 void main()
 {
     aiEcho("APAI startup.");
+    aiEcho("Test environment for fixing the shop");
 }
 
 rule APHeartbeat
@@ -8,7 +9,10 @@ minInterval 30
 active
 {
     aiEcho("APAI heartbeat.");
+    aiEcho("Test updated in all scenarios?");
 }
+
+
 
 void APCheck_3876724() { aiEcho("AP_CHECK:3876724"); }
 void APCheck_3876824() { aiEcho("AP_CHECK:3876824"); }
@@ -142,3 +146,29 @@ void APLocked_Greek() { aiEcho("AP_LOCKED:Greek"); }
 void APLocked_Egyptian() { aiEcho("AP_LOCKED:Egyptian"); }
 void APLocked_Norse() { aiEcho("AP_LOCKED:Norse"); }
 void APLocked_Final() { aiEcho("AP_LOCKED:Final"); }
+// Shop purchase signals
+void APShop_1()  { aiEcho("AP_SHOP:IDX:1"); }
+void APShop_2()  { aiEcho("AP_SHOP:IDX:2"); }
+void APShop_3()  { aiEcho("AP_SHOP:IDX:3"); }
+void APShop_4()  { aiEcho("AP_SHOP:IDX:4"); }
+void APShop_5()  { aiEcho("AP_SHOP:IDX:5"); }
+void APShop_6()  { aiEcho("AP_SHOP:IDX:6"); }
+void APShop_7()  { aiEcho("AP_SHOP:IDX:7"); }
+void APShop_8()  { aiEcho("AP_SHOP:IDX:8"); }
+void APShop_9()  { aiEcho("AP_SHOP:IDX:9"); }
+void APShop_10() { aiEcho("AP_SHOP:IDX:10"); }
+void APShop_11() { aiEcho("AP_SHOP:IDX:11"); }
+void APShop_12() { aiEcho("AP_SHOP:IDX:12"); }
+void APShop_13() { aiEcho("AP_SHOP:IDX:13"); }
+void APShop_14() { aiEcho("AP_SHOP:IDX:14"); }
+void APShop_15() { aiEcho("AP_SHOP:IDX:15"); }
+void APShop_16() { aiEcho("AP_SHOP:IDX:16"); }
+void APShop_17() { aiEcho("AP_SHOP:IDX:17"); }
+void APShop_18() { aiEcho("AP_SHOP:IDX:18"); }
+void APShop_19() { aiEcho("AP_SHOP:IDX:19"); }
+void APShop_20() { aiEcho("AP_SHOP:IDX:20"); }
+void APShop_21() { aiEcho("AP_SHOP:IDX:21"); }
+void APShop_22() { aiEcho("AP_SHOP:IDX:22"); }
+void APShop_23() { aiEcho("AP_SHOP:IDX:23"); }
+void APShop_24() { aiEcho("AP_SHOP:IDX:24"); }
+void APShop_25() { aiEcho("AP_SHOP:IDX:25"); }

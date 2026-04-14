@@ -87,11 +87,15 @@ class AoMManager(GameManager):
             self._atlantis_label.text = f"[b][color={color}]{text}[/b]"
         Clock.schedule_once(_update)
 
-    def update_shop_status(self, gems: int, shops_open: int) -> None:
-        """Update gems and shops open labels from any thread."""
+    def update_shop_status(self, gems, shops_open) -> None:
+        """Update gems and shops open labels. Pass None to hide both."""
         def _update(dt):
-            self._gems_label.text  = f"[b][color=44FF44]Gems: {gems}[/color][/b]"
-            self._shops_label.text = f"[b][color=AAAAFF]Shops open: {shops_open}[/color][/b]"
+            if gems is None:
+                self._gems_label.text  = ""
+                self._shops_label.text = ""
+            else:
+                self._gems_label.text  = f"[b][color=44FF44]Gems: {gems}[/color][/b]"
+                self._shops_label.text = f"[b][color=AAAAFF]Shops open: {shops_open}[/color][/b]"
         Clock.schedule_once(_update)
 
     def on_start(self) -> None:

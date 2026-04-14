@@ -305,21 +305,62 @@ class aomWorld(World):
             self.god_assignments: dict[int, int] = self._generate_god_assignments()
         else:
             self.god_assignments = {}
-        # Always generate minor god assignments — needed even without godsanity
-        # since vanilla scenarios have their age techs manually removed.
         self.minor_god_assignments: dict[int, list] = self._generate_minor_god_assignments()
-        # Archaic unit forbids — units to suppress when god changes
-        self.archaic_forbids: dict[int, list] = self._generate_archaic_forbids()
-        # Shop hint targets — one random player assigned per hint slot
-        self.hint_targets: dict[str, int] = self._assign_hint_targets()
+        self.archaic_forbids: dict[int, list]       = self._generate_archaic_forbids()
+        # Shop generation (only when gem_shop is enabled)
+        self.gem_shop_enabled: bool = bool(self.options.gem_shop.value)
+        if self.gem_shop_enabled:
+            self.shop_obelisk_assignments, self.shop_progression_slots, self.shop_filler_only = (
+                self._generate_shop_assignments()
+            )
+        else:
+            self.shop_obelisk_assignments = {}
+            self.shop_progression_slots   = {}
+            self.shop_filler_only         = set()
 
-    def _assign_hint_targets(self) -> dict[str, int]:
-        """Assigns a random multiworld player to each hint slot at generation time."""
-        all_players = list(range(1, self.multiworld.players + 1))
-        return {
-            f"{tier}_{slot}": self.random.choice(all_players)
-            for tier, slot, _ in Locations.SHOP_HINT_SLOTS
-        }
+
+
+    def _generate_shop_assignments(self) -> tuple:
+        """
+        Randomly distributes 60 shop items across 14 obelisks (15 per shop).
+        Exactly 1 progression slot per shop. ~half of remaining slots are filler-only.
+        Returns (obelisk_assignments, progression_slots, filler_only_locations).
+        """
+        from .locations.Locations import SHOP_TIER_CONFIGS, TIER_ITEM_IDS, ITEMS_PER_SHOP
+        assignments: dict[str, list[int]] = {}
+        progression_slots: dict[str, int] = {}
+        filler_only_locs: set[int] = set()
+
+        for tier_name, _display, item_obs, _hint_obs in SHOP_TIER_CONFIGS:
+            locs = list(TIER_ITEM_IDS[tier_name])  # 15 location IDs for this tier
+            self.random.shuffle(locs)
+
+            # locs[0] is the one progression-allowed slot (after shuffle = random)
+            progression_slots[tier_name] = locs[0]
+
+            # Of the remaining 14, randomly pick ~half to be filler-only
+            non_prog = locs[1:]
+            n_filler_only = round(len(non_prog) * 0.8)  # ~11 of 14
+            filler_only_locs.update(self.random.sample(non_prog, n_filler_only))
+
+            # Distribute 15 items across item_obs obelisks, min 1 each
+            counts = self._random_distribute(ITEMS_PER_SHOP, item_obs)
+            self.random.shuffle(counts)
+
+            ptr = 0
+            for i, count in enumerate(counts, start=1):
+                obelisk_id = f"{tier_name}_ITEM_{i}"
+                assignments[obelisk_id] = locs[ptr:ptr + count]
+                ptr += count
+
+        return assignments, progression_slots, filler_only_locs
+
+    def _random_distribute(self, total: int, bins: int) -> list:
+        """Distribute total items across bins, minimum 1 per bin."""
+        counts = [1] * bins
+        for _ in range(total - bins):
+            counts[self.random.randrange(bins)] += 1
+        return counts
 
     def _generate_god_assignments(self) -> dict[int, int]:
         """Randomly assign a major god to each scenario using the world seed."""
@@ -434,10 +475,8 @@ class aomWorld(World):
             item_type = item.type_data
             classification = Items.item_type_to_classification[item_type]
 
-            # Victory is locked to FOTT_32's Victory location by Rules.py.
-            # Gem is locked to Victory locations 1-31 by Rules.py.
-            # Neither belongs in the random item pool.
-            if item_type in (Items.Victory, Items.Gem):
+            # Victory, Gem, and ProgressiveShopInfo are locked to specific locations by Rules.py.
+            if item_type in (Items.Victory, Items.Gem, Items.ProgressiveShopInfo):
                 continue
 
             # Section unlock items
@@ -520,16 +559,18 @@ class aomWorld(World):
                     progression_pool.append(ap_item)
 
         # Visible location count:
-        #   All non-COMPLETION locations
-        #   Minus 32 locked Victory locations (31 Gems at scenarios 1-31 + Victory item at 32)
-        #   Plus 68 shop item locations (always in the pool)
-        #   Plus "The Way to Atlantis" ONLY when the key is in the pool
+        #   Campaign non-COMPLETION locations minus all 32 Victory locations
+        #   Plus shop locations if gem_shop is enabled (60 item + 4 progressive info)
+        #   Plus "The Way to Atlantis" when key is in pool (added below)
+        gem_shop_on = self.gem_shop_enabled
         visible_location_count = (
             sum(1 for loc in Locations.aomLocationData
                 if loc.type != Locations.aomLocationType.COMPLETION)
-            - 32                              # all Victory locations are locked
-            + len(Locations.SHOP_ITEM_LOCATIONS)  # shop item slots need pool items
+            - 32  # all Victory locations are locked (31 Gems + 1 Victory item)
         )
+        if gem_shop_on:
+            visible_location_count += len(Locations.ALL_SHOP_ITEM_IDS)           # 60
+            visible_location_count += len(Locations.ALL_PROGRESSIVE_INFO_IDS)    # 4
 
         if final_mode != FinalScenarios.option_beat_x_scenarios:
             visible_location_count += 1  # Way to Atlantis is a free fill slot
@@ -602,9 +643,10 @@ class aomWorld(World):
                 f"items in pool: {len(itempool)}."
             )
 
-        # Pre-collect starting gems — currency for the shop
-        for _ in range(int(self.options.starting_gems.value)):
-            self.multiworld.push_precollected(self.create_item(Items.aomItemData.GEM.item_name))
+        # Pre-collect starting gems (only when gem_shop is enabled)
+        if self.gem_shop_enabled:
+            for _ in range(int(self.options.starting_gems.value)):
+                self.multiworld.push_precollected(self.create_item(Items.aomItemData.GEM.item_name))
 
         self.multiworld.itempool += itempool
 
@@ -626,55 +668,68 @@ class aomWorld(World):
     def fill_slot_data(self) -> Mapping[str, Any]:
         data: dict = {
             "version_public": 0,
-            "version_major": 2,
-            "version_minor": 1,
-            "world_id": ((time.time_ns() >> 17) + self.player) & 0x7FFF_FFFF,
-            "final_mode":  int(self.options.final_scenarios.value),
-            "x_scenarios": int(self.options.x_scenarios.value),
-            "godsanity":   bool(self.options.godsanity.value),
-            "starting_gems":    int(self.options.starting_gems.value),
-            "wins_to_open_shop": int(self.options.wins_to_open_shop.value),
+            "version_major":  2,
+            "version_minor":  2,
+            "world_id":       ((time.time_ns() >> 17) + self.player) & 0x7FFF_FFFF,
+            "final_mode":     int(self.options.final_scenarios.value),
+            "x_scenarios":    int(self.options.x_scenarios.value),
+            "godsanity":      bool(self.options.godsanity.value),
+            "gem_shop":       self.gem_shop_enabled,
         }
         if self.options.godsanity:
             data["god_assignments"] = self.god_assignments
-        # Always send minor_god_assignments so vanilla seeds also get starting ages
         data["minor_god_assignments"] = self.minor_god_assignments
         data["archaic_forbids"]       = self.archaic_forbids
 
-        # Shop hint targets — slot_id → player_id
-        data["hint_targets"] = self.hint_targets
+        if self.gem_shop_enabled:
+            data["starting_gems"]       = int(self.options.starting_gems.value)
+            data["wins_to_open_shop"]   = int(self.options.wins_to_open_shop.value)
 
-        # Shop item placements — slot_id → [(location_id, player_id, item_name, classification), ...]
-        shop_items: dict[str, list] = {}
-        for sl in Locations.SHOP_ITEM_LOCATIONS:
-            location = self.multiworld.get_location(sl.name, self.player)
-            if location.item is not None:
-                entry = {
-                    "location_id":     sl.id,
-                    "player":          location.item.player,
-                    "player_name":     self.multiworld.get_player_name(location.item.player),
-                    "item_name":       location.item.name,
-                    "classification":  sl.classification,
-                }
-                shop_items.setdefault(sl.slot_id, []).append(entry)
-        data["shop_items"] = shop_items
-
-        # Shop hint slot specs — slot_id → {target_player, player_name, hints: [(cls, count)]}
-        shop_hints: dict[str, dict] = {}
-        for tier, slot_name, spec in Locations.SHOP_HINT_SLOTS:
-            slot_id = f"{tier}_{slot_name}"
-            target  = self.hint_targets.get(slot_id, self.player)
-            shop_hints[slot_id] = {
-                "target_player": target,
-                "player_name":   self.multiworld.get_player_name(target),
-                "hints":         spec,
+            # Obelisk → location_id list (determined at generation)
+            data["shop_obelisk_assignments"] = {
+                k: list(v) for k, v in self.shop_obelisk_assignments.items()
             }
-        data["shop_hints"] = shop_hints
+
+            # Per-location item details (populated after fill)
+            shop_item_details: dict[int, dict] = {}
+            for loc_id in Locations.ALL_SHOP_ITEM_IDS:
+                name = Locations.location_id_to_name.get(loc_id)
+                if name:
+                    location = self.multiworld.get_location(name, self.player)
+                    if location and location.item:
+                        shop_item_details[loc_id] = {
+                            "player":         location.item.player,
+                            "player_name":    self.multiworld.get_player_name(location.item.player),
+                            "item_name":      location.item.name,
+                            "classification": location.item.classification.name.lower(),
+                        }
+            data["shop_item_details"] = shop_item_details
+
+            # Hint slot configs
+            shop_hint_config: dict[str, dict] = {}
+            for tier, _display, _item_obs, hint_obs in Locations.SHOP_TIER_CONFIGS:
+                for h in range(1, hint_obs + 1):
+                    slot_id = f"{tier}_HINT_{h}"
+                    if h == 1:
+                        shop_hint_config[slot_id] = {
+                            "type":       "progressive_info",
+                            "loc_id":     Locations.PROGRESSIVE_INFO_IDS[tier],
+                        }
+                    else:
+                        # A (Marsh)→1-2, B (Desert)→2-3, C (Grass)→3-4
+                        if tier == "A":
+                            missions_range = (1, 2)
+                        elif tier == "B":
+                            missions_range = (2, 3)
+                        else:  # C (Grass)
+                            missions_range = (3, 4)
+                        shop_hint_config[slot_id] = {
+                            "type":           "mission_hints",
+                            "missions_range": missions_range,
+                        }
+            data["shop_hint_config"] = shop_hint_config
 
         return data
-
-
-
 
 def run_client(*args: Any) -> None:
     print("Running Age Of Mythology Retold Client")

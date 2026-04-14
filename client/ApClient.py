@@ -225,17 +225,20 @@ def _update_atlantis_ui(ctx: "AoMContext") -> None:
     ctx.ui.update_atlantis_status(text, green)
 
     if hasattr(ctx.ui, "update_shop_status"):
-        from .GameClient import GEM_ITEM_ID, VICTORY_LOCATION_IDS
-        gems_earned = sum(1 for i in ctx.game_ctx.received_items if i == GEM_ITEM_ID)
-        gems_spent  = len(ctx.game_ctx.purchased_slots)
-        gems_avail  = max(0, gems_earned - gems_spent)
-        threshold   = ctx.game_ctx.wins_to_open_shop
-        beaten      = len(ctx.game_ctx.sent_checks & VICTORY_LOCATION_IDS)
-        if threshold == 0:
-            shops_open = 4
+        if not ctx.game_ctx.gem_shop_enabled:
+            ctx.ui.update_shop_status(None, None)
         else:
-            shops_open = 1 + min(3, beaten // threshold)
-        ctx.ui.update_shop_status(gems_avail, shops_open)
+            from .GameClient import GEM_ITEM_ID, VICTORY_LOCATION_IDS
+            gems_earned = sum(1 for i in ctx.game_ctx.received_items if i == GEM_ITEM_ID)
+            gems_spent  = len(ctx.game_ctx.purchased_slots)
+            gems_avail  = max(0, gems_earned - gems_spent)
+            threshold   = ctx.game_ctx.wins_to_open_shop
+            beaten      = len(ctx.game_ctx.sent_checks & VICTORY_LOCATION_IDS)
+            if threshold == 0:
+                shops_open = 4
+            else:
+                shops_open = 1 + min(3, beaten // threshold)
+            ctx.ui.update_shop_status(gems_avail, shops_open)
 
 
 def _format_progress(ctx: "AoMContext") -> str:
@@ -326,31 +329,35 @@ class AoMCommandProcessor(ClientCommandProcessor):
         self.output(block_line("Norse Scenarios",    has_norse))
         self.output(block_line("Final Scenarios",    has_atlantis, final_extra))
 
-        # Sort all non-final scenarios into categories
-        beaten    = []
-        partial   = []
-        untouched = []
+        # Sort scenarios into categories.
+        # Beaten = victory sent. In Progress = any checked AND any missing (including beaten with missing).
+        beaten_list    = []
+        in_progress    = []
+        untouched_list = []
 
         for scenario in aomScenarioData:
-            stats = scenario_stats[scenario]
-            name  = scenario.display_name
+            stats    = scenario_stats[scenario]
+            name     = scenario.display_name
+            missing  = stats["total"] - stats["checked"]
             if stats["beaten"]:
-                beaten.append(name)
+                beaten_list.append(name)
+                if missing > 0:
+                    in_progress.append(f"{name} ({stats['checked']}/{stats['total']} objectives — beaten, {missing} missing)")
             elif stats["checked"] > 0:
-                partial.append(f"{name} ({stats['checked']}/{stats['total']} objectives)")
+                in_progress.append(f"{name} ({stats['checked']}/{stats['total']} objectives)")
             else:
-                untouched.append(name)
+                untouched_list.append(name)
 
-        self.output(f"=== Beaten ({len(beaten)}) ===")
-        for name in beaten:
+        self.output(f"=== Beaten ({len(beaten_list)}) ===")
+        for name in beaten_list:
             self.output(f"  {name}")
 
-        self.output(f"=== In Progress ({len(partial)}) ===")
-        for entry in partial:
+        self.output(f"=== In Progress ({len(in_progress)}) ===")
+        for entry in in_progress:
             self.output(f"  {entry}")
 
-        self.output(f"=== Not Started ({len(untouched)}) ===")
-        for name in untouched:
+        self.output(f"=== Not Started ({len(untouched_list)}) ===")
+        for name in untouched_list:
             self.output(f"  {name}")
 
     def _cmd_gods(self) -> None:
@@ -716,13 +723,15 @@ class AoMContext(CommonContext):
         self.game_ctx.archaic_forbids = (
             {int(k): v for k, v in raw_forbids.items()} if raw_forbids else {}
         )
-        self.game_ctx.starting_gems     = int(slot_data.get("starting_gems", 0))
-        self.game_ctx.wins_to_open_shop = int(slot_data.get("wins_to_open_shop", 5))
-        self.game_ctx.shop_items        = slot_data.get("shop_items", {})
-        self.game_ctx.shop_hints        = slot_data.get("shop_hints", {})
-        # Build canonical slot order from Locations so XS indices are consistent
+        self.game_ctx.world_id              = int(slot_data.get("world_id", 0))
+        self.game_ctx.gem_shop_enabled      = bool(slot_data.get("gem_shop", True))
+        self.game_ctx.starting_gems         = int(slot_data.get("starting_gems", 0))
+        self.game_ctx.wins_to_open_shop     = int(slot_data.get("wins_to_open_shop", 4))
+        self.game_ctx.shop_obelisk_assignments = slot_data.get("shop_obelisk_assignments", {})
+        self.game_ctx.shop_item_details     = {int(k): v for k, v in slot_data.get("shop_item_details", {}).items()}
+        self.game_ctx.shop_hint_config      = slot_data.get("shop_hint_config", {})
         from ..locations.Locations import SHOP_SLOT_ORDER
-        self.game_ctx.shop_slot_order = list(SHOP_SLOT_ORDER)
+        self.game_ctx.shop_slot_order       = list(SHOP_SLOT_ORDER)
         _update_atlantis_ui(self)
         # Install trigger files from apworld bundle to user's trigger folder
         _install_trigger_files(self.game_ctx.user_folder)
@@ -752,55 +761,66 @@ class AoMContext(CommonContext):
                 )
             item_ids.append(item_id)
 
+        PROG_INFO_ID = 9997
+        old_info_level = self.game_ctx.received_items.count(PROG_INFO_ID)
+
         if index == 0:
-            # Full resend from server — replace entire list
             on_items_received(self.game_ctx, item_ids)
         else:
-            # Incremental — append new items to existing list
             combined = self.game_ctx.received_items + item_ids
             on_items_received(self.game_ctx, combined)
+
+        new_info_level = self.game_ctx.received_items.count(PROG_INFO_ID)
+        # 4th Progressive Shop Info: send hints for 5 missions instead of showing item names
+        if old_info_level < 4 <= new_info_level:
+            logger.info("4th Progressive Shop Info received — sending hints for 5 missions")
+            self.send_mission_hints((5, 5))
+
         _update_atlantis_ui(self)
 
-    def request_hint(self, target_player: int, classification: str, count: int = 1) -> None:
+    def send_mission_hints(self, missions_range: tuple) -> None:
         """
-        Scout unchecked shop item locations for target_player whose items match the
-        given classification (or below), creating hints visible to target_player.
-        The AP server deduplicates hints that already exist, so we don't filter
-        sent_checks here — we just send all matching candidates and let the server
-        handle already-hinted or already-collected items.
+        Scout all unchecked locations in a random set of unbeaten scenarios.
+        missions_range: (min, max) number of missions to hint.
         """
         import random
-        from ..locations.Locations import SHOP_ITEM_LOCATIONS
+        from ..locations.Locations import aomLocationData, aomLocationType
+        from .GameClient import VICTORY_LOCATION_IDS
 
-        cls_rank = {"filler": 0, "useful": 1, "progression": 2}
-        max_rank  = cls_rank.get(classification, 2)
+        # Find scenarios that haven't been beaten and have unchecked locations
+        from ..locations.Scenarios import aomScenarioData
+        from ..locations.Locations import SCENARIO_TO_LOCATIONS
 
-        candidates = []
-        for sl in SHOP_ITEM_LOCATIONS:
-            if sl.slot_id in self.game_ctx.purchased_slots:
-                continue  # slot already bought, skip
-            placements = self.game_ctx.shop_items.get(sl.slot_id, [])
-            for p in placements:
-                if p.get("location_id") == sl.id and p.get("player") == target_player:
-                    item_rank = cls_rank.get(p.get("classification", "filler"), 0)
-                    if item_rank <= max_rank:
-                        candidates.append(sl.id)
-                        break
+        unbeaten = []
+        for scenario in aomScenarioData:
+            vic_loc = next((l for l in SCENARIO_TO_LOCATIONS.get(scenario, [])
+                            if l.type == aomLocationType.VICTORY), None)
+            if vic_loc and vic_loc.id not in self.game_ctx.sent_checks:
+                # Find unchecked objective locations for this scenario
+                unchecked = [l.id for l in SCENARIO_TO_LOCATIONS.get(scenario, [])
+                             if l.type == aomLocationType.OBJECTIVE
+                             and l.id not in self.game_ctx.sent_checks]
+                if unchecked:
+                    unbeaten.append((scenario.global_number, unchecked))
 
-        if not candidates:
-            logger.info(f"No hint candidates available for player {target_player} ({classification})")
+        if not unbeaten:
+            logger.info("No hintable mission locations available.")
             return
 
-        chosen = random.sample(candidates, min(count, len(candidates)))
-        if len(chosen) < count:
-            logger.info(f"Only {len(chosen)} hint candidate(s) available (requested {count}) for player {target_player} ({classification})")
+        count    = random.randint(missions_range[0], missions_range[1])
+        chosen   = random.sample(unbeaten, min(count, len(unbeaten)))
+        hint_ids = [loc_id for _, locs in chosen for loc_id in locs]
+
+        if not hint_ids:
+            return
 
         asyncio.ensure_future(self.send_msgs([{
             "cmd": "LocationScouts",
-            "locations": chosen,
+            "locations": hint_ids,
             "create_as_hint": 2,
         }]))
-        logger.info(f"Hinted {len(chosen)} location(s) for player {target_player} ({classification})")
+        mission_nums = [n for n, _ in chosen]
+        logger.info(f"Hinted {len(hint_ids)} location(s) across missions {mission_nums}")
 
     def on_location_received(self, location_id: int) -> None:
         from ..locations.Locations import aomLocationData, aomLocationType

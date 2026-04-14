@@ -12,71 +12,55 @@ extern int[] gAPItems = default;
 
 // Shop globals — declared before include so aom_state.xs (APShopStateInit) can reference them
 extern int    gAPShopAvailableGems        = 0;
-extern int    gAPShopTierThreshold        = 5;
-extern bool   gAPShopPurchased_A_ITEM_1   = false;
-extern bool   gAPShopPurchased_A_ITEM_2   = false;
-extern bool   gAPShopPurchased_A_ITEM_3   = false;
-extern bool   gAPShopPurchased_A_ITEM_4   = false;
-extern bool   gAPShopPurchased_A_ITEM_5   = false;
-extern bool   gAPShopPurchased_A_ITEM_6   = false;
-extern bool   gAPShopPurchased_A_ITEM_7   = false;
-extern bool   gAPShopPurchased_B_ITEM_1   = false;
-extern bool   gAPShopPurchased_B_ITEM_2   = false;
-extern bool   gAPShopPurchased_B_ITEM_3   = false;
-extern bool   gAPShopPurchased_B_ITEM_4   = false;
-extern bool   gAPShopPurchased_B_ITEM_5   = false;
-extern bool   gAPShopPurchased_B_ITEM_6   = false;
-extern bool   gAPShopPurchased_C_ITEM_1   = false;
-extern bool   gAPShopPurchased_C_ITEM_2   = false;
-extern bool   gAPShopPurchased_C_ITEM_3   = false;
-extern bool   gAPShopPurchased_D_ITEM_1   = false;
-extern bool   gAPShopPurchased_D_ITEM_2   = false;
-extern bool   gAPShopPurchased_A_HINT_1   = false;
-extern bool   gAPShopPurchased_A_HINT_2   = false;
-extern bool   gAPShopPurchased_A_HINT_3   = false;
-extern bool   gAPShopPurchased_A_HINT_4   = false;
-extern bool   gAPShopPurchased_A_HINT_5   = false;
-extern bool   gAPShopPurchased_B_HINT_1   = false;
-extern bool   gAPShopPurchased_B_HINT_2   = false;
-extern bool   gAPShopPurchased_B_HINT_3   = false;
-extern bool   gAPShopPurchased_B_HINT_4   = false;
-extern bool   gAPShopPurchased_C_HINT_1   = false;
-extern bool   gAPShopPurchased_C_HINT_2   = false;
-extern bool   gAPShopPurchased_C_HINT_3   = false;
-extern bool   gAPShopPurchased_D_HINT_1   = false;
-extern bool   gAPShopPurchased_D_HINT_2   = false;
-extern string gAPShopLabel_A_ITEM_1       = "Loading...";
-extern string gAPShopLabel_A_ITEM_2       = "Loading...";
-extern string gAPShopLabel_A_ITEM_3       = "Loading...";
-extern string gAPShopLabel_A_ITEM_4       = "Loading...";
-extern string gAPShopLabel_A_ITEM_5       = "Loading...";
-extern string gAPShopLabel_A_ITEM_6       = "Loading...";
-extern string gAPShopLabel_A_ITEM_7       = "Loading...";
-extern string gAPShopLabel_B_ITEM_1       = "Loading...";
-extern string gAPShopLabel_B_ITEM_2       = "Loading...";
-extern string gAPShopLabel_B_ITEM_3       = "Loading...";
-extern string gAPShopLabel_B_ITEM_4       = "Loading...";
-extern string gAPShopLabel_B_ITEM_5       = "Loading...";
-extern string gAPShopLabel_B_ITEM_6       = "Loading...";
-extern string gAPShopLabel_C_ITEM_1       = "Loading...";
-extern string gAPShopLabel_C_ITEM_2       = "Loading...";
-extern string gAPShopLabel_C_ITEM_3       = "Loading...";
-extern string gAPShopLabel_D_ITEM_1       = "Loading...";
-extern string gAPShopLabel_D_ITEM_2       = "Loading...";
-extern string gAPShopLabel_A_HINT_1       = "Loading...";
-extern string gAPShopLabel_A_HINT_2       = "Loading...";
-extern string gAPShopLabel_A_HINT_3       = "Loading...";
-extern string gAPShopLabel_A_HINT_4       = "Loading...";
-extern string gAPShopLabel_A_HINT_5       = "Loading...";
-extern string gAPShopLabel_B_HINT_1       = "Loading...";
-extern string gAPShopLabel_B_HINT_2       = "Loading...";
-extern string gAPShopLabel_B_HINT_3       = "Loading...";
-extern string gAPShopLabel_B_HINT_4       = "Loading...";
-extern string gAPShopLabel_C_HINT_1       = "Loading...";
-extern string gAPShopLabel_C_HINT_2       = "Loading...";
-extern string gAPShopLabel_C_HINT_3       = "Loading...";
-extern string gAPShopLabel_D_HINT_1       = "Loading...";
-extern string gAPShopLabel_D_HINT_2       = "Loading...";
+extern int    gAPShopTierThreshold        = 4;
+extern bool   gAPShopPurchased_A_ITEM_1        = false;
+extern bool   gAPShopPurchased_A_ITEM_2        = false;
+extern bool   gAPShopPurchased_A_ITEM_3        = false;
+extern bool   gAPShopPurchased_A_ITEM_4        = false;
+extern bool   gAPShopPurchased_A_ITEM_5        = false;
+extern bool   gAPShopPurchased_B_ITEM_1       = false;
+extern bool   gAPShopPurchased_B_ITEM_2       = false;
+extern bool   gAPShopPurchased_B_ITEM_3       = false;
+extern bool   gAPShopPurchased_B_ITEM_4       = false;
+extern bool   gAPShopPurchased_C_ITEM_1        = false;
+extern bool   gAPShopPurchased_C_ITEM_2        = false;
+extern bool   gAPShopPurchased_C_ITEM_3        = false;
+extern bool   gAPShopPurchased_D_ITEM_1        = false;
+extern bool   gAPShopPurchased_D_ITEM_2        = false;
+extern bool   gAPShopPurchased_A_HINT_1        = false;
+extern bool   gAPShopPurchased_A_HINT_2        = false;
+extern bool   gAPShopPurchased_A_HINT_3        = false;
+extern bool   gAPShopPurchased_A_HINT_4        = false;
+extern bool   gAPShopPurchased_B_HINT_1       = false;
+extern bool   gAPShopPurchased_B_HINT_2       = false;
+extern bool   gAPShopPurchased_B_HINT_3       = false;
+extern bool   gAPShopPurchased_C_HINT_1        = false;
+extern bool   gAPShopPurchased_C_HINT_2        = false;
+extern bool   gAPShopPurchased_D_HINT_1        = false;
+extern string gAPShopLabel_A_ITEM_1            = "Loading...";
+extern string gAPShopLabel_A_ITEM_2            = "Loading...";
+extern string gAPShopLabel_A_ITEM_3            = "Loading...";
+extern string gAPShopLabel_A_ITEM_4            = "Loading...";
+extern string gAPShopLabel_A_ITEM_5            = "Loading...";
+extern string gAPShopLabel_B_ITEM_1           = "Loading...";
+extern string gAPShopLabel_B_ITEM_2           = "Loading...";
+extern string gAPShopLabel_B_ITEM_3           = "Loading...";
+extern string gAPShopLabel_B_ITEM_4           = "Loading...";
+extern string gAPShopLabel_C_ITEM_1            = "Loading...";
+extern string gAPShopLabel_C_ITEM_2            = "Loading...";
+extern string gAPShopLabel_C_ITEM_3            = "Loading...";
+extern string gAPShopLabel_D_ITEM_1            = "Loading...";
+extern string gAPShopLabel_D_ITEM_2            = "Loading...";
+extern string gAPShopLabel_A_HINT_1            = "Loading...";
+extern string gAPShopLabel_A_HINT_2            = "Loading...";
+extern string gAPShopLabel_A_HINT_3            = "Loading...";
+extern string gAPShopLabel_A_HINT_4            = "Loading...";
+extern string gAPShopLabel_B_HINT_1           = "Loading...";
+extern string gAPShopLabel_B_HINT_2           = "Loading...";
+extern string gAPShopLabel_B_HINT_3           = "Loading...";
+extern string gAPShopLabel_C_HINT_1            = "Loading...";
+extern string gAPShopLabel_C_HINT_2            = "Loading...";
+extern string gAPShopLabel_D_HINT_1            = "Loading...";
 
 include "aom_state.xs";
 
@@ -561,252 +545,8 @@ void APReadRandomGod()
     if (gAPScenarioId == 32) { int g = trQuestVarGet("APGod32"); if (g > 0) { gAPMajorGod = g; } }
 }
 
-// ── Static shop functions (available at trigger-compile time) ───────────
-// All shop globals (gAPShopAvailableGems, gAPShopPurchased_*, gAPShopLabel_*)
-// are declared as extern before the include at the top of this file so they
-// are visible to aom_state.xs when it compiles APShopStateInit.
-
-int APGetAvailableGems()
-{
-    return gAPShopAvailableGems;
-}
-
-bool APIsSlotPurchased(string slotId = "")
-{
-    if (slotId == "A_ITEM_1") { return gAPShopPurchased_A_ITEM_1; }
-    if (slotId == "A_ITEM_2") { return gAPShopPurchased_A_ITEM_2; }
-    if (slotId == "A_ITEM_3") { return gAPShopPurchased_A_ITEM_3; }
-    if (slotId == "A_ITEM_4") { return gAPShopPurchased_A_ITEM_4; }
-    if (slotId == "A_ITEM_5") { return gAPShopPurchased_A_ITEM_5; }
-    if (slotId == "A_ITEM_6") { return gAPShopPurchased_A_ITEM_6; }
-    if (slotId == "A_ITEM_7") { return gAPShopPurchased_A_ITEM_7; }
-    if (slotId == "B_ITEM_1") { return gAPShopPurchased_B_ITEM_1; }
-    if (slotId == "B_ITEM_2") { return gAPShopPurchased_B_ITEM_2; }
-    if (slotId == "B_ITEM_3") { return gAPShopPurchased_B_ITEM_3; }
-    if (slotId == "B_ITEM_4") { return gAPShopPurchased_B_ITEM_4; }
-    if (slotId == "B_ITEM_5") { return gAPShopPurchased_B_ITEM_5; }
-    if (slotId == "B_ITEM_6") { return gAPShopPurchased_B_ITEM_6; }
-    if (slotId == "C_ITEM_1") { return gAPShopPurchased_C_ITEM_1; }
-    if (slotId == "C_ITEM_2") { return gAPShopPurchased_C_ITEM_2; }
-    if (slotId == "C_ITEM_3") { return gAPShopPurchased_C_ITEM_3; }
-    if (slotId == "D_ITEM_1") { return gAPShopPurchased_D_ITEM_1; }
-    if (slotId == "D_ITEM_2") { return gAPShopPurchased_D_ITEM_2; }
-    if (slotId == "A_HINT_1") { return gAPShopPurchased_A_HINT_1; }
-    if (slotId == "A_HINT_2") { return gAPShopPurchased_A_HINT_2; }
-    if (slotId == "A_HINT_3") { return gAPShopPurchased_A_HINT_3; }
-    if (slotId == "A_HINT_4") { return gAPShopPurchased_A_HINT_4; }
-    if (slotId == "A_HINT_5") { return gAPShopPurchased_A_HINT_5; }
-    if (slotId == "B_HINT_1") { return gAPShopPurchased_B_HINT_1; }
-    if (slotId == "B_HINT_2") { return gAPShopPurchased_B_HINT_2; }
-    if (slotId == "B_HINT_3") { return gAPShopPurchased_B_HINT_3; }
-    if (slotId == "B_HINT_4") { return gAPShopPurchased_B_HINT_4; }
-    if (slotId == "C_HINT_1") { return gAPShopPurchased_C_HINT_1; }
-    if (slotId == "C_HINT_2") { return gAPShopPurchased_C_HINT_2; }
-    if (slotId == "C_HINT_3") { return gAPShopPurchased_C_HINT_3; }
-    if (slotId == "D_HINT_1") { return gAPShopPurchased_D_HINT_1; }
-    if (slotId == "D_HINT_2") { return gAPShopPurchased_D_HINT_2; }
-    return false;
-}
-
-string APShopGetLabel(string slotId = "")
-{
-    if (slotId == "A_ITEM_1") { return gAPShopLabel_A_ITEM_1; }
-    if (slotId == "A_ITEM_2") { return gAPShopLabel_A_ITEM_2; }
-    if (slotId == "A_ITEM_3") { return gAPShopLabel_A_ITEM_3; }
-    if (slotId == "A_ITEM_4") { return gAPShopLabel_A_ITEM_4; }
-    if (slotId == "A_ITEM_5") { return gAPShopLabel_A_ITEM_5; }
-    if (slotId == "A_ITEM_6") { return gAPShopLabel_A_ITEM_6; }
-    if (slotId == "A_ITEM_7") { return gAPShopLabel_A_ITEM_7; }
-    if (slotId == "B_ITEM_1") { return gAPShopLabel_B_ITEM_1; }
-    if (slotId == "B_ITEM_2") { return gAPShopLabel_B_ITEM_2; }
-    if (slotId == "B_ITEM_3") { return gAPShopLabel_B_ITEM_3; }
-    if (slotId == "B_ITEM_4") { return gAPShopLabel_B_ITEM_4; }
-    if (slotId == "B_ITEM_5") { return gAPShopLabel_B_ITEM_5; }
-    if (slotId == "B_ITEM_6") { return gAPShopLabel_B_ITEM_6; }
-    if (slotId == "C_ITEM_1") { return gAPShopLabel_C_ITEM_1; }
-    if (slotId == "C_ITEM_2") { return gAPShopLabel_C_ITEM_2; }
-    if (slotId == "C_ITEM_3") { return gAPShopLabel_C_ITEM_3; }
-    if (slotId == "D_ITEM_1") { return gAPShopLabel_D_ITEM_1; }
-    if (slotId == "D_ITEM_2") { return gAPShopLabel_D_ITEM_2; }
-    if (slotId == "A_HINT_1") { return gAPShopLabel_A_HINT_1; }
-    if (slotId == "A_HINT_2") { return gAPShopLabel_A_HINT_2; }
-    if (slotId == "A_HINT_3") { return gAPShopLabel_A_HINT_3; }
-    if (slotId == "A_HINT_4") { return gAPShopLabel_A_HINT_4; }
-    if (slotId == "A_HINT_5") { return gAPShopLabel_A_HINT_5; }
-    if (slotId == "B_HINT_1") { return gAPShopLabel_B_HINT_1; }
-    if (slotId == "B_HINT_2") { return gAPShopLabel_B_HINT_2; }
-    if (slotId == "B_HINT_3") { return gAPShopLabel_B_HINT_3; }
-    if (slotId == "B_HINT_4") { return gAPShopLabel_B_HINT_4; }
-    if (slotId == "C_HINT_1") { return gAPShopLabel_C_HINT_1; }
-    if (slotId == "C_HINT_2") { return gAPShopLabel_C_HINT_2; }
-    if (slotId == "C_HINT_3") { return gAPShopLabel_C_HINT_3; }
-    if (slotId == "D_HINT_1") { return gAPShopLabel_D_HINT_1; }
-    if (slotId == "D_HINT_2") { return gAPShopLabel_D_HINT_2; }
-    return "Unknown Slot";
-}
-
-void APShopPurchase(string slotId = "")
-{
-    if (APIsSlotPurchased(slotId)) { return; }
-    if (APGetAvailableGems() < 1)  { return; }
-    if (slotId == "A_ITEM_1") { trExecuteOnAI(12, "APShopFire_A_ITEM_1"); }
-    if (slotId == "A_ITEM_2") { trExecuteOnAI(12, "APShopFire_A_ITEM_2"); }
-    if (slotId == "A_ITEM_3") { trExecuteOnAI(12, "APShopFire_A_ITEM_3"); }
-    if (slotId == "A_ITEM_4") { trExecuteOnAI(12, "APShopFire_A_ITEM_4"); }
-    if (slotId == "A_ITEM_5") { trExecuteOnAI(12, "APShopFire_A_ITEM_5"); }
-    if (slotId == "A_ITEM_6") { trExecuteOnAI(12, "APShopFire_A_ITEM_6"); }
-    if (slotId == "A_ITEM_7") { trExecuteOnAI(12, "APShopFire_A_ITEM_7"); }
-    if (slotId == "B_ITEM_1") { trExecuteOnAI(12, "APShopFire_B_ITEM_1"); }
-    if (slotId == "B_ITEM_2") { trExecuteOnAI(12, "APShopFire_B_ITEM_2"); }
-    if (slotId == "B_ITEM_3") { trExecuteOnAI(12, "APShopFire_B_ITEM_3"); }
-    if (slotId == "B_ITEM_4") { trExecuteOnAI(12, "APShopFire_B_ITEM_4"); }
-    if (slotId == "B_ITEM_5") { trExecuteOnAI(12, "APShopFire_B_ITEM_5"); }
-    if (slotId == "B_ITEM_6") { trExecuteOnAI(12, "APShopFire_B_ITEM_6"); }
-    if (slotId == "C_ITEM_1") { trExecuteOnAI(12, "APShopFire_C_ITEM_1"); }
-    if (slotId == "C_ITEM_2") { trExecuteOnAI(12, "APShopFire_C_ITEM_2"); }
-    if (slotId == "C_ITEM_3") { trExecuteOnAI(12, "APShopFire_C_ITEM_3"); }
-    if (slotId == "D_ITEM_1") { trExecuteOnAI(12, "APShopFire_D_ITEM_1"); }
-    if (slotId == "D_ITEM_2") { trExecuteOnAI(12, "APShopFire_D_ITEM_2"); }
-    if (slotId == "A_HINT_1") { trExecuteOnAI(12, "APShopFire_A_HINT_1"); }
-    if (slotId == "A_HINT_2") { trExecuteOnAI(12, "APShopFire_A_HINT_2"); }
-    if (slotId == "A_HINT_3") { trExecuteOnAI(12, "APShopFire_A_HINT_3"); }
-    if (slotId == "A_HINT_4") { trExecuteOnAI(12, "APShopFire_A_HINT_4"); }
-    if (slotId == "A_HINT_5") { trExecuteOnAI(12, "APShopFire_A_HINT_5"); }
-    if (slotId == "B_HINT_1") { trExecuteOnAI(12, "APShopFire_B_HINT_1"); }
-    if (slotId == "B_HINT_2") { trExecuteOnAI(12, "APShopFire_B_HINT_2"); }
-    if (slotId == "B_HINT_3") { trExecuteOnAI(12, "APShopFire_B_HINT_3"); }
-    if (slotId == "B_HINT_4") { trExecuteOnAI(12, "APShopFire_B_HINT_4"); }
-    if (slotId == "C_HINT_1") { trExecuteOnAI(12, "APShopFire_C_HINT_1"); }
-    if (slotId == "C_HINT_2") { trExecuteOnAI(12, "APShopFire_C_HINT_2"); }
-    if (slotId == "C_HINT_3") { trExecuteOnAI(12, "APShopFire_C_HINT_3"); }
-    if (slotId == "D_HINT_1") { trExecuteOnAI(12, "APShopFire_D_HINT_1"); }
-    if (slotId == "D_HINT_2") { trExecuteOnAI(12, "APShopFire_D_HINT_2"); }
-    trPlayerGrantResources(1, "Gold", -1);
-}
-
-void APShopScenarioInit()
-{
-    // APShopStateInit() is generated by the client into aom_state.xs.
-    // It sets gAPShop* globals AND sets APPurchased_* quest variables (1=purchased, 0=not).
-    // Each obelisk has a kill trigger in the scenario with condition:
-    //   Quest Variable Value  "APPurchased_SLOT_ID"  >= 1
-    // That trigger handles destruction on reload — no XS unit ID reading needed.
-    APShopStateInit();
-    trPlayerGrantResources(1, "Gold", APGetAvailableGems());
-
-    // Show labels above surviving obelisks.
-    if (gAPShopPurchased_A_ITEM_1) { trWorldSpacePromptHide("APLabel_A_ITEM_1"); }
-    else { trWorldSpacePrompt("APLabel_A_ITEM_1", trQuestVarGet("APOb_A_ITEM_1"), false, APShopGetLabel("A_ITEM_1"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_A_ITEM_2) { trWorldSpacePromptHide("APLabel_A_ITEM_2"); }
-    else { trWorldSpacePrompt("APLabel_A_ITEM_2", trQuestVarGet("APOb_A_ITEM_2"), false, APShopGetLabel("A_ITEM_2"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_A_ITEM_3) { trWorldSpacePromptHide("APLabel_A_ITEM_3"); }
-    else { trWorldSpacePrompt("APLabel_A_ITEM_3", trQuestVarGet("APOb_A_ITEM_3"), false, APShopGetLabel("A_ITEM_3"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_A_ITEM_4) { trWorldSpacePromptHide("APLabel_A_ITEM_4"); }
-    else { trWorldSpacePrompt("APLabel_A_ITEM_4", trQuestVarGet("APOb_A_ITEM_4"), false, APShopGetLabel("A_ITEM_4"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_A_ITEM_5) { trWorldSpacePromptHide("APLabel_A_ITEM_5"); }
-    else { trWorldSpacePrompt("APLabel_A_ITEM_5", trQuestVarGet("APOb_A_ITEM_5"), false, APShopGetLabel("A_ITEM_5"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_A_ITEM_6) { trWorldSpacePromptHide("APLabel_A_ITEM_6"); }
-    else { trWorldSpacePrompt("APLabel_A_ITEM_6", trQuestVarGet("APOb_A_ITEM_6"), false, APShopGetLabel("A_ITEM_6"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_A_ITEM_7) { trWorldSpacePromptHide("APLabel_A_ITEM_7"); }
-    else { trWorldSpacePrompt("APLabel_A_ITEM_7", trQuestVarGet("APOb_A_ITEM_7"), false, APShopGetLabel("A_ITEM_7"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_A_HINT_1) { trWorldSpacePromptHide("APLabel_A_HINT_1"); }
-    else { trWorldSpacePrompt("APLabel_A_HINT_1", trQuestVarGet("APOb_A_HINT_1"), false, APShopGetLabel("A_HINT_1"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_A_HINT_2) { trWorldSpacePromptHide("APLabel_A_HINT_2"); }
-    else { trWorldSpacePrompt("APLabel_A_HINT_2", trQuestVarGet("APOb_A_HINT_2"), false, APShopGetLabel("A_HINT_2"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_A_HINT_3) { trWorldSpacePromptHide("APLabel_A_HINT_3"); }
-    else { trWorldSpacePrompt("APLabel_A_HINT_3", trQuestVarGet("APOb_A_HINT_3"), false, APShopGetLabel("A_HINT_3"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_A_HINT_4) { trWorldSpacePromptHide("APLabel_A_HINT_4"); }
-    else { trWorldSpacePrompt("APLabel_A_HINT_4", trQuestVarGet("APOb_A_HINT_4"), false, APShopGetLabel("A_HINT_4"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_A_HINT_5) { trWorldSpacePromptHide("APLabel_A_HINT_5"); }
-    else { trWorldSpacePrompt("APLabel_A_HINT_5", trQuestVarGet("APOb_A_HINT_5"), false, APShopGetLabel("A_HINT_5"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_B_ITEM_1) { trWorldSpacePromptHide("APLabel_B_ITEM_1"); }
-    else { trWorldSpacePrompt("APLabel_B_ITEM_1", trQuestVarGet("APOb_B_ITEM_1"), false, APShopGetLabel("B_ITEM_1"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_B_ITEM_2) { trWorldSpacePromptHide("APLabel_B_ITEM_2"); }
-    else { trWorldSpacePrompt("APLabel_B_ITEM_2", trQuestVarGet("APOb_B_ITEM_2"), false, APShopGetLabel("B_ITEM_2"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_B_ITEM_3) { trWorldSpacePromptHide("APLabel_B_ITEM_3"); }
-    else { trWorldSpacePrompt("APLabel_B_ITEM_3", trQuestVarGet("APOb_B_ITEM_3"), false, APShopGetLabel("B_ITEM_3"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_B_ITEM_4) { trWorldSpacePromptHide("APLabel_B_ITEM_4"); }
-    else { trWorldSpacePrompt("APLabel_B_ITEM_4", trQuestVarGet("APOb_B_ITEM_4"), false, APShopGetLabel("B_ITEM_4"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_B_ITEM_5) { trWorldSpacePromptHide("APLabel_B_ITEM_5"); }
-    else { trWorldSpacePrompt("APLabel_B_ITEM_5", trQuestVarGet("APOb_B_ITEM_5"), false, APShopGetLabel("B_ITEM_5"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_B_ITEM_6) { trWorldSpacePromptHide("APLabel_B_ITEM_6"); }
-    else { trWorldSpacePrompt("APLabel_B_ITEM_6", trQuestVarGet("APOb_B_ITEM_6"), false, APShopGetLabel("B_ITEM_6"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_B_HINT_1) { trWorldSpacePromptHide("APLabel_B_HINT_1"); }
-    else { trWorldSpacePrompt("APLabel_B_HINT_1", trQuestVarGet("APOb_B_HINT_1"), false, APShopGetLabel("B_HINT_1"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_B_HINT_2) { trWorldSpacePromptHide("APLabel_B_HINT_2"); }
-    else { trWorldSpacePrompt("APLabel_B_HINT_2", trQuestVarGet("APOb_B_HINT_2"), false, APShopGetLabel("B_HINT_2"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_B_HINT_3) { trWorldSpacePromptHide("APLabel_B_HINT_3"); }
-    else { trWorldSpacePrompt("APLabel_B_HINT_3", trQuestVarGet("APOb_B_HINT_3"), false, APShopGetLabel("B_HINT_3"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_B_HINT_4) { trWorldSpacePromptHide("APLabel_B_HINT_4"); }
-    else { trWorldSpacePrompt("APLabel_B_HINT_4", trQuestVarGet("APOb_B_HINT_4"), false, APShopGetLabel("B_HINT_4"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_C_ITEM_1) { trWorldSpacePromptHide("APLabel_C_ITEM_1"); }
-    else { trWorldSpacePrompt("APLabel_C_ITEM_1", trQuestVarGet("APOb_C_ITEM_1"), false, APShopGetLabel("C_ITEM_1"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_C_ITEM_2) { trWorldSpacePromptHide("APLabel_C_ITEM_2"); }
-    else { trWorldSpacePrompt("APLabel_C_ITEM_2", trQuestVarGet("APOb_C_ITEM_2"), false, APShopGetLabel("C_ITEM_2"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_C_ITEM_3) { trWorldSpacePromptHide("APLabel_C_ITEM_3"); }
-    else { trWorldSpacePrompt("APLabel_C_ITEM_3", trQuestVarGet("APOb_C_ITEM_3"), false, APShopGetLabel("C_ITEM_3"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_C_HINT_1) { trWorldSpacePromptHide("APLabel_C_HINT_1"); }
-    else { trWorldSpacePrompt("APLabel_C_HINT_1", trQuestVarGet("APOb_C_HINT_1"), false, APShopGetLabel("C_HINT_1"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_C_HINT_2) { trWorldSpacePromptHide("APLabel_C_HINT_2"); }
-    else { trWorldSpacePrompt("APLabel_C_HINT_2", trQuestVarGet("APOb_C_HINT_2"), false, APShopGetLabel("C_HINT_2"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_C_HINT_3) { trWorldSpacePromptHide("APLabel_C_HINT_3"); }
-    else { trWorldSpacePrompt("APLabel_C_HINT_3", trQuestVarGet("APOb_C_HINT_3"), false, APShopGetLabel("C_HINT_3"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_D_ITEM_1) { trWorldSpacePromptHide("APLabel_D_ITEM_1"); }
-    else { trWorldSpacePrompt("APLabel_D_ITEM_1", trQuestVarGet("APOb_D_ITEM_1"), false, APShopGetLabel("D_ITEM_1"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_D_ITEM_2) { trWorldSpacePromptHide("APLabel_D_ITEM_2"); }
-    else { trWorldSpacePrompt("APLabel_D_ITEM_2", trQuestVarGet("APOb_D_ITEM_2"), false, APShopGetLabel("D_ITEM_2"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_D_HINT_1) { trWorldSpacePromptHide("APLabel_D_HINT_1"); }
-    else { trWorldSpacePrompt("APLabel_D_HINT_1", trQuestVarGet("APOb_D_HINT_1"), false, APShopGetLabel("D_HINT_1"), vector(0,0,0), "vfx_top", true); }
-    if (gAPShopPurchased_D_HINT_2) { trWorldSpacePromptHide("APLabel_D_HINT_2"); }
-    else { trWorldSpacePrompt("APLabel_D_HINT_2", trQuestVarGet("APOb_D_HINT_2"), false, APShopGetLabel("D_HINT_2"), vector(0,0,0), "vfx_top", true); }
-}
-
-
-rule APActivateScenario
-highFrequency
-inactive
-runImmediately
-{
-    gAPScenarioId = trQuestVarGet("APScenarioID");
-
-    // Shop scenario (ID 0) — skip campaign setup, just init the shop
-    if (gAPScenarioId == 0)
-    {
-        APInitItems();
-        APShopScenarioInit();
-        xsEnableRule("APProcessShopBuy");
-        xsEnableRule("APShopTierCheck");
-        trMusicPlayCurrent();
-        xsDisableSelf();
-        return;
-    }
-
-    gAPCampaignId = APGetCampaignForScenario(gAPScenarioId);
-    gAPMajorGod = APGetMajorGodForScenario(gAPScenarioId);
-    APInitItems();               // populate gAPItems array first — needed by reads below
-    APInitGods();                // populate APGod1..APGod32 quest vars
-    APReadRandomGod();           // override gAPMajorGod if godsanity is active
-    APSetPlayerCiv();            // change civ + force-clear old civ age techs
-    APForbidVanillaArchaicUnits(); // forbid archaic units from vanilla god/civ if changed
-    APInitStartingAgeTechs();    // grant pre-computed starting age techs for this scenario
-    APForbidItemGatedUnits();    // forbid all units whose unlock items have not been received
-
-    // SPC campaign heroes — never player-trainable regardless of god or items
-    trForbidProtounit(1, "Ajax");
-    trForbidProtounit(1, "Chiron");
-    trForbidProtounit(1, "Odysseus");
-
-    // Scenario 12: Roc causes a game-breaking bug — always forbidden here
-    if (gAPScenarioId == 12) { trForbidProtounit(1, "Roc"); }
-
-    xsEnableRule("APApplyItems");
-    trMusicPlayCurrent();
-    xsDisableSelf();
-}
-
 // -----------------------------------------------------------------------
 // God announcement — called from APApplyItems when godsanity is on.
-// Fires at the same time as APCheckCampaignLock, after the cinematic ends.
 // -----------------------------------------------------------------------
 
 void APAnnounceGod()
@@ -836,19 +576,207 @@ void APAnnounceGod()
     }
 }
 
+// ── Static shop functions (available at trigger-compile time) ───────────
+// All shop globals are extern-declared before the include at the top of this file.
+
+int APGetAvailableGems()
+{
+    return gAPShopAvailableGems;
+}
+
+bool APIsSlotPurchased(string slotId = "")
+{
+    if (slotId == "A_ITEM_1") { return gAPShopPurchased_A_ITEM_1; }
+    if (slotId == "A_ITEM_2") { return gAPShopPurchased_A_ITEM_2; }
+    if (slotId == "A_ITEM_3") { return gAPShopPurchased_A_ITEM_3; }
+    if (slotId == "A_ITEM_4") { return gAPShopPurchased_A_ITEM_4; }
+    if (slotId == "A_ITEM_5") { return gAPShopPurchased_A_ITEM_5; }
+    if (slotId == "B_ITEM_1") { return gAPShopPurchased_B_ITEM_1; }
+    if (slotId == "B_ITEM_2") { return gAPShopPurchased_B_ITEM_2; }
+    if (slotId == "B_ITEM_3") { return gAPShopPurchased_B_ITEM_3; }
+    if (slotId == "B_ITEM_4") { return gAPShopPurchased_B_ITEM_4; }
+    if (slotId == "C_ITEM_1") { return gAPShopPurchased_C_ITEM_1; }
+    if (slotId == "C_ITEM_2") { return gAPShopPurchased_C_ITEM_2; }
+    if (slotId == "C_ITEM_3") { return gAPShopPurchased_C_ITEM_3; }
+    if (slotId == "D_ITEM_1") { return gAPShopPurchased_D_ITEM_1; }
+    if (slotId == "D_ITEM_2") { return gAPShopPurchased_D_ITEM_2; }
+    if (slotId == "A_HINT_1") { return gAPShopPurchased_A_HINT_1; }
+    if (slotId == "A_HINT_2") { return gAPShopPurchased_A_HINT_2; }
+    if (slotId == "A_HINT_3") { return gAPShopPurchased_A_HINT_3; }
+    if (slotId == "A_HINT_4") { return gAPShopPurchased_A_HINT_4; }
+    if (slotId == "B_HINT_1") { return gAPShopPurchased_B_HINT_1; }
+    if (slotId == "B_HINT_2") { return gAPShopPurchased_B_HINT_2; }
+    if (slotId == "B_HINT_3") { return gAPShopPurchased_B_HINT_3; }
+    if (slotId == "C_HINT_1") { return gAPShopPurchased_C_HINT_1; }
+    if (slotId == "C_HINT_2") { return gAPShopPurchased_C_HINT_2; }
+    if (slotId == "D_HINT_1") { return gAPShopPurchased_D_HINT_1; }
+    return false;
+}
+
+string APShopGetLabel(string slotId = "")
+{
+    if (slotId == "A_ITEM_1") { return gAPShopLabel_A_ITEM_1; }
+    if (slotId == "A_ITEM_2") { return gAPShopLabel_A_ITEM_2; }
+    if (slotId == "A_ITEM_3") { return gAPShopLabel_A_ITEM_3; }
+    if (slotId == "A_ITEM_4") { return gAPShopLabel_A_ITEM_4; }
+    if (slotId == "A_ITEM_5") { return gAPShopLabel_A_ITEM_5; }
+    if (slotId == "B_ITEM_1") { return gAPShopLabel_B_ITEM_1; }
+    if (slotId == "B_ITEM_2") { return gAPShopLabel_B_ITEM_2; }
+    if (slotId == "B_ITEM_3") { return gAPShopLabel_B_ITEM_3; }
+    if (slotId == "B_ITEM_4") { return gAPShopLabel_B_ITEM_4; }
+    if (slotId == "C_ITEM_1") { return gAPShopLabel_C_ITEM_1; }
+    if (slotId == "C_ITEM_2") { return gAPShopLabel_C_ITEM_2; }
+    if (slotId == "C_ITEM_3") { return gAPShopLabel_C_ITEM_3; }
+    if (slotId == "D_ITEM_1") { return gAPShopLabel_D_ITEM_1; }
+    if (slotId == "D_ITEM_2") { return gAPShopLabel_D_ITEM_2; }
+    if (slotId == "A_HINT_1") { return gAPShopLabel_A_HINT_1; }
+    if (slotId == "A_HINT_2") { return gAPShopLabel_A_HINT_2; }
+    if (slotId == "A_HINT_3") { return gAPShopLabel_A_HINT_3; }
+    if (slotId == "A_HINT_4") { return gAPShopLabel_A_HINT_4; }
+    if (slotId == "B_HINT_1") { return gAPShopLabel_B_HINT_1; }
+    if (slotId == "B_HINT_2") { return gAPShopLabel_B_HINT_2; }
+    if (slotId == "B_HINT_3") { return gAPShopLabel_B_HINT_3; }
+    if (slotId == "C_HINT_1") { return gAPShopLabel_C_HINT_1; }
+    if (slotId == "C_HINT_2") { return gAPShopLabel_C_HINT_2; }
+    if (slotId == "D_HINT_1") { return gAPShopLabel_D_HINT_1; }
+    return "Unknown Slot";
+}
+
+void APShopPurchase(string slotId = "")
+{
+        if (APIsSlotPurchased(slotId)) { return; }
+        if (APGetAvailableGems() < 1)  { return; }
+
+        // Set quest var immediately for kill-on-reload triggers
+        if (slotId == "A_ITEM_1") { trQuestVarSet("APPurchased_A_ITEM_1", 1); }
+        if (slotId == "A_ITEM_2") { trQuestVarSet("APPurchased_A_ITEM_2", 1); }
+        if (slotId == "A_ITEM_3") { trQuestVarSet("APPurchased_A_ITEM_3", 1); }
+        if (slotId == "A_ITEM_4") { trQuestVarSet("APPurchased_A_ITEM_4", 1); }
+        if (slotId == "A_ITEM_5") { trQuestVarSet("APPurchased_A_ITEM_5", 1); }
+        if (slotId == "B_ITEM_1") { trQuestVarSet("APPurchased_B_ITEM_1", 1); }
+        if (slotId == "B_ITEM_2") { trQuestVarSet("APPurchased_B_ITEM_2", 1); }
+        if (slotId == "B_ITEM_3") { trQuestVarSet("APPurchased_B_ITEM_3", 1); }
+        if (slotId == "B_ITEM_4") { trQuestVarSet("APPurchased_B_ITEM_4", 1); }
+        if (slotId == "C_ITEM_1") { trQuestVarSet("APPurchased_C_ITEM_1", 1); }
+        if (slotId == "C_ITEM_2") { trQuestVarSet("APPurchased_C_ITEM_2", 1); }
+        if (slotId == "C_ITEM_3") { trQuestVarSet("APPurchased_C_ITEM_3", 1); }
+        if (slotId == "D_ITEM_1") { trQuestVarSet("APPurchased_D_ITEM_1", 1); }
+        if (slotId == "D_ITEM_2") { trQuestVarSet("APPurchased_D_ITEM_2", 1); }
+        if (slotId == "A_HINT_1") { trQuestVarSet("APPurchased_A_HINT_1", 1); }
+        if (slotId == "A_HINT_2") { trQuestVarSet("APPurchased_A_HINT_2", 1); }
+        if (slotId == "A_HINT_3") { trQuestVarSet("APPurchased_A_HINT_3", 1); }
+        if (slotId == "A_HINT_4") { trQuestVarSet("APPurchased_A_HINT_4", 1); }
+        if (slotId == "B_HINT_1") { trQuestVarSet("APPurchased_B_HINT_1", 1); }
+        if (slotId == "B_HINT_2") { trQuestVarSet("APPurchased_B_HINT_2", 1); }
+        if (slotId == "B_HINT_3") { trQuestVarSet("APPurchased_B_HINT_3", 1); }
+        if (slotId == "C_HINT_1") { trQuestVarSet("APPurchased_C_HINT_1", 1); }
+        if (slotId == "C_HINT_2") { trQuestVarSet("APPurchased_C_HINT_2", 1); }
+        if (slotId == "D_HINT_1") { trQuestVarSet("APPurchased_D_HINT_1", 1); }
+
+        // Single generic signal — slot index read from APShopBuySlot quest var
+        trExecuteOnAI(12, "APShopSignal");
+
+        if (slotId == "A_HINT_1") { xsEnableRule("APShopRestartDelay"); }
+        if (slotId == "B_HINT_1") { xsEnableRule("APShopRestartDelay"); }
+        if (slotId == "C_HINT_1") { xsEnableRule("APShopRestartDelay"); }
+        if (slotId == "D_HINT_1") { xsEnableRule("APShopRestartDelay"); }
+        trPlayerGrantResources(1, "Gold", -1);
+}
+
+void APShopScenarioInit()
+{
+    APShopStateInit();
+    trPlayerGrantResources(1, "Gold", APGetAvailableGems());
+
+    // Kill purchased obelisks on reload
+    if (gAPShopPurchased_A_ITEM_1) { trUnitSelectByID(trQuestVarGet("APOb_A_ITEM_1")); trUnitDestroy(false); }
+    if (gAPShopPurchased_A_ITEM_2) { trUnitSelectByID(trQuestVarGet("APOb_A_ITEM_2")); trUnitDestroy(false); }
+    if (gAPShopPurchased_A_ITEM_3) { trUnitSelectByID(trQuestVarGet("APOb_A_ITEM_3")); trUnitDestroy(false); }
+    if (gAPShopPurchased_A_ITEM_4) { trUnitSelectByID(trQuestVarGet("APOb_A_ITEM_4")); trUnitDestroy(false); }
+    if (gAPShopPurchased_A_ITEM_5) { trUnitSelectByID(trQuestVarGet("APOb_A_ITEM_5")); trUnitDestroy(false); }
+    if (gAPShopPurchased_B_ITEM_1) { trUnitSelectByID(trQuestVarGet("APOb_B_ITEM_1")); trUnitDestroy(false); }
+    if (gAPShopPurchased_B_ITEM_2) { trUnitSelectByID(trQuestVarGet("APOb_B_ITEM_2")); trUnitDestroy(false); }
+    if (gAPShopPurchased_B_ITEM_3) { trUnitSelectByID(trQuestVarGet("APOb_B_ITEM_3")); trUnitDestroy(false); }
+    if (gAPShopPurchased_B_ITEM_4) { trUnitSelectByID(trQuestVarGet("APOb_B_ITEM_4")); trUnitDestroy(false); }
+    if (gAPShopPurchased_C_ITEM_1) { trUnitSelectByID(trQuestVarGet("APOb_C_ITEM_1")); trUnitDestroy(false); }
+    if (gAPShopPurchased_C_ITEM_2) { trUnitSelectByID(trQuestVarGet("APOb_C_ITEM_2")); trUnitDestroy(false); }
+    if (gAPShopPurchased_C_ITEM_3) { trUnitSelectByID(trQuestVarGet("APOb_C_ITEM_3")); trUnitDestroy(false); }
+    if (gAPShopPurchased_D_ITEM_1) { trUnitSelectByID(trQuestVarGet("APOb_D_ITEM_1")); trUnitDestroy(false); }
+    if (gAPShopPurchased_D_ITEM_2) { trUnitSelectByID(trQuestVarGet("APOb_D_ITEM_2")); trUnitDestroy(false); }
+    if (gAPShopPurchased_A_HINT_1) { trUnitSelectByID(trQuestVarGet("APOb_A_HINT_1")); trUnitDestroy(false); }
+    if (gAPShopPurchased_A_HINT_2) { trUnitSelectByID(trQuestVarGet("APOb_A_HINT_2")); trUnitDestroy(false); }
+    if (gAPShopPurchased_A_HINT_3) { trUnitSelectByID(trQuestVarGet("APOb_A_HINT_3")); trUnitDestroy(false); }
+    if (gAPShopPurchased_A_HINT_4) { trUnitSelectByID(trQuestVarGet("APOb_A_HINT_4")); trUnitDestroy(false); }
+    if (gAPShopPurchased_B_HINT_1) { trUnitSelectByID(trQuestVarGet("APOb_B_HINT_1")); trUnitDestroy(false); }
+    if (gAPShopPurchased_B_HINT_2) { trUnitSelectByID(trQuestVarGet("APOb_B_HINT_2")); trUnitDestroy(false); }
+    if (gAPShopPurchased_B_HINT_3) { trUnitSelectByID(trQuestVarGet("APOb_B_HINT_3")); trUnitDestroy(false); }
+    if (gAPShopPurchased_C_HINT_1) { trUnitSelectByID(trQuestVarGet("APOb_C_HINT_1")); trUnitDestroy(false); }
+    if (gAPShopPurchased_C_HINT_2) { trUnitSelectByID(trQuestVarGet("APOb_C_HINT_2")); trUnitDestroy(false); }
+    if (gAPShopPurchased_D_HINT_1) { trUnitSelectByID(trQuestVarGet("APOb_D_HINT_1")); trUnitDestroy(false); }
+
+    // Show labels (hide if purchased or tier locked)
+    if (gAPShopPurchased_A_ITEM_1 || (false)) { trWorldSpacePromptHide("APLabel_A_ITEM_1"); }
+    else { trWorldSpacePrompt("APLabel_A_ITEM_1", trQuestVarGet("APOb_A_ITEM_1"), false, APShopGetLabel("A_ITEM_1"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_A_ITEM_2 || (false)) { trWorldSpacePromptHide("APLabel_A_ITEM_2"); }
+    else { trWorldSpacePrompt("APLabel_A_ITEM_2", trQuestVarGet("APOb_A_ITEM_2"), false, APShopGetLabel("A_ITEM_2"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_A_ITEM_3 || (false)) { trWorldSpacePromptHide("APLabel_A_ITEM_3"); }
+    else { trWorldSpacePrompt("APLabel_A_ITEM_3", trQuestVarGet("APOb_A_ITEM_3"), false, APShopGetLabel("A_ITEM_3"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_A_ITEM_4 || (false)) { trWorldSpacePromptHide("APLabel_A_ITEM_4"); }
+    else { trWorldSpacePrompt("APLabel_A_ITEM_4", trQuestVarGet("APOb_A_ITEM_4"), false, APShopGetLabel("A_ITEM_4"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_A_ITEM_5 || (false)) { trWorldSpacePromptHide("APLabel_A_ITEM_5"); }
+    else { trWorldSpacePrompt("APLabel_A_ITEM_5", trQuestVarGet("APOb_A_ITEM_5"), false, APShopGetLabel("A_ITEM_5"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_B_ITEM_1 || (trQuestVarGet("APBeatenScenarios") < gAPShopTierThreshold * 1)) { trWorldSpacePromptHide("APLabel_B_ITEM_1"); }
+    else { trWorldSpacePrompt("APLabel_B_ITEM_1", trQuestVarGet("APOb_B_ITEM_1"), false, APShopGetLabel("B_ITEM_1"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_B_ITEM_2 || (trQuestVarGet("APBeatenScenarios") < gAPShopTierThreshold * 1)) { trWorldSpacePromptHide("APLabel_B_ITEM_2"); }
+    else { trWorldSpacePrompt("APLabel_B_ITEM_2", trQuestVarGet("APOb_B_ITEM_2"), false, APShopGetLabel("B_ITEM_2"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_B_ITEM_3 || (trQuestVarGet("APBeatenScenarios") < gAPShopTierThreshold * 1)) { trWorldSpacePromptHide("APLabel_B_ITEM_3"); }
+    else { trWorldSpacePrompt("APLabel_B_ITEM_3", trQuestVarGet("APOb_B_ITEM_3"), false, APShopGetLabel("B_ITEM_3"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_B_ITEM_4 || (trQuestVarGet("APBeatenScenarios") < gAPShopTierThreshold * 1)) { trWorldSpacePromptHide("APLabel_B_ITEM_4"); }
+    else { trWorldSpacePrompt("APLabel_B_ITEM_4", trQuestVarGet("APOb_B_ITEM_4"), false, APShopGetLabel("B_ITEM_4"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_C_ITEM_1 || (trQuestVarGet("APBeatenScenarios") < gAPShopTierThreshold * 2)) { trWorldSpacePromptHide("APLabel_C_ITEM_1"); }
+    else { trWorldSpacePrompt("APLabel_C_ITEM_1", trQuestVarGet("APOb_C_ITEM_1"), false, APShopGetLabel("C_ITEM_1"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_C_ITEM_2 || (trQuestVarGet("APBeatenScenarios") < gAPShopTierThreshold * 2)) { trWorldSpacePromptHide("APLabel_C_ITEM_2"); }
+    else { trWorldSpacePrompt("APLabel_C_ITEM_2", trQuestVarGet("APOb_C_ITEM_2"), false, APShopGetLabel("C_ITEM_2"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_C_ITEM_3 || (trQuestVarGet("APBeatenScenarios") < gAPShopTierThreshold * 2)) { trWorldSpacePromptHide("APLabel_C_ITEM_3"); }
+    else { trWorldSpacePrompt("APLabel_C_ITEM_3", trQuestVarGet("APOb_C_ITEM_3"), false, APShopGetLabel("C_ITEM_3"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_D_ITEM_1 || (trQuestVarGet("APBeatenScenarios") < gAPShopTierThreshold * 3)) { trWorldSpacePromptHide("APLabel_D_ITEM_1"); }
+    else { trWorldSpacePrompt("APLabel_D_ITEM_1", trQuestVarGet("APOb_D_ITEM_1"), false, APShopGetLabel("D_ITEM_1"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_D_ITEM_2 || (trQuestVarGet("APBeatenScenarios") < gAPShopTierThreshold * 3)) { trWorldSpacePromptHide("APLabel_D_ITEM_2"); }
+    else { trWorldSpacePrompt("APLabel_D_ITEM_2", trQuestVarGet("APOb_D_ITEM_2"), false, APShopGetLabel("D_ITEM_2"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_A_HINT_1 || (false)) { trWorldSpacePromptHide("APLabel_A_HINT_1"); }
+    else { trWorldSpacePrompt("APLabel_A_HINT_1", trQuestVarGet("APOb_A_HINT_1"), false, APShopGetLabel("A_HINT_1"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_A_HINT_2 || (false)) { trWorldSpacePromptHide("APLabel_A_HINT_2"); }
+    else { trWorldSpacePrompt("APLabel_A_HINT_2", trQuestVarGet("APOb_A_HINT_2"), false, APShopGetLabel("A_HINT_2"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_A_HINT_3 || (false)) { trWorldSpacePromptHide("APLabel_A_HINT_3"); }
+    else { trWorldSpacePrompt("APLabel_A_HINT_3", trQuestVarGet("APOb_A_HINT_3"), false, APShopGetLabel("A_HINT_3"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_A_HINT_4 || (false)) { trWorldSpacePromptHide("APLabel_A_HINT_4"); }
+    else { trWorldSpacePrompt("APLabel_A_HINT_4", trQuestVarGet("APOb_A_HINT_4"), false, APShopGetLabel("A_HINT_4"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_B_HINT_1 || (trQuestVarGet("APBeatenScenarios") < gAPShopTierThreshold * 1)) { trWorldSpacePromptHide("APLabel_B_HINT_1"); }
+    else { trWorldSpacePrompt("APLabel_B_HINT_1", trQuestVarGet("APOb_B_HINT_1"), false, APShopGetLabel("B_HINT_1"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_B_HINT_2 || (trQuestVarGet("APBeatenScenarios") < gAPShopTierThreshold * 1)) { trWorldSpacePromptHide("APLabel_B_HINT_2"); }
+    else { trWorldSpacePrompt("APLabel_B_HINT_2", trQuestVarGet("APOb_B_HINT_2"), false, APShopGetLabel("B_HINT_2"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_B_HINT_3 || (trQuestVarGet("APBeatenScenarios") < gAPShopTierThreshold * 1)) { trWorldSpacePromptHide("APLabel_B_HINT_3"); }
+    else { trWorldSpacePrompt("APLabel_B_HINT_3", trQuestVarGet("APOb_B_HINT_3"), false, APShopGetLabel("B_HINT_3"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_C_HINT_1 || (trQuestVarGet("APBeatenScenarios") < gAPShopTierThreshold * 2)) { trWorldSpacePromptHide("APLabel_C_HINT_1"); }
+    else { trWorldSpacePrompt("APLabel_C_HINT_1", trQuestVarGet("APOb_C_HINT_1"), false, APShopGetLabel("C_HINT_1"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_C_HINT_2 || (trQuestVarGet("APBeatenScenarios") < gAPShopTierThreshold * 2)) { trWorldSpacePromptHide("APLabel_C_HINT_2"); }
+    else { trWorldSpacePrompt("APLabel_C_HINT_2", trQuestVarGet("APOb_C_HINT_2"), false, APShopGetLabel("C_HINT_2"), vector(0,0,0), "vfx_top", true); }
+    if (gAPShopPurchased_D_HINT_1 || (trQuestVarGet("APBeatenScenarios") < gAPShopTierThreshold * 3)) { trWorldSpacePromptHide("APLabel_D_HINT_1"); }
+    else { trWorldSpacePrompt("APLabel_D_HINT_1", trQuestVarGet("APOb_D_HINT_1"), false, APShopGetLabel("D_HINT_1"), vector(0,0,0), "vfx_top", true); }
+}
+
 // -----------------------------------------------------------------------
-// Shop system — static definitions
-//
-// These functions are called directly from trigger XS code, so they MUST
-// be defined here in the static file. Trigger XS code is compiled at
-// scenario load before any trIncludeFile effects run, meaning functions
-// defined only in the generated aom_state.xs are not available at parse time.
-//
-// All dynamic data (purchased state, gem count, labels) is stored in global
-// variables below. APShopStateInit() in aom_state.xs sets them at runtime
-// after the include chain runs. APShopScenarioInit() calls APShopStateInit()
-// then grants the player their available gems as gold.
+// APShopRestartDelay — fires after Progressive Shop Info purchase to reload
+// the shop scenario so labels refresh at the new info level.
 // -----------------------------------------------------------------------
+
+rule APShopRestartDelay
+minInterval 2
+inactive
+{
+    trRestartScenario();
+    xsDisableSelf();
+}
 
 // -----------------------------------------------------------------------
 // Shop purchase polling rule
@@ -867,33 +795,25 @@ string APShopSlotFromIndex(int idx = 0)
     if (idx ==  3) { return "A_ITEM_3"; }
     if (idx ==  4) { return "A_ITEM_4"; }
     if (idx ==  5) { return "A_ITEM_5"; }
-    if (idx ==  6) { return "A_ITEM_6"; }
-    if (idx ==  7) { return "A_ITEM_7"; }
-    if (idx ==  8) { return "B_ITEM_1"; }
-    if (idx ==  9) { return "B_ITEM_2"; }
-    if (idx == 10) { return "B_ITEM_3"; }
-    if (idx == 11) { return "B_ITEM_4"; }
-    if (idx == 12) { return "B_ITEM_5"; }
-    if (idx == 13) { return "B_ITEM_6"; }
-    if (idx == 14) { return "C_ITEM_1"; }
-    if (idx == 15) { return "C_ITEM_2"; }
-    if (idx == 16) { return "C_ITEM_3"; }
-    if (idx == 17) { return "D_ITEM_1"; }
-    if (idx == 18) { return "D_ITEM_2"; }
-    if (idx == 19) { return "A_HINT_1"; }
-    if (idx == 20) { return "A_HINT_2"; }
-    if (idx == 21) { return "A_HINT_3"; }
-    if (idx == 22) { return "A_HINT_4"; }
-    if (idx == 23) { return "A_HINT_5"; }
-    if (idx == 24) { return "B_HINT_1"; }
-    if (idx == 25) { return "B_HINT_2"; }
-    if (idx == 26) { return "B_HINT_3"; }
-    if (idx == 27) { return "B_HINT_4"; }
-    if (idx == 28) { return "C_HINT_1"; }
-    if (idx == 29) { return "C_HINT_2"; }
-    if (idx == 30) { return "C_HINT_3"; }
-    if (idx == 31) { return "D_HINT_1"; }
-    if (idx == 32) { return "D_HINT_2"; }
+    if (idx ==  6) { return "B_ITEM_1"; }
+    if (idx ==  7) { return "B_ITEM_2"; }
+    if (idx ==  8) { return "B_ITEM_3"; }
+    if (idx ==  9) { return "B_ITEM_4"; }
+    if (idx == 10) { return "C_ITEM_1"; }
+    if (idx == 11) { return "C_ITEM_2"; }
+    if (idx == 12) { return "C_ITEM_3"; }
+    if (idx == 13) { return "D_ITEM_1"; }
+    if (idx == 14) { return "D_ITEM_2"; }
+    if (idx == 15) { return "A_HINT_1"; }
+    if (idx == 16) { return "A_HINT_2"; }
+    if (idx == 17) { return "A_HINT_3"; }
+    if (idx == 18) { return "A_HINT_4"; }
+    if (idx == 19) { return "B_HINT_1"; }
+    if (idx == 20) { return "B_HINT_2"; }
+    if (idx == 21) { return "B_HINT_3"; }
+    if (idx == 22) { return "C_HINT_1"; }
+    if (idx == 23) { return "C_HINT_2"; }
+    if (idx == 24) { return "D_HINT_1"; }
     return "";
 }
 
@@ -1087,8 +1007,15 @@ void APShowQueuedCheckMessage(int id = 0)
 {
     string objectiveText = APGetCheckText(id);
 
+    string _msgColor = "<color1,1,0>";
+    string _msgText  = objectiveText;
+    if (objectiveText == "Scenario Victory")
+    {
+        _msgColor = "<color0,1,0>";
+        _msgText  = "Gem Received";
+    }
     trMessageSetText(
-        "Checked <color1,1,0>" + objectiveText + "</color>\n\nComplete or quit the mission to send or receive items.",
+        "Checked " + _msgColor + _msgText + "</color>\n\nComplete or quit the mission to send or receive items.",
         -1
     );
     trSoundPlayFN("campaign\fott\cinematics\fott07\clearedcity.wav");
@@ -1102,6 +1029,64 @@ void APCheckLocation(string objectiveText = "")
         -1
     );
     trSoundPlayFN("campaign\fott\cinematics\fott07\clearedcity.wav");
+}
+
+// -----------------------------------------------------------------------
+// Main scenario activation rule — enabled by the Gameplay_Starts trigger
+// in each scenario via: xsEnableRule("APActivateScenario")
+// -----------------------------------------------------------------------
+
+rule APActivateScenario
+highFrequency
+inactive
+runImmediately
+{
+    gAPScenarioId = trQuestVarGet("APScenarioID");
+    gAPCampaignId = APGetCampaignForScenario(gAPScenarioId);
+    gAPMajorGod   = APGetMajorGodForScenario(gAPScenarioId);
+    APInitItems();               // populate gAPItems array first
+    trQuestVarSet("APGodsanity", gAPItems[5] == 9010 ? 1 : 0);
+
+    // Shop scenario (ID 0)
+    if (gAPScenarioId == 0)
+    {
+        // gem_shop disabled flag is at index 6 (9010=enabled, 9000=disabled)
+        if (gAPItemCount > 6 && gAPItems[6] != 9010)
+        {
+            trMessageSetText("The Shop was Disabled in the Options yaml.", 8);
+            trLeaveGame();
+            xsDisableSelf();
+            return;
+        }
+        APShopScenarioInit();
+        xsEnableRule("APProcessShopBuy");
+        xsEnableRule("APShopTierCheck");
+        trMusicPlayCurrent();
+        xsDisableSelf();
+        return;
+    }
+
+    APInitGods();
+    APReadRandomGod();
+    APSetPlayerCiv();
+    APForbidVanillaArchaicUnits();
+    APInitStartingAgeTechs();
+    APForbidItemGatedUnits();
+
+    // SPC campaign heroes
+    trForbidProtounit(1, "Ajax");
+    trForbidProtounit(1, "Chiron");
+    trForbidProtounit(1, "Odysseus");
+
+    // Scenario 12: Roc causes a game-breaking bug
+    if (gAPScenarioId == 12) { trForbidProtounit(1, "Roc"); }
+
+    gAPGodsanity = (gAPItemCount > 5 && gAPItems[5] == 9010);
+
+    xsEnableRule("APApplyItems");
+    xsEnableRule("APAnnounceGod");
+    trMusicPlayCurrent();
+    xsDisableSelf();
 }
 
 rule APInitQueuedCheckState
@@ -1414,7 +1399,7 @@ void APApplyAgeUnlocks()
     int i = 0;
     int id = 0;
 
-    for (i = 6; i < gAPItemCount; i++)
+    for (i = 7; i < gAPItemCount; i++)
     {
         id = gAPItems[i];
         if (id == cGREEK_AGE_UNLOCK)      { greekCount++;     }
@@ -1487,7 +1472,7 @@ void APApplyHeroBoosts()
     bool regProjectile        = false;
 
     // Start at 6 — indices 0-5 are flags (campaign unlocks, campaign ID, godsanity)
-    for (i = 6; i < gAPItemCount; i++)
+    for (i = 7; i < gAPItemCount; i++)
     {
         id = gAPItems[i];
 
@@ -1737,12 +1722,13 @@ runImmediately
     //   [3]: 9004 = has Atlantis Key,       9000 = no
     //   [4]: 9100 + campaign_id (for age unlock logic)
     //   [5]: 9010 = godsanity on,           9000 = no
+    //   [6]: 9010 = gem_shop enabled,        9000 = no
     gHasGreek    = false;
     gHasEgyptian = false;
     gHasNorse    = false;
     gHasAtlantis = false;
     gAPGodsanity = false;
-    if (gAPItemCount > 5)
+    if (gAPItemCount > 6)
     {
         if (gAPItems[0] == 9001) { gHasGreek    = true; }
         if (gAPItems[1] == 9002) { gHasEgyptian = true; }
@@ -1776,7 +1762,7 @@ runImmediately
     int i = 0;
     int j = 0;
     // Start at 6 — indices 0-5 are flags (campaign unlocks, campaign ID, godsanity)
-    for (i = 6; i < gAPItemCount; i++)
+    for (i = 7; i < gAPItemCount; i++)
     {
         itemId = gAPItems[i];
 
