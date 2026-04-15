@@ -25,9 +25,10 @@ _ICON_PATH = Path(__file__).parent.parent / "aom_icon.ico"
 # Trigger files bundled inside the apworld at aom/triggers/
 # Format: (source filename in apworld, destination subfolder relative to user_folder)
 _TRIGGER_FILES = [
-    ("ap_init.xs",     "trigger"),   # scenario trigger include
-    ("archipelago.xs", "trigger"),   # main AP logic
-    ("ap_ai.xs",       "Game\\AI"),  # AI log poller — different destination
+    ("ap_init.xs",        "trigger"),   # scenario trigger include
+    ("archipelago.xs",    "trigger"),   # main AP logic
+    ("ap_ai_init.xs",     "Game\\AI"),  # stable AI entry point used by scenarios
+    ("ap_ai_runtime.xs",  "Game\\AI"),  # runtime AI template; regenerated on connect
 ]
 
 

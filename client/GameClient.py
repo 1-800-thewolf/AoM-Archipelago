@@ -44,7 +44,8 @@ for _item in aomItemData:
 AI_OUTPUT_FILENAME = "MythRetoldAIOutputPlayer12.txt"
 
 MOD_AI_DIR_NAME = "fott_ap_campaign"
-APAI_FILENAME = "ap_ai.xs"
+APAI_INIT_FILENAME = "ap_ai_init.xs"
+APAI_RUNTIME_FILENAME = "ap_ai_runtime.xs"
 
 TRIGGER_FOLDER_NAME = "trigger"
 AOM_STATE_FILENAME = "aom_state.xs"
@@ -110,28 +111,30 @@ class AoMGameContext:
     def aom_state_file(self) -> Path:
         return self.trigger_folder / AOM_STATE_FILENAME
 
-    def apai_file(self, mods_local_dir: Path) -> Path:
-        # apai.xs must live in the user-level Game\AI folder, not the mod folder.
-        # mods_local_dir is e.g. .../76561198039446386/mods/local
-        # Game\AI is at       .../76561198039446386/Game/AI
-        return Path(self.user_folder) / "Game" / "AI" / APAI_FILENAME
+    def ap_ai_init_file(self, mods_local_dir: Path) -> Path:
+        # ap_ai_init.xs must live in the user-level Game\AI folder.
+        return Path(self.user_folder) / "Game" / "AI" / APAI_INIT_FILENAME
+
+    def ap_ai_runtime_file(self, mods_local_dir: Path) -> Path:
+        # ap_ai_runtime.xs must live in the user-level Game\AI folder.
+        return Path(self.user_folder) / "Game" / "AI" / APAI_RUNTIME_FILENAME
 
 
 # -----------------------------------------------------------------------
 # apai.xs generation
 # -----------------------------------------------------------------------
 
-def _load_ap_ai_template_text() -> str:
+def _load_ap_ai_runtime_template_text() -> str:
     """
     Load the canonical static ap_ai.xs template from the packaged world.
     This keeps startup / heartbeat / helper logic in one place.
     """
     package_root = (__package__ or "aom.client").split(".")[0]
     try:
-        template = resources.files(package_root).joinpath("triggers").joinpath(APAI_FILENAME)
+        template = resources.files(package_root).joinpath("triggers").joinpath(APAI_RUNTIME_FILENAME)
         return template.read_text(encoding="utf-8")
     except Exception as ex:
-        logger.error(f"Failed to load packaged {APAI_FILENAME} template: {ex}")
+        logger.error(f"Failed to load packaged {APAI_RUNTIME_FILENAME} template: {ex}")
         # Safe fallback so the player still gets a working AI bridge.
         return (
             'extern int gAPCategory = -1;\n\n'
@@ -171,14 +174,14 @@ def _strip_generated_ap_functions(template_text: str) -> str:
 
 def generate_ap_ai_xs(ctx: AoMGameContext, mods_local_dir: Path) -> None:
     """
-    Generate Game\\AI\\ap_ai.xs from the packaged triggers/ap_ai.xs template, then
-    append generated AP bridge functions for Player 12.
-    Called on every client connect so the file is always current.
+    Generate Game\AI\ap_ai_runtime.xs from the packaged triggers/ap_ai_runtime.xs
+    template, then append generated AP bridge functions for Player 12.
+    Called on every client connect so the live runtime AI file is always current.
     """
-    # mods_local_dir is kept for call-site compatibility.
+    # mods_local_dir kept for call-site compatibility.
     _ = mods_local_dir
 
-    template_text = _strip_generated_ap_functions(_load_ap_ai_template_text())
+    template_text = _strip_generated_ap_functions(_load_ap_ai_runtime_template_text())
 
     lines = [
         template_text.rstrip(),
@@ -213,14 +216,14 @@ def generate_ap_ai_xs(ctx: AoMGameContext, mods_local_dir: Path) -> None:
     lines.append("")
     content = "\n".join(lines)
 
-    apai_path = ctx.apai_file(mods_local_dir)
-    apai_path.parent.mkdir(parents=True, exist_ok=True)
+    runtime_path = ctx.ap_ai_runtime_file(mods_local_dir)
+    runtime_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
-        apai_path.write_text(content, encoding="utf-8")
-        logger.info(f"Generated {apai_path} with {generated_count} AP bridge functions.")
+        runtime_path.write_text(content, encoding="utf-8")
+        logger.info(f"Generated {runtime_path} with {generated_count} AP bridge functions.")
     except Exception as ex:
-        logger.error(f"Failed to write {APAI_FILENAME}: {ex}")
+        logger.error(f"Failed to write {APAI_RUNTIME_FILENAME}: {ex}")
 
 # -----------------------------------------------------------------------
 # aom_state.xs writing
