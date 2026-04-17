@@ -49,6 +49,12 @@ class ProgressiveShopInfo:
     """Unlocks additional label detail in the Gem Shop. One per shop tier."""
     pass
 
+@dataclass
+class Trap:
+    """A trap sent to the AoM player that activates mid-scenario."""
+    trap_type: int  # matches cAPTrap* constants in ap_ai_runtime.xs
+
+
 
 @dataclass
 class StartingResources:
@@ -128,21 +134,21 @@ class MythUnitUnlockFiller:
 
 @dataclass
 class AtlanteanUnitUnlockProgression:
-    """Atlantean unit unlock — only in pool when godsanity is enabled."""
+    """Atlantean unit unlock — only in pool when random_major_gods is enabled."""
     unit_name: str
     culture: str
 
 
 @dataclass
 class AtlanteanUnitUnlockUseful:
-    """Atlantean unit unlock — only in pool when godsanity is enabled."""
+    """Atlantean unit unlock — only in pool when random_major_gods is enabled."""
     unit_name: str
     culture: str
 
 
 @dataclass
 class AtlanteanMythUnitUnlock:
-    """Atlantean myth unit unlock — only in pool when godsanity is enabled."""
+    """Atlantean myth unit unlock — only in pool when random_major_gods is enabled."""
     units: list
     culture: str
     age: str
@@ -241,6 +247,8 @@ item_type_to_classification: dict[type, ItemClassification] = {
     FinalUnlock:            ItemClassification.progression,
     Gem:                    ItemClassification.filler,
     ProgressiveShopInfo:    ItemClassification.useful,
+    Trap:                   ItemClassification.trap,
+        Trap:                   ItemClassification.trap,
     UnitUnlockProgression:  ItemClassification.progression,
     StartingResources:      ItemClassification.filler,
     PassiveIncome:          ItemClassification.filler,
@@ -310,6 +318,32 @@ class aomItemData(enum.IntEnum):
     VICTORY = 9999, "Victory", Victory()
     GEM                  = 9998, "Gem",                  Gem()
     PROGRESSIVE_SHOP_INFO = 9997, "Progressive Shop Info", ProgressiveShopInfo()
+    TRAP_METEOR          = 9980, "Trap: Meteor",           Trap(trap_type=1)
+    TRAP_LIGHTNING_STORM = 9981, "Trap: Lightning Storm",  Trap(trap_type=2)
+    TRAP_LOCUST_SWARM    = 9982, "Trap: Locust Swarm",     Trap(trap_type=3)
+    TRAP_BOLT            = 9983, "Trap: Bolt",             Trap(trap_type=4)
+    TRAP_SPAWN_UNITS     = 9984, "Trap: Spawn Units",      Trap(trap_type=5)
+    TRAP_TRANSFORM_DROP  = 9985, "Trap: Transform Drops",  Trap(trap_type=6)
+    TRAP_RESTORATION     = 9986, "Trap: Restoration",      Trap(trap_type=7)
+    TRAP_CITADEL         = 9987, "Trap: Citadel",          Trap(trap_type=8)
+    TRAP_TORNADO         = 9988, "Trap: Tornado",          Trap(trap_type=9)
+    TRAP_EARTHQUAKE      = 9989, "Trap: Earthquake",       Trap(trap_type=10)
+    TRAP_CURSE           = 9990, "Trap: Curse",            Trap(trap_type=11)
+    TRAP_PLAGUE_SERPENTS = 9991, "Trap: Plague of Serpents", Trap(trap_type=12)
+    TRAP_IMPLODE         = 9992, "Trap: Implode",          Trap(trap_type=13)
+    TRAP_TARTARIAN_GATE  = 9993, "Trap: Tartarian Gate",   Trap(trap_type=14)
+    TRAP_CHAOS           = 9994, "Trap: Chaos",            Trap(trap_type=15)
+    TRAP_TRAITOR         = 9995, "Trap: Traitor",          Trap(trap_type=16)
+    TRAP_CARNIVORA       = 9950, "Trap: Carnivora",        Trap(trap_type=17)
+    TRAP_SPIDER_LAIR     = 9951, "Trap: Spider Lair",      Trap(trap_type=18)
+    TRAP_DECONSTRUCTION  = 9952, "Trap: Deconstruction",   Trap(trap_type=19)
+    TRAP_FIMBULWINTER    = 9953, "Trap: Fimbulwinter",     Trap(trap_type=20)
+    TRAP_FLAMING_WEAPONS = 9954, "Trap: Flaming Weapons",  Trap(trap_type=21)
+    TRAP_ANCESTORS       = 9955, "Trap: Ancestors",        Trap(trap_type=22)
+    TRAP_PESTILENCE      = 9956, "Trap: Pestilence",       Trap(trap_type=23)
+    TRAP_BRONZE          = 9957, "Trap: Bronze",           Trap(trap_type=24)
+    TRAP_ECLIPSE         = 9958, "Trap: Eclipse",          Trap(trap_type=25)
+
 
     # -----------------------------------------------------------------------
     # Campaign / Section unlocks (progression)
@@ -332,7 +366,7 @@ class aomItemData(enum.IntEnum):
     EGYPTIAN_AGE_UNLOCK   = 1005, "Progressive Egyptian Age Unlock",      AgeUnlock("Egyptian")
 
     NORSE_AGE_UNLOCK      = 1008, "Progressive Norse Age Unlock",      AgeUnlock("Norse")
-    ATLANTEAN_AGE_UNLOCK  = 1011, "Progressive Atlantean Age Unlock", AgeUnlock("Atlantean")  # only in pool when godsanity is on
+    ATLANTEAN_AGE_UNLOCK  = 1011, "Progressive Atlantean Age Unlock", AgeUnlock("Atlantean")  # only in pool when random_major_gods is on
 
     # -----------------------------------------------------------------------
     # Unit Unlocks
@@ -368,7 +402,7 @@ class aomItemData(enum.IntEnum):
     CAN_TRAIN_RAIDING_CAVALRY = 3232, "Can train Raiding Cavalry", UnitUnlockUseful("RaidingCavalry", "Norse")
     CAN_TRAIN_JARL            = 3233, "Can train Jarl",            UnitUnlockUseful("Jarl", "Norse")
 
-    # Atlantean unit unlocks — only added to pool when godsanity is enabled
+    # Atlantean unit unlocks — only added to pool when random_major_gods is enabled
     CAN_TRAIN_MURMILLO        = 3240, "Can train Murmillo",        AtlanteanUnitUnlockProgression("Murmillo", "Atlantean")
     CAN_TRAIN_KATAPELTES      = 3241, "Can train Katapeltes",      AtlanteanUnitUnlockUseful("Katapeltes", "Atlantean")
     CAN_TRAIN_TURMA           = 3242, "Can train Turma",           AtlanteanUnitUnlockUseful("Turma", "Atlantean")
@@ -459,7 +493,7 @@ class aomItemData(enum.IntEnum):
     NORSE_HEROIC_MYTH_UNITS                  = 5023, "Can train Norse Heroic Myth Units", MythUnitUnlockProgression(['FrostGiant', 'BattleBoar', 'MountainGiant', 'RockGiant', 'Kraken'], "Norse", "Heroic")
     NORSE_MYTHIC_MYTH_UNITS                  = 5024, "Can train Norse Mythic Myth Units", MythUnitUnlockProgression(['FireGiant', 'FenrisWolfBrood', 'Fafnir', 'JormunElver'], "Norse", "Mythic")
 
-    # Atlantean myth unit unlocks — only added to pool when godsanity is enabled
+    # Atlantean myth unit unlocks — only added to pool when random_major_gods is enabled
     ATLANTEAN_CLASSICAL_MYTH_UNITS = 5025, "Can train Atlantean Classical Myth Units", AtlanteanMythUnitUnlock(['Promethean', 'Automaton', 'Caladria', 'Servant'], "Atlantean", "Classical")
     ATLANTEAN_HEROIC_MYTH_UNITS    = 5026, "Can train Atlantean Heroic Myth Units",    AtlanteanMythUnitUnlock(['Behemoth', 'Satyr', 'StymphalianBird', 'Nereid'], "Atlantean", "Heroic")
     ATLANTEAN_MYTHIC_MYTH_UNITS    = 5027, "Can train Atlantean Mythic Myth Units",    AtlanteanMythUnitUnlock(['Centimanus', 'Argus', 'Lampades', 'ManOWar'], "Atlantean", "Mythic")

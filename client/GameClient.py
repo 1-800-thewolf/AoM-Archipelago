@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import os
-from importlib import resources
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -53,6 +52,7 @@ AOM_STATE_FILENAME = "aom_state.xs"
 AP_CHECK_PREFIX  = "AP_CHECK:"
 AP_LOCKED_PREFIX = "AP_LOCKED:"
 AP_SHOP_PREFIX   = "AP_SHOP:"
+AP_TRAP_PREFIX   = "AP_TRAP_FIRED:"
 
 GEM_ITEM_ID = 9998  # aomItemData.GEM
 SHOP_SCENARIO_ID = 0  # reserved scenario ID for the shop
@@ -77,12 +77,13 @@ class AoMGameContext:
     user_folder: str = ""
     received_items: list[int] = field(default_factory=list)
     sent_checks: set[int] = field(default_factory=set)
-    last_ai_output_mtime: float = 0.0
+    last_ai_output_offset: int = 0  # byte offset into log file; reset when file shrinks
     client_interface: object = None
     # Slot data cached on connect for state file logic
     final_mode: int = -1           # 0=beat_x, 1=always_open, 2=atlantis_key
     x_scenarios_threshold: int = 0  # only used when final_mode == 0
-    godsanity: bool = False
+    random_major_gods: bool = False
+    update_buildings_for_random_god: bool = True
     god_assignments: dict = None         # scenario_id (int) → major_god int
     minor_god_assignments: dict = None   # scenario_id (int) → [tech_name, ...]\n
     archaic_forbids: dict = None         # scenario_id (int) → [unit_name, ...]
@@ -91,6 +92,9 @@ class AoMGameContext:
     wins_to_open_shop: int = 5
     world_id: int = 0
     gem_shop_enabled: bool = True
+    trap_queue: list  = field(default_factory=list)   # list of trap_type ints
+    trap_ack_nonce: int = 0                           # written to aom_state.xs
+    traps_fired_this_scenario: int = 0                 # reset each scenario load
     purchased_slots: set  = field(default_factory=set)
     shop_obelisk_assignments: dict = field(default_factory=dict)  # obelisk_id → [loc_id,...]
     shop_item_details: dict = field(default_factory=dict)         # loc_id → {player, name, cls}
@@ -126,30 +130,51 @@ class AoMGameContext:
 
 def _load_ap_ai_runtime_template_text() -> str:
     """
-    Load the canonical static ap_ai.xs template from the packaged world.
-    This keeps startup / heartbeat / helper logic in one place.
+    Load ap_ai_runtime.xs from the triggers folder inside the apworld zip.
+
+    __file__ for a zip-imported module is a virtual path like:
+        C:\...\aom.apworld\aom\client\GameClient.py
+    That path doesn't exist on disk, so Path.read_text() fails.
+    We walk up __file__'s parents to find the .apworld boundary, then
+    use zipfile.ZipFile to read the template directly from the archive.
     """
-    package_root = (__package__ or "aom.client").split(".")[0]
+    import zipfile as _zf
     try:
-        template = resources.files(package_root).joinpath("triggers").joinpath(APAI_RUNTIME_FILENAME)
-        return template.read_text(encoding="utf-8")
+        # Find the .apworld file in the path hierarchy
+        apworld_path = None
+        for parent in [Path(__file__)] + list(Path(__file__).parents):
+            if str(parent).lower().endswith(".apworld") and parent.is_file():
+                apworld_path = parent
+                break
+        if apworld_path:
+            with _zf.ZipFile(apworld_path, "r") as z:
+                internal = f"aom/triggers/{APAI_RUNTIME_FILENAME}"
+                if internal in z.namelist():
+                    return z.read(internal).decode("utf-8")
+            logger.error(f"{APAI_RUNTIME_FILENAME} not found inside {apworld_path}")
+        else:
+            # Not running from a zip — try plain filesystem (dev/test mode)
+            template_path = Path(__file__).parent.parent / "triggers" / APAI_RUNTIME_FILENAME
+            if template_path.exists():
+                return template_path.read_text(encoding="utf-8")
+            logger.error(f"Could not locate apworld zip and {template_path} does not exist")
     except Exception as ex:
-        logger.error(f"Failed to load packaged {APAI_RUNTIME_FILENAME} template: {ex}")
-        # Safe fallback so the player still gets a working AI bridge.
-        return (
-            'extern int gAPCategory = -1;\n\n'
-            'void main()\n'
-            '{\n'
-            '   gAPCategory = aiAddEchoCategory("Archipelago");\n'
-            '   aiEcho("APAI startup.");\n'
-            '}\n\n'
-            'rule APHeartbeat\n'
-            'minInterval 30\n'
-            'active\n'
-            '{\n'
-            '   aiEcho("APAI heartbeat.");\n'
-            '}\n'
-        )
+        logger.error(f"Failed to load {APAI_RUNTIME_FILENAME} template: {ex}")
+    # Minimal fallback — trap system won't work but checks still will.
+    return (
+        'extern int gAPCategory = -1;\n\n'
+        'void main()\n'
+        '{\n'
+        '   gAPCategory = aiAddEchoCategory("Archipelago");\n'
+        '   aiEcho("APAI startup.");\n'
+        '}\n\n'
+        'rule APHeartbeat\n'
+        'minInterval 30\n'
+        'active\n'
+        '{\n'
+        '   aiEcho("APAI heartbeat.");\n'
+        '}\n'
+    )
 
 
 def _strip_generated_ap_functions(template_text: str) -> str:
@@ -167,6 +192,8 @@ def _strip_generated_ap_functions(template_text: str) -> str:
         if s.startswith("void APShop_"):
             continue
         if s.startswith("void APShopSignal("):
+            continue
+        if s.startswith("void APTrapFiredSignal("):
             continue
         stripped_lines.append(line.rstrip())
     return "\n".join(stripped_lines).rstrip() + "\n"
@@ -214,6 +241,9 @@ def generate_ap_ai_xs(ctx: AoMGameContext, mods_local_dir: Path) -> None:
         generated_count += 1
 
     lines.append("")
+    lines.append(f'void APTrapFiredSignal() {{ aiEcho("AP_TRAP_FIRED:"); }}')
+
+    lines.append("")
     content = "\n".join(lines)
 
     runtime_path = ctx.ap_ai_runtime_file(mods_local_dir)
@@ -256,6 +286,30 @@ def _get_has_atlantis(ctx: AoMGameContext, received_set: set) -> int:
     return 9000
 
 
+# -----------------------------------------------------------------------
+# Building transformation data for UpdateBuildingsForRandomGod
+# -----------------------------------------------------------------------
+_GOD_TO_CIV = {
+    1: "Greek", 2: "Greek", 3: "Greek",        # Zeus, Poseidon, Hades
+    4: "Egyptian", 5: "Egyptian", 6: "Egyptian", # Ra, Isis, Set
+    7: "Norse", 8: "Norse", 9: "Norse",          # Thor, Odin, Loki
+    10: "Atlantean", 11: "Atlantean", 12: "Atlantean",  # Kronos, Oranos, Gaia
+}
+_CLASSICAL_BLDGS = {
+    "Greek":     ["MilitaryAcademy", "ArcheryRange", "Stable"],
+    "Egyptian":  ["Barracks"],
+    "Norse":     ["Longhouse", "GreatHall"],
+    "Atlantean": ["MilitaryBarracks", "CounterBarracks"],
+}
+_HEROIC_BLDGS = {
+    "Greek":     ["Fortress"],
+    "Egyptian":  ["MigdolStronghold", "SiegeWorks"],
+    "Norse":     ["HillFort"],
+    "Atlantean": ["Palace"],
+}
+# Scenario 7 uses player 3 instead of player 1
+_BLDG_PLAYER_OVERRIDE = {7: 3}
+
 def write_aom_state(ctx: AoMGameContext) -> None:
 
     """
@@ -284,7 +338,7 @@ def write_aom_state(ctx: AoMGameContext) -> None:
     #   [2] = 9003 if Norse Scenarios in items,    else 9000
     #   [3] = 9004 if Atlantis Key in items,       else 9000
     #   [4] = 9100 + campaign_id
-    #   [5] = 9010 if godsanity is on,             else 9000
+    #   [5] = 9010 if random_major_gods is on,             else 9000
     #   [6] = 9010 if gem_shop is enabled,          else 9000
     # Real items start at index 7.
     GREEK_SCENARIOS    = 3500
@@ -298,7 +352,7 @@ def write_aom_state(ctx: AoMGameContext) -> None:
         9003 if NORSE_SCENARIOS    in received_set else 9000,
         _get_has_atlantis(ctx, received_set),
         9100 + campaign_id,                      # index 4: campaign ID
-        9010 if ctx.godsanity else 9000,         # index 5: godsanity flag
+        9010 if ctx.random_major_gods else 9000,         # index 5: random_major_gods flag
         9010 if ctx.gem_shop_enabled else 9000,  # index 6: gem_shop flag
     ]
     items_with_flags = flags + list(ctx.received_items)
@@ -313,24 +367,24 @@ def write_aom_state(ctx: AoMGameContext) -> None:
         lines.append(f"    gAPItems[{i}] = {item_id};")
     lines.append("}")
 
-    # Godsanity — APInitGods() sets quest vars for /gods command
+    # Random_Major_Gods — APInitGods() sets quest vars for /gods command
     lines.append("")
     lines.append("void APInitGods()")
     lines.append("{")
     for scenario_id in range(1, 33):
-        if ctx.godsanity and ctx.god_assignments and scenario_id in ctx.god_assignments:
+        if ctx.random_major_gods and ctx.god_assignments and scenario_id in ctx.god_assignments:
             god_val = ctx.god_assignments[scenario_id]
         else:
             god_val = 0
         lines.append(f"    trQuestVarSet(\"APGod{scenario_id}\", {god_val});")
     lines.append("}")
 
-    # Godsanity — APInitStartingAgeTechs() grants starting age techs per scenario
+    # Random_Major_Gods — APInitStartingAgeTechs() grants starting age techs per scenario
     lines.append("")
     lines.append("void APInitStartingAgeTechs()")
     lines.append("{")
     lines.append("    int scenId = trQuestVarGet(\"APScenarioID\");")
-    if ctx.godsanity and ctx.minor_god_assignments:
+    if ctx.random_major_gods and ctx.minor_god_assignments:
         for scenario_id in range(1, 33):
             techs = ctx.minor_god_assignments.get(scenario_id) or []
             if not techs:
@@ -377,10 +431,11 @@ def write_aom_state(ctx: AoMGameContext) -> None:
     info_level     = sum(1 for i in ctx.received_items if i == PROG_INFO_ID)
     gems_earned    = sum(1 for i in ctx.received_items if i == GEM_ITEM_ID)
     available_gems = max(0, gems_earned - len(ctx.purchased_slots))
+    update_bldgs_on = ctx.update_buildings_for_random_god
 
     def _xs(s): lines.append(s)
-    def _cls_rank(c): return {"filler":0,"useful":1,"progression":2}.get(c,0)
-    def _cls_disp(c): return {"filler":"Filler","useful":"Useful","progression":"Progression"}.get(c,"?")
+    def _cls_rank(c): return {"trap":-1,"filler":0,"useful":1,"progression":2}.get(c,-1)
+    def _cls_disp(c): return {"trap":"Trap","filler":"Filler","useful":"Useful","progression":"Progression"}.get(c,"?")
 
     _xs("")
     _xs("void APShopStateInit()")
@@ -389,7 +444,7 @@ def write_aom_state(ctx: AoMGameContext) -> None:
     _xs(f"    gAPShopTierThreshold = {ctx.wins_to_open_shop};")
     _beaten = len(ctx.sent_checks & VICTORY_LOCATION_IDS)
     _xs('    trQuestVarSet("APBeatenScenarios", ' + str(_beaten) + ");")
-    _xs('    trQuestVarSet("APGodsanity", ' + ('1' if ctx.godsanity else '0') + ");")
+    _xs('    trQuestVarSet("APRandom_Major_Gods", ' + ('1' if ctx.random_major_gods else '0') + ");")
 
     for _sid in ctx.shop_slot_order:
         _pv = "true" if _sid in ctx.purchased_slots else "false"
@@ -399,34 +454,122 @@ def write_aom_state(ctx: AoMGameContext) -> None:
     for _oid, _lids in ctx.shop_obelisk_assignments.items():
         _det = [ctx.shop_item_details.get(_l) for _l in _lids if ctx.shop_item_details.get(_l)]
         _n   = len(_det)
+
+        # Main recipient = player with most items in this obelisk
+        def _main_recipient(det):
+            from collections import Counter
+            if not det: return "?"
+            counts = Counter(d.get("player_name","?") for d in det)
+            return counts.most_common(1)[0][0]
+
         if not _det or info_level == 0:
-            _lbl = "? items\\nHighest rarity: ?\\nFor ?"
+            _lbl = "? items\\n? is rarest\\n?: main recipient"
         elif info_level == 1:
-            _lbl = str(_n) + " items\\nHighest rarity: ?\\nFor ?"
+            _lbl = str(_n) + " items\\n? is rarest\\n?: main recipient"
         elif info_level == 2:
             _top = _cls_disp(max((_d.get("classification","filler") for _d in _det), key=_cls_rank))
-            _lbl = str(_n) + " items\\nHighest rarity: " + _top + "\\nFor ?"
+            _lbl = str(_n) + " items\\n" + _top + " is rarest\\n?: main recipient"
         elif info_level == 3:
             _top = _cls_disp(max((_d.get("classification","filler") for _d in _det), key=_cls_rank))
-            _pl  = _det[0].get("player_name","?")
-            _lbl = str(_n) + " items\\nHighest rarity: " + _top + "\\nFor " + _pl
+            _pl  = _main_recipient(_det)
+            _lbl = str(_n) + " items\\n" + _top + " is rarest\\n" + _pl + ": main recipient"
         else:
-            # Level 4: cap at level 3 display — the 4th upgrade sends mission hints instead
-            _top = _cls_disp(max((_d.get("classification","filler") for _d in _det), key=_cls_rank))
-            _pl  = _det[0].get("player_name","?")
-            _lbl = str(_n) + " items\\nHighest rarity: " + _top + "\\nFor " + _pl
-        _lbl = _lbl.replace('"', '\\\\"')
+            # Level 4: show count of rarest item type
+            _top     = max((_d.get("classification","filler") for _d in _det), key=_cls_rank)
+            _top_disp = _cls_disp(_top)
+            _top_cnt = sum(1 for _d in _det if _d.get("classification","filler") == _top)
+            _pl      = _main_recipient(_det)
+            _lbl = (str(_n) + " items\\n" + _top_disp + " is rarest\\n\\n"
+                    + str(_top_cnt) + " " + _top_disp + " items\\n" + _pl + ": main recipient")
+        _lbl = _lbl.replace('"', '\\\\"'  )
         _xs('    gAPShopLabel_' + _oid + ' = "' + _lbl + '";')
 
     for _sid, _hcfg in ctx.shop_hint_config.items():
         if _hcfg.get("type") == "progressive_info":
-            _lbl = "Progressive Shop Info\\nUpgrades shop labels"
+            _lbl = "Progressive shop info\\nUpgrades item labels"
         else:
             _rng = _hcfg.get("missions_range", (1,2))
             _lbl = "Hints for " + str(_rng[0]) + "-" + str(_rng[1]) + " missions"
         _xs('    gAPShopLabel_' + _sid + ' = "' + _lbl + '";')
 
     _xs("}")
+
+    # Generate APTrapQueueInit — called from APActivateScenario
+    _xs("")
+    _xs("void APTrapQueueInit()")
+    _xs("{")
+    _xs(f"    gAPTrapQueueSize = {len(ctx.trap_queue)};")
+    if ctx.trap_queue:
+        _xs(f"    gAPTrapQueue = new int({len(ctx.trap_queue)}, 0);")
+        for _ti, _tt in enumerate(ctx.trap_queue):
+            _xs(f"    gAPTrapQueue[{_ti}] = {_tt};")
+    _xs('    trQuestVarSet("APTrapAckNonce", ' + str(ctx.trap_ack_nonce) + ");")
+    _xs('    trQuestVarSet("APTrapsFiredThisScenario", 0);')
+    _xs("}")
+
+    # Generate APTransformBuildings() — data-only, no tr* calls.
+    # Writes scenario→building transform pairs as XS int/string arrays.
+    # Execution (tr* calls) lives in archipelago.xs APTransformBuildings().
+    update_bldgs_on2 = ctx.update_buildings_for_random_god
+    _xs("")
+    _xs("extern int      gAPBldgTransformCount = 0;")
+    _xs("extern int[]    gAPBldgScen           = default;")
+    _xs("extern int[]    gAPBldgPlayer         = default;")
+    _xs("extern string[] gAPBldgFrom           = default;")
+    _xs("extern string[] gAPBldgTo1            = default;")
+    _xs("extern string[] gAPBldgTo2            = default;")
+    _xs("")
+    _xs("void APLoadBuildingTransforms()")
+    _xs("{")
+    _xs("    gAPBldgTransformCount = 0;")
+    if update_bldgs_on2 and ctx.god_assignments:
+        _vanilla_gods2 = {
+            1: 2, 2: 2, 3: 2, 4: 2,
+            5: 1, 6: 1, 7: 1, 8: 1, 9: 1, 10: 1,
+            11: 4, 12: 5, 13: 6, 14: 4, 15: 4,
+            16: 3,
+            17: 5, 18: 5, 19: 4, 20: 4,
+            21: 1,
+            22: 8, 23: 8,
+            24: 9, 25: 9,
+            26: 7, 27: 7, 28: 7,
+            29: 8, 30: 8,
+            31: 1, 32: 1,
+        }
+        _pairs = []  # list of (scenId, targetPlayer, fromProto, toProto1, toProto2)
+        for _sid, _vgod in sorted(_vanilla_gods2.items()):
+            _rgod = ctx.god_assignments.get(_sid, _vgod)
+            _vc   = _GOD_TO_CIV.get(_vgod, "Greek")
+            _rc   = _GOD_TO_CIV.get(_rgod, "Greek")
+            if _vc == _rc:
+                continue
+            _tp = _BLDG_PLAYER_OVERRIDE.get(_sid, 1)
+            for _from in _CLASSICAL_BLDGS[_vc]:
+                _to = _CLASSICAL_BLDGS[_rc]
+                _pairs.append((_sid, _tp, _from, _to[0], _to[1] if len(_to)>1 else ""))
+            for _from in _HEROIC_BLDGS[_vc]:
+                _to = _HEROIC_BLDGS[_rc]
+                _pairs.append((_sid, _tp, _from, _to[0], _to[1] if len(_to)>1 else ""))
+        # Size all arrays before assigning by index (XS requires this)
+        _xs(f"    gAPBldgScen   = new int({len(_pairs)}, 0);")
+        _xs(f"    gAPBldgPlayer = new int({len(_pairs)}, 1);")
+        _xs(f'    gAPBldgFrom   = new string({len(_pairs)}, "");')
+        _xs(f'    gAPBldgTo1    = new string({len(_pairs)}, "");')
+        _xs(f'    gAPBldgTo2    = new string({len(_pairs)}, "");')
+        for _i, (_sid, _tp, _fr, _t1, _t2) in enumerate(_pairs):
+            _xs(f'    gAPBldgScen[{_i}]    = {_sid};')
+            _xs(f'    gAPBldgPlayer[{_i}]  = {_tp};')
+            _xs(f'    gAPBldgFrom[{_i}]    = "{_fr}";')
+            _xs(f'    gAPBldgTo1[{_i}]     = "{_t1}";')
+            _xs(f'    gAPBldgTo2[{_i}]     = "{_t2}";')
+        _xs(f"    gAPBldgTransformCount = {len(_pairs)};")
+    _xs("}")
+
+    # Set APUpdateBldgs quest var in APShopStateInit so archipelago.xs knows option state
+    # Patch it into the existing APShopStateInit by inserting before closing brace
+    # We do this by re-finding and replacing the end of APShopStateInit generation
+
+
 
     content = "\n".join(lines) + "\n"
 
@@ -441,6 +584,32 @@ def write_aom_state(ctx: AoMGameContext) -> None:
 # -----------------------------------------------------------------------
 # AI output file reading
 # -----------------------------------------------------------------------
+
+def save_trap_state(ctx: AoMGameContext) -> None:
+    """Persist trap_queue to a per-seed JSON sidecar."""
+    import json
+    try:
+        path = ctx.trigger_folder / f"ap_trap_state_{ctx.world_id}.json"
+        path.write_text(json.dumps({"trap_queue": ctx.trap_queue}), encoding="utf-8")
+    except Exception as ex:
+        logger.warning(f"Failed to save trap state: {ex}")
+
+
+def load_trap_state(ctx: AoMGameContext) -> None:
+    """Load persisted trap_queue for the current seed."""
+    import json
+    try:
+        path = ctx.trigger_folder / f"ap_trap_state_{ctx.world_id}.json"
+        if path.exists():
+            data = json.loads(path.read_text(encoding="utf-8"))
+            ctx.trap_queue = data.get("trap_queue", [])
+            logger.info(f"Loaded trap state: {len(ctx.trap_queue)} trap(s) queued.")
+        else:
+            ctx.trap_queue = []
+    except Exception as ex:
+        logger.warning(f"Failed to load trap state: {ex}")
+        ctx.trap_queue = []
+
 
 def save_shop_state(ctx: AoMGameContext) -> None:
     """Persist purchased_slots to a per-seed JSON sidecar."""
@@ -527,8 +696,10 @@ def _send_shop_hints(ctx: AoMGameContext, slot_id: str) -> None:
 
 def read_new_checks(ctx: AoMGameContext) -> list[int]:
     """
-    Check if MythRetoldAIOutputPlayer12.txt has been updated since last read.
-    If so, parse all AP_CHECK: lines and return new location IDs not yet sent.
+    Read new lines from MythRetoldAIOutputPlayer12.txt since last read.
+    Uses a byte offset so we only process genuinely new lines even if mtime
+    is unchanged (AoM flushes the log at scenario end, not continuously).
+    Resets offset if the file shrank (new scenario overwrote the log).
     """
     ai_file = ctx.ai_output_file
 
@@ -536,24 +707,39 @@ def read_new_checks(ctx: AoMGameContext) -> list[int]:
         return []
 
     try:
-        mtime = ai_file.stat().st_mtime
+        file_size = ai_file.stat().st_size
     except OSError:
         return []
 
-    if mtime <= ctx.last_ai_output_mtime:
-        return []
+    # File shrank → new scenario started, log was reset
+    if file_size < ctx.last_ai_output_offset:
+        ctx.last_ai_output_offset = 0
 
-    ctx.last_ai_output_mtime = mtime
+    if file_size <= ctx.last_ai_output_offset:
+        return []
 
     new_checks = []
     try:
-        content = ai_file.read_text(encoding="utf-16-le", errors="ignore")
+        with ai_file.open("rb") as f:
+            f.seek(ctx.last_ai_output_offset)
+            raw = f.read()
+            ctx.last_ai_output_offset += len(raw)
+        content = raw.decode("utf-16-le", errors="ignore")
         for line in content.splitlines():
             line = line.strip()
             if AP_LOCKED_PREFIX in line:
                 idx = line.find(AP_LOCKED_PREFIX)
                 campaign = line[idx + len(AP_LOCKED_PREFIX):].strip()
                 logger.warning(f"Archipelago: You need the {campaign} Scenarios item to play this campaign.")
+                continue
+            if "AP_TRAP_FIRED:" in line:
+                # Trap fired — pop front of queue
+                if ctx.trap_queue:
+                    fired = ctx.trap_queue.pop(0)
+                    logger.info(f"Trap fired: type {fired}, {len(ctx.trap_queue)} remaining")
+                ctx.trap_ack_nonce += 1
+                save_trap_state(ctx)
+                write_aom_state(ctx)
                 continue
             if AP_SHOP_PREFIX in line:
                 idx_pos  = line.find(AP_SHOP_PREFIX)
@@ -622,16 +808,15 @@ async def game_loop(ctx: AoMGameContext) -> None:
     logger.info("Age of Mythology: Retold client commands:")
     logger.info("  /status              — show connection info and Atlantis Key progress")
     logger.info("  /scenarios (/progress) — list beaten, in-progress, and untouched scenarios")
-    logger.info("  /gods                  — show randomized god per scenario (godsanity only)")
+    logger.info("  /gods                  — show randomized god per scenario (random_major_gods only)")
     logger.info("  /greek /egypt /norse /atlantean — show unit/myth/age unlock items for that civ")
     logger.info("  /generic               — show all other received items (heroes, resources, etc.)")
 
-    # Seed mtime so we only react to writes that happen AFTER client starts.
+    # Start reading from end of current log so we only see new lines
     ai_file = ctx.ai_output_file
     if ai_file.exists():
         try:
-            ctx.last_ai_output_mtime = ai_file.stat().st_mtime
-            pass
+            ctx.last_ai_output_offset = ai_file.stat().st_size
         except OSError:
             pass
     while ctx.running:

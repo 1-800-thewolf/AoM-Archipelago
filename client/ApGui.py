@@ -20,31 +20,42 @@ class AoMManager(GameManager):
     icon = str(Path(__file__).parent.parent / "aom_icon.ico")
 
     def build(self):
-        # Wrap the normal GameManager layout in a FloatLayout so we can
-        # freely position a small overlay label in the upper-right corner
-        # without affecting the existing layout at all.
         main_content = super().build()
 
         root = FloatLayout()
-        root.add_widget(main_content)  # fills entire window as normal
+        root.add_widget(main_content)
 
-        # Small black-background container positioned dynamically
-        # just below the tab bar (All / Hints), flush to the right edge.
-        # We bind to self.tabs.y so it tracks the actual tab bar position
-        # rather than relying on hardcoded pixel offsets.
+        # Single container — 5 rows stacked vertically, same as original.
+        # Two canvas rectangles are drawn: a wide one behind row 1 (Atlantis Key)
+        # and a narrower one behind rows 2-5 (Gems / Shops / Traps).
         container = BoxLayout(
             orientation="vertical",
             size_hint=(None, None),
-            size=(dp(250), dp(60)),
+            size=(dp(260), dp(100)),
             padding=(dp(6), 0),
         )
+
         with container.canvas.before:
             Color(0, 0, 0, 1)
-            self._label_bg = Rectangle(pos=container.pos, size=container.size)
-        container.bind(
-            pos=lambda inst, val: setattr(self._label_bg, "pos", val),
-            size=lambda inst, val: setattr(self._label_bg, "size", val),
-        )
+            # Wide rectangle behind the Atlantis Key row (full width)
+            self._bg_top = Rectangle()
+            # Narrower rectangle behind the remaining rows
+            self._bg_bot = Rectangle()
+
+        def _update_rects(*args):
+            row_h  = dp(20)
+            top_w  = container.width * 0.9     # 10% narrower than container
+            bot_w  = dp(142)                   # bottom rect width
+            cx, cy = container.x, container.y
+            ch     = container.height
+            # Top rect: rightmost top_w pixels, top row only
+            self._bg_top.pos  = (cx + container.width - top_w, cy + ch - row_h)
+            self._bg_top.size = (top_w, row_h)
+            # Bot rect: rightmost bot_w pixels, rows 2-5
+            self._bg_bot.pos  = (cx + container.width - bot_w, cy)
+            self._bg_bot.size = (bot_w, ch - row_h)
+
+        container.bind(pos=_update_rects, size=_update_rects)
 
         def _make_label():
             lbl = Label(
@@ -54,16 +65,19 @@ class AoMManager(GameManager):
             lbl.bind(size=lbl.setter("text_size"))
             return lbl
 
-        self._atlantis_label = _make_label()
-        self._gems_label     = _make_label()
-        self._shops_label    = _make_label()
+        self._atlantis_label    = _make_label()
+        self._gems_label        = _make_label()
+        self._shops_label       = _make_label()
+        self._trap_count_label  = _make_label()
+        self._trap_next_label   = _make_label()
 
         container.add_widget(self._atlantis_label)
         container.add_widget(self._gems_label)
         container.add_widget(self._shops_label)
+        container.add_widget(self._trap_count_label)
+        container.add_widget(self._trap_next_label)
         root.add_widget(container)
 
-        # Bind position so the label tracks the bottom of the tab bar
         def _reposition(*args):
             container.right = root.right
             container.top   = self.tabs.y
@@ -74,11 +88,6 @@ class AoMManager(GameManager):
         return root
 
     def update_atlantis_status(self, text: str, green: bool = False) -> None:
-        """
-        Update the Atlantis Key status label from any thread.
-        Bold yellow on black; green=True switches to bright green when unlocked.
-        Uses Clock.schedule_once to safely marshal onto the Kivy main thread.
-        """
         def _update(dt):
             if not text:
                 self._atlantis_label.text = ""
@@ -88,7 +97,6 @@ class AoMManager(GameManager):
         Clock.schedule_once(_update)
 
     def update_shop_status(self, gems, shops_open) -> None:
-        """Update gems and shops open labels. Pass None to hide both."""
         def _update(dt):
             if gems is None:
                 self._gems_label.text  = ""
@@ -98,12 +106,23 @@ class AoMManager(GameManager):
                 self._shops_label.text = f"[b][color=AAAAFF]Shops open: {shops_open}[/color][/b]"
         Clock.schedule_once(_update)
 
+    def update_trap_status(self, queue_size: int, next_trap_name: str) -> None:
+        def _update(dt):
+            if queue_size <= 0:
+                self._trap_count_label.text = ""
+                self._trap_next_label.text  = ""
+            else:
+                c = "C9695F"
+                self._trap_count_label.text = f"[b][color={c}]Traps in Queue: {queue_size}[/color][/b]"
+                self._trap_next_label.text  = f"[b][color={c}]Next Trap: {next_trap_name}[/color][/b]"
+        Clock.schedule_once(_update)
+
     def on_start(self) -> None:
         logging.getLogger(__name__).addHandler(LogtoUI(self.log_panels["All"].on_log))
         logger = logging.getLogger("Client")
         logger.info("Age of Mythology: Retold client commands:")
-        logger.info("  /status              — show connection info and Atlantis Key progress")
-        logger.info("  /scenarios (/progress) — list beaten, in-progress, and untouched scenarios")
+        logger.info("  /status              - show connection info and Atlantis Key progress")
+        logger.info("  /scenarios (/progress) - list beaten, in-progress, and untouched scenarios")
 
     @staticmethod
     def start_ap_ui(ctx: "AoMContext") -> None:

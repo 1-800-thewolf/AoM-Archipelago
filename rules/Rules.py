@@ -649,10 +649,22 @@ def set_shop_rules(world) -> None:
 
     # Item classification per location:
     #   - exactly 1 progression slot per shop (no restriction)
-    #   - ~half of the rest are filler-only
-    #   - remainder accept filler or useful (not progression)
+    #   - randomly excluded locations get no item_rule (filler/trap fills them via AP)
+    #   - ~half of the remaining non-excluded are filler-only
+    #   - the rest accept filler or useful (not progression)
     prog_slots   = getattr(world, "shop_progression_slots", {})
     filler_only  = getattr(world, "shop_filler_only", set())
+
+    # Randomly exclude 8-11 shop item locations per shop so AP fills them with
+    # lowest-priority items (filler or trap). Don't exclude the progression slot.
+    n_exclude = world.random.randint(8, 11)
+    excludable = [
+        loc_id for loc_id in ALL_SHOP_ITEM_IDS
+        if not any(loc_id == prog_slots.get(tier) for tier, *_ in SHOP_TIER_CONFIGS)
+    ]
+    world.random.shuffle(excludable)
+    excluded_ids = set(excludable[:n_exclude])
+
     for loc_id in ALL_SHOP_ITEM_IDS:
         name = location_id_to_name.get(loc_id)
         if not name:
@@ -660,12 +672,16 @@ def set_shop_rules(world) -> None:
         loc = multiworld.get_location(name, player)
         is_prog_slot = any(loc_id == prog_slots.get(tier) for tier, *_ in SHOP_TIER_CONFIGS)
         if is_prog_slot:
-            pass  # no restriction — this slot gets exactly 1 progression item
+            pass  # no restriction
+        elif loc_id in excluded_ids:
+            loc.progress_type = LocationProgressType.EXCLUDED  # filled with filler/trap
         elif loc_id in filler_only:
-            loc.item_rule = lambda item: item.classification == ItemClassification.filler
+            loc.item_rule = lambda item: item.classification in (
+                ItemClassification.filler, ItemClassification.trap
+            )
         else:
             loc.item_rule = lambda item: item.classification in (
-                ItemClassification.filler, ItemClassification.useful
+                ItemClassification.filler, ItemClassification.useful, ItemClassification.trap
             )
 
 def set_rules(world) -> None:

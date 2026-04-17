@@ -8,12 +8,15 @@ from typing import Any, ClassVar, Mapping
 
 import settings
 from BaseClasses import Item, ItemClassification
-from Options import OptionGroup
+try:
+    from Options import OptionGroup
+except ImportError:
+    OptionGroup = None
 from worlds.AutoWorld import WebWorld, World
 from worlds.LauncherComponents import Component, Type, components, launch as launch_subprocess
 import worlds.LauncherComponents as components_module
 
-from .Options import (Godsanity, GodForceChange, MythUnitSanity, ExtraFinalMissionAgeUnlocks, 
+from .Options import (Random_Major_Gods, ForceDifferentGod, MythUnitSanity, ExtraFinalMissionAgeUnlocks, 
     AomOptions,
     FinalScenarios,
     HeroAbilities,
@@ -59,12 +62,12 @@ class aomWebWorld(WebWorld):
             ExtraFinalMissionAgeUnlocks,
             HeroAbilities,
         ]),
-    ]
+    ] if OptionGroup is not None else []
 
 
 
 # ---------------------------------------------------------------------------
-# Godsanity — vanilla god per scenario and civ groupings
+# Random_Major_Gods — vanilla god per scenario and civ groupings
 # ---------------------------------------------------------------------------
 _VANILLA_GODS: dict = {
     1: 2, 2: 2, 3: 2, 4: 2,               # Poseidon
@@ -106,7 +109,7 @@ def _civ_of_god_name(god: int) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Godsanity — minor god tech choices per (major_god_id, age_tier)
+# Random_Major_Gods — minor god tech choices per (major_god_id, age_tier)
 # Each entry lists [option_A, option_B]; one is chosen randomly at generation.
 # age_tier: 1=Classical 2=Heroic 3=Mythic
 # ---------------------------------------------------------------------------
@@ -164,7 +167,7 @@ _SCENARIO_STARTING_AGE: dict[int, int] = {
 }
 
 
-# Vanilla minor god tech assignments per scenario (for non-godsanity runs).
+# Vanilla minor god tech assignments per scenario (for non-random_major_gods runs).
 # Includes base age tech + chosen minor god tech, in order: Classical, Heroic, Mythic.
 _VANILLA_MINOR_GOD_TECHS: dict[int, list] = {
     1:  ["cTechClassicalAgeGreek",    "cTechClassicalAgeHermes"],
@@ -301,7 +304,7 @@ class aomWorld(World):
         return self.random.choice([item.item_name for item in Items.filler_items])
 
     def generate_early(self) -> None:
-        if self.options.godsanity:
+        if self.options.random_major_gods:
             self.god_assignments: dict[int, int] = self._generate_god_assignments()
         else:
             self.god_assignments = {}
@@ -364,7 +367,7 @@ class aomWorld(World):
 
     def _generate_god_assignments(self) -> dict[int, int]:
         """Randomly assign a major god to each scenario using the world seed."""
-        force = bool(self.options.god_force_change.value)
+        force = bool(self.options.force_different_god.value)
         assignments: dict[int, int] = {}
         for scenario_id in range(1, 33):
             vanilla = _VANILLA_GODS[scenario_id]
@@ -376,12 +379,11 @@ class aomWorld(World):
             else:
                 candidates = list(_ALL_GODS_WITH_ATLANTIS)
             assignments[scenario_id] = self.random.choice(candidates)
-        self._log_god_assignments(assignments)
         return assignments
 
     def _log_god_assignments(self, assignments: dict[int, int]) -> None:
         from .locations.Scenarios import aomScenarioData
-        lines = ["Godsanity god assignments:"]
+        lines = ["Random_Major_Gods god assignments:"]
         for scenario in aomScenarioData:
             n   = scenario.global_number
             god = _GOD_NAMES.get(assignments.get(n, 0), "Unknown")
@@ -406,11 +408,11 @@ class aomWorld(World):
         Returns {scenario_id: [tech_const, ...]} listing age techs to activate
         at scenario start, in order (Classical base, Classical minor, Heroic base...).
 
-        When godsanity is on: picks randomly from valid minor gods for the
+        When random_major_gods is on: picks randomly from valid minor gods for the
         assigned major god up to the scenario's starting age.
-        When godsanity is off: uses the vanilla campaign minor god table.
+        When random_major_gods is off: uses the vanilla campaign minor god table.
         """
-        if not self.options.godsanity:
+        if not self.options.random_major_gods:
             return dict(_VANILLA_MINOR_GOD_TECHS)
 
         result: dict[int, list] = {}
@@ -456,7 +458,7 @@ class aomWorld(World):
         atlantean_types    = (Items.AtlanteanUnitUnlockProgression, Items.AtlanteanUnitUnlockUseful,
                                Items.AtlanteanMythUnitUnlock)
         myth_unit_sanity_on = bool(self.options.myth_unit_sanity.value)
-        godsanity_on        = bool(self.options.godsanity.value)
+        random_major_gods_on        = bool(self.options.random_major_gods.value)
 
         # How many age unlocks to precollect per civ
         starting_age_unlocks = {
@@ -478,6 +480,8 @@ class aomWorld(World):
             # Victory, Gem, and ProgressiveShopInfo are locked to specific locations by Rules.py.
             if item_type in (Items.Victory, Items.Gem, Items.ProgressiveShopInfo):
                 continue
+            if item_type == Items.Trap or (isinstance(item_type, type) and issubclass(item_type, Items.Trap)):
+                continue  # traps placed via trap_count option below
 
             # Section unlock items
             if item_type == Items.Campaign:
@@ -511,8 +515,8 @@ class aomWorld(World):
             if isinstance(item.type, myth_unit_types) and not myth_unit_sanity_on:
                 continue
 
-            # Atlantean items — skip if godsanity is off (Atlantis not in the pool)
-            if isinstance(item.type, atlantean_types) and not godsanity_on:
+            # Atlantean items — skip if random_major_gods is off (Atlantis not in the pool)
+            if isinstance(item.type, atlantean_types) and not random_major_gods_on:
                 continue
 
             # All remaining items bucketed by classification
@@ -544,8 +548,8 @@ class aomWorld(World):
             (Items.aomItemData.EGYPTIAN_AGE_UNLOCK, "Egyptian", 3 + egyptian_extra),
             (Items.aomItemData.NORSE_AGE_UNLOCK,    "Norse",    3 + norse_extra),
         ]
-        # Atlantean age unlocks only added when godsanity is on
-        if godsanity_on:
+        # Atlantean age unlocks only added when random_major_gods is on
+        if random_major_gods_on:
             age_unlock_config.append(
                 (Items.aomItemData.ATLANTEAN_AGE_UNLOCK, "Atlantean", 3 + atlantean_extra)
             )
@@ -581,60 +585,97 @@ class aomWorld(World):
                 f"visible location count ({visible_location_count})."
             )
 
+        # Trap cycle — all 12 trap types, repeated indefinitely when drawing traps
+        # Deck-of-cards trap pool: cycle through all trap types in shuffled order,
+        # never repeating a type until all have been used once.
+        # Types 5 (Spawn Units) and 6 (Transform Drops) excluded until implemented.
+        _trap_deck_base = [
+            Items.aomItemData.TRAP_METEOR.item_name,
+            # Items.aomItemData.TRAP_LIGHTNING_STORM.item_name,  # disabled: fails to cast
+            # Items.aomItemData.TRAP_LOCUST_SWARM.item_name,  # disabled: buggy
+            Items.aomItemData.TRAP_BOLT.item_name,
+            Items.aomItemData.TRAP_RESTORATION.item_name,
+            Items.aomItemData.TRAP_CITADEL.item_name,
+            Items.aomItemData.TRAP_TORNADO.item_name,
+            Items.aomItemData.TRAP_EARTHQUAKE.item_name,
+            Items.aomItemData.TRAP_CURSE.item_name,
+            Items.aomItemData.TRAP_PLAGUE_SERPENTS.item_name,
+            Items.aomItemData.TRAP_IMPLODE.item_name,
+            Items.aomItemData.TRAP_TARTARIAN_GATE.item_name,
+            Items.aomItemData.TRAP_CHAOS.item_name,
+            Items.aomItemData.TRAP_TRAITOR.item_name,
+            # Items.aomItemData.TRAP_CARNIVORA.item_name,  # disabled: buggy
+            # Items.aomItemData.TRAP_SPIDER_LAIR.item_name,  # disabled: buggy
+            Items.aomItemData.TRAP_DECONSTRUCTION.item_name,
+            Items.aomItemData.TRAP_FIMBULWINTER.item_name,
+            # Items.aomItemData.TRAP_FLAMING_WEAPONS.item_name,  # disabled: fails to cast
+            Items.aomItemData.TRAP_ANCESTORS.item_name,
+            Items.aomItemData.TRAP_PESTILENCE.item_name,
+            Items.aomItemData.TRAP_BRONZE.item_name,
+            Items.aomItemData.TRAP_ECLIPSE.item_name,
+        ]
+        # Build infinite deck: reshuffle each time a full cycle completes
+        _trap_deck: list[str] = []
+        def _next_trap() -> str:
+            nonlocal _trap_deck
+            if not _trap_deck:
+                _trap_deck = list(_trap_deck_base)
+                self.random.shuffle(_trap_deck)
+            return _trap_deck.pop()
+
+        trap_pct = int(self.options.trap_percentage.value)  # 0-100
+
+        # Flatten useful and filler into shuffled lists
+        all_useful  = [n for names in useful_groups.values() for n in names]
+        all_filler  = [n for names in filler_groups.values() for n in names]
+        all_filler_inf = [
+            item.item_name for item in Items.aomItemData
+            if Items.item_type_to_classification[item.type_data] == ItemClassification.filler
+        ]
+        self.random.shuffle(all_useful)
+        self.random.shuffle(all_filler)
+        self.random.shuffle(all_filler_inf)
+
+        # Fill remaining slots with 1:1 useful:filler ratio.
+        # When a filler item is drawn, roll against trap_pct — if hit, replace with a trap.
+        # If useful exhausted → use filler instead (no trap replacement for those).
+        # If filler exhausted → use useful instead (no trap replacement for those).
+        # If both exhausted → infinite filler padding (no trap replacement).
         itempool: list[Item] = []
         itempool.extend(progression_pool)
         remaining_slots = visible_location_count - len(itempool)
 
-        def round_robin_pick(groups: dict[type, list[str]], slots: int) -> list[Item]:
-            """Pull items evenly across groups until slots are filled or groups run dry."""
-            picked: list[Item] = []
-            local_groups = {
-                key: self.random.sample(names, len(names))
-                for key, names in groups.items()
-                if names
-            }
-            while slots > 0 and local_groups:
-                progressed = False
-                for key in list(local_groups.keys()):
-                    names = local_groups[key]
-                    if not names:
-                        del local_groups[key]
-                        continue
-                    picked.append(self.create_item(names.pop(0)))
-                    slots -= 1
-                    progressed = True
-                    if not names:
-                        del local_groups[key]
-                    if slots == 0:
-                        break
-                if not progressed:
-                    break
-            return picked
-
-        useful_items = round_robin_pick(useful_groups, remaining_slots)
-        itempool.extend(useful_items)
-        remaining_slots = visible_location_count - len(itempool)
-
-        filler_items = round_robin_pick(filler_groups, remaining_slots)
-        itempool.extend(filler_items)
-        remaining_slots = visible_location_count - len(itempool)
-
-        # Dynamic filler padding — round-robins through all filler items to cover
-        # any shortfall from options (hero abilities off, heavy starting precollect,
-        # or extra Greek age unlocks displacing useful/filler items)
-        if remaining_slots > 0:
-            all_filler_names = [
-                item.item_name for item in Items.aomItemData
-                if Items.item_type_to_classification[item.type_data]
-                   == ItemClassification.filler
-            ]
-            filler_cycle = list(all_filler_names)  # copy for cycling
-            self.random.shuffle(filler_cycle)
-            filler_idx = 0
-            while remaining_slots > 0:
-                itempool.append(self.create_item(filler_cycle[filler_idx % len(filler_cycle)]))
-                filler_idx += 1
-                remaining_slots -= 1
+        u_idx = f_idx = inf_idx = 0
+        want_useful = True  # alternates between useful and filler
+        for _ in range(remaining_slots):
+            placed_filler_slot = False
+            if want_useful:
+                if u_idx < len(all_useful):
+                    itempool.append(self.create_item(all_useful[u_idx])); u_idx += 1
+                elif f_idx < len(all_filler):
+                    placed_filler_slot = True  # exhausted useful, using filler
+                    filler_name = all_filler[f_idx]; f_idx += 1
+                    if trap_pct > 0 and self.random.randint(1, 100) <= trap_pct:
+                        itempool.append(self.create_item(_next_trap()))
+                    else:
+                        itempool.append(self.create_item(filler_name))
+                else:
+                    itempool.append(self.create_item(all_filler_inf[inf_idx % len(all_filler_inf)]))
+                    inf_idx += 1
+            else:
+                if f_idx < len(all_filler):
+                    placed_filler_slot = True
+                    filler_name = all_filler[f_idx]; f_idx += 1
+                    if trap_pct > 0 and self.random.randint(1, 100) <= trap_pct:
+                        itempool.append(self.create_item(_next_trap()))
+                    else:
+                        itempool.append(self.create_item(filler_name))
+                elif u_idx < len(all_useful):
+                    itempool.append(self.create_item(all_useful[u_idx])); u_idx += 1
+                else:
+                    itempool.append(self.create_item(all_filler_inf[inf_idx % len(all_filler_inf)]))
+                    inf_idx += 1
+            want_useful = not want_useful
 
         if len(itempool) != visible_location_count:
             raise ValueError(
@@ -654,11 +695,11 @@ class aomWorld(World):
         Rules.set_rules(self)
 
     def write_spoiler_header(self, spoiler_handle) -> None:
-        """Write godsanity god assignments to the spoiler log."""
-        if not self.options.godsanity or not self.god_assignments:
+        """Write random_major_gods god assignments to the spoiler log."""
+        if not self.options.random_major_gods or not self.god_assignments:
             return
         from .locations.Scenarios import aomScenarioData
-        spoiler_handle.write(f"\nGodsanity God Assignments ({self.multiworld.get_player_name(self.player)}):\n")
+        spoiler_handle.write(f"\nRandom_Major_Gods God Assignments ({self.multiworld.get_player_name(self.player)}):\n")
         for scenario in aomScenarioData:
             n   = scenario.global_number
             god = _GOD_NAMES.get(self.god_assignments.get(n, 0), "Unknown")
@@ -673,10 +714,11 @@ class aomWorld(World):
             "world_id":       ((time.time_ns() >> 17) + self.player) & 0x7FFF_FFFF,
             "final_mode":     int(self.options.final_scenarios.value),
             "x_scenarios":    int(self.options.x_scenarios.value),
-            "godsanity":      bool(self.options.godsanity.value),
+            "random_major_gods":      bool(self.options.random_major_gods.value),
+            "update_buildings_for_random_god": bool(self.options.update_buildings_for_random_god.value),
             "gem_shop":       self.gem_shop_enabled,
         }
-        if self.options.godsanity:
+        if self.options.random_major_gods:
             data["god_assignments"] = self.god_assignments
         data["minor_god_assignments"] = self.minor_god_assignments
         data["archaic_forbids"]       = self.archaic_forbids
@@ -716,7 +758,7 @@ class aomWorld(World):
                             "loc_id":     Locations.PROGRESSIVE_INFO_IDS[tier],
                         }
                     else:
-                        # A (Marsh)→1-2, B (Desert)→2-3, C (Grass)→3-4
+                        # A→1-2 missions, B→2-3 missions, C→3-4 missions (D has no mission hints)
                         if tier == "A":
                             missions_range = (1, 2)
                         elif tier == "B":

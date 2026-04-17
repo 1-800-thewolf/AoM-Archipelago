@@ -62,6 +62,15 @@ extern string gAPShopLabel_C_HINT_1            = "Loading...";
 extern string gAPShopLabel_C_HINT_2            = "Loading...";
 extern string gAPShopLabel_D_HINT_1            = "Loading...";
 
+// Trap queue globals — declared before include so aom_state.xs can set them
+extern int   gAPTrapQueueSize   = 0;
+extern int[] gAPTrapQueue       = default;
+extern bool  gAPTrapPending     = false;
+extern float gAPTrapFireTime    = 0.0;
+int          gAPTrapsFiredCount  = 0;  // increments each fire; client reads via quest var
+vector       gAPTrapPos         = vector(0, 0, 0);
+// Building transform data — populated by APLoadBuildingTransforms() in aom_state.xs
+
 include "aom_state.xs";
 
 // -----------------------------------------------------------------------
@@ -344,7 +353,7 @@ void APFindReinforcementSpawn()
 int gAPScenarioId  = 0;
 int gAPCampaignId  = 0;
 int gAPMajorGod    = 0;
-bool gAPGodsanity  = false;
+bool gAPRandomMajorGods  = false;
 bool gHasGreek     = false;
 bool gHasEgyptian  = false;
 bool gHasNorse     = false;
@@ -551,7 +560,7 @@ void APReadRandomGod()
 
 void APAnnounceGod()
 {
-    if (gAPGodsanity == false) { return; }
+    if (gAPRandomMajorGods == false) { return; }
 
     string godName   = "";
     string colorOpen = "";
@@ -771,7 +780,7 @@ void APShopScenarioInit()
 // -----------------------------------------------------------------------
 
 rule APShopRestartDelay
-minInterval 2
+minInterval 1
 inactive
 {
     trRestartScenario();
@@ -849,7 +858,11 @@ inactive
 {
     int beaten = trQuestVarGet("APBeatenScenarios");
     int tier   = 1;
-    if (gAPShopTierThreshold > 0)
+    if (gAPShopTierThreshold <= 0)
+    {
+        tier = 4;  // wins_to_open_shop = 0 means all shops always open
+    }
+    else
     {
         if (beaten >= gAPShopTierThreshold * 3) { tier = 4; }
         else if (beaten >= gAPShopTierThreshold * 2) { tier = 3; }
@@ -1003,25 +1016,6 @@ string APGetCheckText(int id = 0)
     return "Unknown Location";
 }
 
-void APShowQueuedCheckMessage(int id = 0)
-{
-    string objectiveText = APGetCheckText(id);
-
-    string _msgColor = "<color1,1,0>";
-    string _msgText  = objectiveText;
-    if (objectiveText == "Scenario Victory")
-    {
-        _msgColor = "<color0,1,0>";
-        _msgText  = "Gem Received";
-    }
-    trMessageSetText(
-        "Checked " + _msgColor + _msgText + "</color>\n\nComplete or quit the mission to send or receive items.",
-        -1
-    );
-    trSoundPlayFN("campaign\fott\cinematics\fott07\clearedcity.wav");
-}
-
-// Legacy helper retained for compatibility if called from within this XS file.
 void APCheckLocation(string objectiveText = "")
 {
     trMessageSetText(
@@ -1031,10 +1025,300 @@ void APCheckLocation(string objectiveText = "")
     trSoundPlayFN("campaign\fott\cinematics\fott07\clearedcity.wav");
 }
 
+void APShowQueuedCheckMessage(int id = 0)
+{
+    string objectiveText = APGetCheckText(id);
+
+    if (objectiveText == "Scenario Victory")
+    {
+        trMessageSetText("<color0,1,0><icon=(25)(resources\egyptian\static_color\technologies\funeral_rites_icon.png)> Gem Received</color>", 5);
+    }
+    else
+    {
+        trMessageSetText(
+            "Checked <color1,1,0>" + objectiveText + "</color>\n\nComplete or quit the mission to send or receive items.",
+            -1
+        );
+    }
+    trSoundPlayFN("campaign\fott\cinematics\fott07\clearedcity.wav");
+}
+
+// Legacy helper retained for compatibility if called from within this XS file.
+
 // -----------------------------------------------------------------------
 // Main scenario activation rule — enabled by the Gameplay_Starts trigger
+void APTransformBuildings()
+{
+    int scenId = trQuestVarGet("APScenarioID");
+    int matched = 0;
+    int i = 0;
+    while (i < gAPBldgTransformCount)
+    {
+        if (gAPBldgScen[i] == scenId)
+        {
+            int    _tp     = gAPBldgPlayer[i];
+            string _from   = gAPBldgFrom[i];
+            string _t1     = gAPBldgTo1[i];
+            string _t2     = gAPBldgTo2[i];
+            string _target = _t1;
+            if (_t2 != "" && xsRandInt(0, 1) == 1) { _target = _t2; }
+            trChatSend(1, "BLDG xform P" + _tp + ": [" + _from + "] -> [" + _target + "]");
+            trPlayerChangeProtoUnit(_tp, _from, _target, false);
+            matched++;
+        }
+        i++;
+    }
+    trChatSend(1, "BLDG done: " + matched + " pairs matched scenId=" + scenId);
+}
+
+// -----------------------------------------------------------------------
+// Targeting helpers (KB queries work in trigger XS with xsSetContextPlayer)
+// -----------------------------------------------------------------------
+bool APTrapIsLivestock(int uid = -1)
+{
+    string pname = kbProtoUnitGetName(kbUnitGetProtoUnitID(uid));
+    if (pname == "Goat")             { return (true); }
+    if (pname == "Pig")              { return (true); }
+    if (pname == "PigSPC")           { return (true); }
+    if (pname == "Cow")              { return (true); }
+    if (pname == "Chicken")          { return (true); }
+    if (pname == "ChickenOfSet")     { return (true); }
+    if (pname == "ChickenEvil")      { return (true); }
+    if (pname == "ChickenExploding") { return (true); }
+    if (pname == "ChickenBlood")     { return (true); }
+    return (false);
+}
+
+int APTrapQueryRandom(int playerID = 1, string protoName = "default")
+{
+    xsSetContextPlayer(playerID);
+    int qid = kbUnitQueryCreate("APTrapQ");
+    kbUnitQuerySetPlayerID(qid, playerID);
+    if (protoName != "default")
+        kbUnitQuerySetUnitType(qid, kbGetUnitTypeID(protoName));
+    else
+        kbUnitQuerySetUnitType(qid, cUnitTypeUnit);
+    kbUnitQuerySetIgnoreKnockedOutUnits(qid, true);
+    kbUnitQuerySetState(qid, cUnitStateAlive);
+    kbUnitQueryExecute(qid);
+    int[] res = kbUnitQueryGetResults(qid);
+    kbUnitQueryDestroy(qid);
+    xsSetContextPlayer(12);
+    int sz = res.size();
+    if (sz <= 0) { return (-1); }
+    // Pick randomly, retry up to sz times to avoid livestock
+    int attempt = 0;
+    while (attempt < sz)
+    {
+        int candidate = res[xsRandInt(0, sz - 1)];
+        xsSetContextPlayer(playerID);
+        bool isLive = APTrapIsLivestock(candidate);
+        xsSetContextPlayer(12);
+        if (!isLive) { return (candidate); }
+        attempt++;
+    }
+    // All results are livestock — return first one as fallback
+    return (res[0]);
+}
+
+// Query a random alive building for a player (for Pestilence, Deconstruction).
+// Prefers Town Center; falls back to any building.
+int APTrapQueryBuilding(int playerID = 1)
+{
+    xsSetContextPlayer(playerID);
+    int qid = kbUnitQueryCreate("APTrapBldQ");
+    kbUnitQuerySetPlayerID(qid, playerID);
+    kbUnitQuerySetUnitType(qid, cUnitTypeBuilding);
+    kbUnitQuerySetState(qid, cUnitStateAlive);
+    kbUnitQueryExecute(qid);
+    int[] res = kbUnitQueryGetResults(qid);
+    kbUnitQueryDestroy(qid);
+    xsSetContextPlayer(12);
+    if (res.size() > 0) { return (res[xsRandInt(0, res.size() - 1)]); }
+    return (-1);
+}
+
+// Prefer myth units for single-unit targeted powers (Bolt, Traitor).
+// Falls back to cUnitTypeUnit if no myth units found.
+int APTrapQueryMythOrUnit(int playerID = 1)
+{
+    xsSetContextPlayer(playerID);
+    int qid = kbUnitQueryCreate("APTrapMythQ");
+    kbUnitQuerySetPlayerID(qid, playerID);
+    kbUnitQuerySetUnitType(qid, cUnitTypeMythUnit);
+    kbUnitQuerySetState(qid, cUnitStateAlive);
+    kbUnitQueryExecute(qid);
+    int[] res = kbUnitQueryGetResults(qid);
+    kbUnitQueryDestroy(qid);
+    xsSetContextPlayer(12);
+    if (res.size() > 0) { return (res[xsRandInt(0, res.size() - 1)]); }
+    // No myth units — fall back to any military unit
+    return (APTrapQueryRandom(playerID, "default"));
+}
+
+string APTrapGetName(int trapType = 0)
+{
+    if (trapType == 1)  { return ("Meteor"); }
+    if (trapType == 2)  { return ("Lightning Storm"); }
+    if (trapType == 3)  { return ("Locust Swarm"); }
+    if (trapType == 4)  { return ("Bolt"); }
+    if (trapType == 7)  { return ("Restoration"); }
+    if (trapType == 8)  { return ("Citadel"); }
+    if (trapType == 9)  { return ("Tornado"); }
+    if (trapType == 10) { return ("Earthquake"); }
+    if (trapType == 11) { return ("Curse"); }
+    if (trapType == 12) { return ("Plague of Serpents"); }
+    if (trapType == 13) { return ("Implode"); }
+    if (trapType == 14) { return ("Tartarian Gate"); }
+    if (trapType == 15) { return ("Chaos"); }
+    if (trapType == 16) { return ("Traitor"); }
+    if (trapType == 17) { return ("Carnivora"); }
+    if (trapType == 18) { return ("Spider Lair"); }
+    if (trapType == 19) { return ("Deconstruction"); }
+    if (trapType == 20) { return ("Fimbulwinter"); }
+    if (trapType == 21) { return ("Flaming Weapons"); }
+    if (trapType == 22) { return ("Ancestors"); }
+    if (trapType == 23) { return ("Pestilence"); }
+    if (trapType == 24) { return ("Bronze"); }
+    if (trapType == 25) { return ("Eclipse"); }
+    return ("Unknown Trap");
+}
+
+void APTrapExecuteTrap(int trapType = 0)
+{
+    // Announcement
+    string _name = APTrapGetName(trapType);
+    trMessageSetText("<color0.788,0.412,0.373>" + _name + " trap triggered</color>", 6);
+
+    // Targeting
+    int _uid  = -1;
+    int _buid = -1;  // building target (Citadel, Deconstruction, Pestilence)
+    gAPTrapPos = vector(0, 0, 0);
+
+    // Friendly powers target P2; unit-targeted powers pick cUnitTypeUnit;
+    // hostile area powers pick random P1 cUnitTypeUnit
+    if (trapType == 7 || trapType == 24)
+    {
+        // Restoration / Bronze → random P2 unit
+        _uid = APTrapQueryRandom(2, "default");
+    }
+    else if (trapType == 8)
+    {
+        // Citadel → hostile Town Center: try P2 then P4, P5, P6
+        _uid = APTrapQueryRandom(2, "Town Center");
+        if (_uid < 0) { _uid = APTrapQueryRandom(4, "Town Center"); }
+        if (_uid < 0) { _uid = APTrapQueryRandom(5, "Town Center"); }
+        if (_uid < 0) { _uid = APTrapQueryRandom(6, "Town Center"); }
+        // No fallback to generic unit — Citadel must target a TC or skip
+    }
+
+    else if (trapType == 23 || trapType == 19)
+    {
+        // Pestilence / Deconstruction → random P1 building
+        _uid = APTrapQueryBuilding(1);
+        if (_uid < 0) { _uid = APTrapQueryRandom(1, "default"); }
+    }
+    else if (trapType == 4 || trapType == 16)
+    {
+        // Bolt / Traitor → prefer myth units, fall back to military units
+        _uid = APTrapQueryMythOrUnit(1);
+    }
+    else
+    {
+        // All other traps → random P1 military unit
+        _uid = APTrapQueryRandom(1, "default");
+    }
+
+    if (_uid >= 0) { gAPTrapPos = trUnitGetPosition(_uid); }
+
+    // Debug: show trap type and coordinates
+    string _dbgName = APTrapGetName(trapType);
+    if (_uid >= 0)
+    {
+        xsSetContextPlayer(1);
+        string _dbgUnit = kbProtoUnitGetName(kbUnitGetProtoUnitID(_uid));
+        xsSetContextPlayer(12);
+        trMessageSetText("<color0.788,0.412,0.373>Trap " + trapType + " (" + _dbgName + "): " + _dbgUnit + " (uid=" + _uid + ")</color>", 8);
+    }
+    if (_uid < 0)  { trMessageSetText("<color0.788,0.412,0.373>Trap " + trapType + " (" + _dbgName + "): no target</color>", 8); }
+
+    // Disable god power blocking before invoke, re-enable after
+    trGodPowerEnableBlocking(false);
+
+    trUnitSelectClear();
+
+    if (trapType == 1)  { trGodPowerGrant(12, "Meteor",             1, 0, false, false); trGodPowerInvoke(12, "Meteor",             gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 2)  { trGodPowerGrant(12, "Lightning Storm",    1, 0, false, false); trGodPowerInvoke(12, "Lightning Storm",    gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 3)
+    {
+        // Locust Swarm: pos1=start, pos2=direction. Pick a random cardinal offset.
+        int _lsDir = xsRandInt(0, 3);
+        vector _lsEnd = gAPTrapPos;
+        if (_lsDir == 0) { _lsEnd = gAPTrapPos + vector(30, 0, 0); }
+        if (_lsDir == 1) { _lsEnd = gAPTrapPos + vector(-30, 0, 0); }
+        if (_lsDir == 2) { _lsEnd = gAPTrapPos + vector(0, 0, 30); }
+        if (_lsDir == 3) { _lsEnd = gAPTrapPos + vector(0, 0, -30); }
+        trGodPowerGrant(12, "Locust Swarm", 1, 0, false, false);
+        trGodPowerInvoke(12, "Locust Swarm", gAPTrapPos, _lsEnd, true);
+    }
+    if (trapType == 4)  { trGodPowerGrant(12, "Bolt",               1, 0, false, false); trGodPowerInvoke(12, "Bolt",               gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 7)  { trGodPowerGrant(12, "Restoration",        1, 0, false, false); trGodPowerInvoke(12, "Restoration",        gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 8)  { trGodPowerGrant(12, "Citadel",            1, 0, false, false); trGodPowerInvoke(12, "Citadel",            gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 9)  { trGodPowerGrant(12, "Tornado",            1, 0, false, false); trGodPowerInvoke(12, "Tornado",            gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 10) { trGodPowerGrant(12, "Earthquake",         1, 0, false, false); trGodPowerInvoke(12, "Earthquake",         gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 11) { trGodPowerGrant(12, "Curse",              1, 0, false, false); trGodPowerInvoke(12, "Curse",              gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 12) { trGodPowerGrant(12, "Plague of Serpents", 1, 0, false, false); trGodPowerInvoke(12, "Plague of Serpents", gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 13) { trGodPowerGrant(12, "Implode",            1, 0, false, false); trGodPowerInvoke(12, "Implode",            gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 14) { trGodPowerGrant(12, "Tartarian Gate",     1, 0, false, false); trGodPowerInvoke(12, "Tartarian Gate",     gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 15) { trGodPowerGrant(12, "Chaos",              1, 0, false, false); trGodPowerInvoke(12, "Chaos",              gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 16) { trGodPowerGrant(12, "Traitor",            1, 0, false, false); trGodPowerInvoke(12, "Traitor",            gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 17) { trGodPowerGrant(12, "Carnivora",          1, 0, false, false); trGodPowerInvoke(12, "Carnivora",          gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 18) { trGodPowerGrant(12, "Spider Lair",        1, 0, false, false); trGodPowerInvoke(12, "Spider Lair",        gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 19) { trGodPowerGrant(12, "Deconstruction",     1, 0, false, false); trGodPowerInvoke(12, "Deconstruction",     gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 20) { trGodPowerGrant(12, "Fimbulwinter",       1, 0, false, false); trGodPowerInvoke(12, "Fimbulwinter",       gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 21) { trGodPowerGrant(12, "Flaming Weapons",    1, 0, false, false); trGodPowerInvoke(12, "Flaming Weapons",    gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 22) { trGodPowerGrant(12, "Ancestors",          1, 0, false, false); trGodPowerInvoke(12, "Ancestors",          gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 23) { trGodPowerGrant(12, "Pestilence",         1, 0, false, false); trGodPowerInvoke(12, "Pestilence",         gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 24) { trGodPowerGrant(12, "Bronze",             1, 0, false, false); trGodPowerInvoke(12, "Bronze",             gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 25) { trGodPowerGrant(12, "Eclipse",            1, 0, false, false); trGodPowerInvoke(12, "Eclipse",            gAPTrapPos, gAPTrapPos, true); }
+
+    trGodPowerEnableBlocking(true);
+
+    // Signal client — log flushed at scenario end, client counts these
+    trExecuteOnAI(12, "APTrapFiredSignal");
+}
+
+
+// -----------------------------------------------------------------------
+
+
 // in each scenario via: xsEnableRule("APActivateScenario")
 // -----------------------------------------------------------------------
+
+
+void APTrapScheduleNext(bool firstInScenario = false)
+{
+    if (gAPTrapQueueSize <= 0) { gAPTrapPending = false; return; }
+    // DEBUG: 10-20 seconds
+    float delay = xsRandInt(10, 20);
+    gAPTrapFireTime = xsGetTime() + delay;
+    gAPTrapPending  = true;
+}
+
+void APTrapPop()
+{
+    if (gAPTrapQueueSize <= 0) { return; }
+    // Shift queue left
+    int i = 0;
+    while (i < gAPTrapQueueSize - 1)
+    {
+        gAPTrapQueue[i] = gAPTrapQueue[i + 1];
+        i++;
+    }
+    gAPTrapQueueSize--;
+    gAPTrapPending = false;
+}
+
 
 rule APActivateScenario
 highFrequency
@@ -1045,7 +1329,7 @@ runImmediately
     gAPCampaignId = APGetCampaignForScenario(gAPScenarioId);
     gAPMajorGod   = APGetMajorGodForScenario(gAPScenarioId);
     APInitItems();               // populate gAPItems array first
-    trQuestVarSet("APGodsanity", gAPItems[5] == 9010 ? 1 : 0);
+    trQuestVarSet("APRandomMajorGods", gAPItems[5] == 9010 ? 1 : 0);
 
     // Shop scenario (ID 0)
     if (gAPScenarioId == 0)
@@ -1081,10 +1365,42 @@ runImmediately
     // Scenario 12: Roc causes a game-breaking bug
     if (gAPScenarioId == 12) { trForbidProtounit(1, "Roc"); }
 
-    gAPGodsanity = (gAPItemCount > 5 && gAPItems[5] == 9010);
+    gAPRandomMajorGods = (gAPItemCount > 5 && gAPItems[5] == 9010);
 
     xsEnableRule("APApplyItems");
     xsEnableRule("APAnnounceGod");
+    // Initialize trap queue from aom_state.xs generated state
+    // Transform buildings to match random god's civilization (if enabled)
+    APLoadBuildingTransforms();
+    trChatSend(1, "BLDG: count=" + gAPBldgTransformCount + " scen=" + trQuestVarGet("APScenarioID"));
+    if (gAPBldgTransformCount > 0)
+    {
+        APTransformBuildings();
+        trChatSend(1, "BLDG: transform done");
+    }
+
+    // Set Player 12 as ally with players 2-11 so god powers only damage Player 1
+    int _dp = 2;
+    while (_dp <= 11)
+    {
+        trPlayerSetDiplomacy(12, _dp, "ally", true);
+        _dp++;
+    }
+
+    // Give Player 12 full map vision for trap targeting via a Revealer unit.
+    // Each scenario editor should also have a Protounit Modify Data trigger
+    // increasing Revealer LOS to 1000 for Player 12.
+    trCreateRevealer(12, "APTrapRevealer", vector(0, 0, 0), 500.0, false);
+    trPlayerTechTreeEnabledGodPowers(12, true);  // ensure P12 can invoke all powers
+    
+    APTrapQueueInit();
+    // Enable trap timer if traps are queued
+    if (gAPTrapQueueSize > 0)
+    {
+        xsEnableRule("APTrapTimer");
+        trQuestVarSet("APTrapActive", 1);
+        APTrapScheduleNext(true);
+    }
     trMusicPlayCurrent();
     xsDisableSelf();
 }
@@ -1727,14 +2043,14 @@ runImmediately
     gHasEgyptian = false;
     gHasNorse    = false;
     gHasAtlantis = false;
-    gAPGodsanity = false;
+    gAPRandomMajorGods = false;
     if (gAPItemCount > 6)
     {
         if (gAPItems[0] == 9001) { gHasGreek    = true; }
         if (gAPItems[1] == 9002) { gHasEgyptian = true; }
         if (gAPItems[2] == 9003) { gHasNorse    = true; }
         if (gAPItems[3] == 9004) { gHasAtlantis = true; }
-        if (gAPItems[5] == 9010) { gAPGodsanity = true; }
+        if (gAPItems[5] == 9010) { gAPRandomMajorGods = true; }
         // Scenario identity is driven by APScenarioID + APActivateScenario.
         // Keep slot 4 for compatibility, but do not overwrite gAPCampaignId here.
     }
@@ -2116,4 +2432,34 @@ minInterval 20
 inactive
 {
     if (gPassiveFavorSlow > 0) { trPlayerGrantResources(1, "Favor", gPassiveFavorSlow); }
+}
+
+// -----------------------------------------------------------------------
+// Trap queue — populated by APTrapQueueInit() in aom_state.xs.
+// Persists across scenarios; client counts AP_TRAP_FIRED echoes at scenario
+// end to know how many traps to pop from its queue.
+// All targeting and execution happens here in trigger XS context.
+// -----------------------------------------------------------------------
+
+
+// -----------------------------------------------------------------------
+// Building transformation for Random Major Gods
+// Data is loaded from aom_state.xs APLoadBuildingTransforms().
+// Execution uses tr* functions available in trigger XS context.
+// -----------------------------------------------------------------------
+
+rule APTrapTimer
+highFrequency
+inactive
+{
+    if (gAPTrapPending == false) { return; }
+    if (gAPTrapQueueSize <= 0)  { gAPTrapPending = false; return; }
+    if (xsGetTime() < gAPTrapFireTime) { return; }
+
+    int trapType = gAPTrapQueue[0];
+    APTrapPop();
+    APTrapScheduleNext(false);
+    APTrapExecuteTrap(trapType);
+    gAPTrapsFiredCount++;
+    trQuestVarSet("APTrapsFiredThisScenario", gAPTrapsFiredCount);
 }

@@ -241,6 +241,23 @@ def _update_atlantis_ui(ctx: "AoMContext") -> None:
                 shops_open = 1 + min(3, beaten // threshold)
             ctx.ui.update_shop_status(gems_avail, shops_open)
 
+    if hasattr(ctx.ui, "update_trap_status"):
+        _TRAP_NAMES = {
+            1: "Meteor", 2: "Lightning Storm", 3: "Locust Swarm", 4: "Bolt",
+            7: "Restoration", 8: "Citadel", 9: "Tornado", 10: "Earthquake",
+            11: "Curse", 12: "Plague of Serpents", 13: "Implode",
+            14: "Tartarian Gate", 15: "Chaos", 16: "Traitor", 17: "Carnivora",
+            18: "Spider Lair", 19: "Deconstruction", 20: "Fimbulwinter",
+            21: "Flaming Weapons", 22: "Ancestors", 23: "Pestilence",
+            24: "Bronze", 25: "Eclipse",
+        }
+        queue = ctx.game_ctx.trap_queue
+        if queue:
+            next_name = _TRAP_NAMES.get(queue[0], f"Trap {queue[0]}")
+            ctx.ui.update_trap_status(len(queue), next_name)
+        else:
+            ctx.ui.update_trap_status(0, "")
+
 
 def _format_progress(ctx: "AoMContext") -> str:
 
@@ -362,10 +379,10 @@ class AoMCommandProcessor(ClientCommandProcessor):
             self.output(f"  {name}")
 
     def _cmd_gods(self) -> None:
-        """Show the randomized major god for each scenario (godsanity mode only)."""
+        """Show the randomized major god for each scenario (random_major_gods mode only)."""
         ctx = self.ctx
-        if not ctx.game_ctx.godsanity:
-            self.output("Godsanity is not enabled for this seed.")
+        if not ctx.game_ctx.random_major_gods:
+            self.output("Random_Major_Gods is not enabled for this seed.")
             return
         god_names = {
             1: "Zeus",   2: "Poseidon", 3: "Hades",
@@ -388,7 +405,7 @@ class AoMCommandProcessor(ClientCommandProcessor):
             29:"29. Unlikely Heroes", 30:"30. All Is Not Lost",
             31:"31. Welcome Back", 32:"32. A Place in My Dreams",
         }
-        self.output("=== Godsanity God Assignments ===")
+        self.output("=== Random_Major_Gods God Assignments ===")
         for n in range(1, 33):
             god_id = ctx.game_ctx.god_assignments.get(n, 0)
             god    = god_names.get(god_id, "Unknown")
@@ -487,10 +504,10 @@ class AoMCommandProcessor(ClientCommandProcessor):
 
 
     def _cmd_gods(self) -> None:
-        """Show the randomized major god for each scenario (godsanity mode only)."""
+        """Show the randomized major god for each scenario (random_major_gods mode only)."""
         ctx = self.ctx
-        if not ctx.game_ctx.godsanity:
-            self.output("Godsanity is not enabled for this seed.")
+        if not ctx.game_ctx.random_major_gods:
+            self.output("Random_Major_Gods is not enabled for this seed.")
             return
         god_names = {
             1: "Zeus",   2: "Poseidon", 3: "Hades",
@@ -513,7 +530,7 @@ class AoMCommandProcessor(ClientCommandProcessor):
             29:"29. Unlikely Heroes", 30:"30. All Is Not Lost",
             31:"31. Welcome Back", 32:"32. A Place in My Dreams",
         }
-        self.output("=== Godsanity God Assignments ===")
+        self.output("=== Random_Major_Gods God Assignments ===")
         for n in range(1, 33):
             god_id = ctx.game_ctx.god_assignments.get(n, 0)
             god    = god_names.get(god_id, "Unknown")
@@ -713,7 +730,8 @@ class AoMContext(CommonContext):
         # Also store on game_ctx so write_aom_state can use them
         self.game_ctx.final_mode = final_mode
         self.game_ctx.x_scenarios_threshold = int(x_scenarios)
-        self.game_ctx.godsanity = bool(slot_data.get("godsanity", False))
+        self.game_ctx.random_major_gods = bool(slot_data.get("random_major_gods", False))
+        self.game_ctx.update_buildings_for_random_god = bool(slot_data.get("update_buildings_for_random_god", True))
         raw_gods = slot_data.get("god_assignments", {})
         self.game_ctx.god_assignments = {int(k): int(v) for k, v in raw_gods.items()} if raw_gods else {}
         raw_minor = slot_data.get("minor_god_assignments", {})
@@ -740,8 +758,9 @@ class AoMContext(CommonContext):
         _ensure_user_cfg(self.game_ctx.user_folder)
         mods_local = _resolve_mods_local_dir(self.game_ctx.user_folder)
         generate_ap_ai_xs(self.game_ctx, mods_local)
-        from .GameClient import write_aom_state, load_shop_state
+        from .GameClient import write_aom_state, load_shop_state, load_trap_state
         load_shop_state(self.game_ctx)
+        load_trap_state(self.game_ctx)
         write_aom_state(self.game_ctx)
         self._start_game_loop()
 
@@ -772,10 +791,23 @@ class AoMContext(CommonContext):
             on_items_received(self.game_ctx, combined)
 
         new_info_level = self.game_ctx.received_items.count(PROG_INFO_ID)
-        # 4th Progressive Shop Info: send hints for 5 missions instead of showing item names
-        if old_info_level < 4 <= new_info_level:
-            logger.info("4th Progressive Shop Info received — sending hints for 5 missions")
-            self.send_mission_hints((5, 5))
+
+        # Queue newly received traps — only for incremental updates (index > 0).
+        # On full resend (index == 0), load_trap_state already holds the correct
+        # persisted queue; adding everything again would inflate it.
+        if index > 0:
+            from ..items.Items import Trap as _Trap, ID_TO_ITEM
+            from .GameClient import save_trap_state, write_aom_state
+            new_traps = []
+            for _item_id in item_ids:
+                _item_data = ID_TO_ITEM.get(_item_id)
+                if _item_data is not None and isinstance(_item_data.type, _Trap):
+                    new_traps.append(_item_data.type.trap_type)
+            if new_traps:
+                self.game_ctx.trap_queue.extend(new_traps)
+                save_trap_state(self.game_ctx)
+                write_aom_state(self.game_ctx)
+                logger.info(f"Traps queued: {new_traps} (total: {len(self.game_ctx.trap_queue)})")
 
         _update_atlantis_ui(self)
 
