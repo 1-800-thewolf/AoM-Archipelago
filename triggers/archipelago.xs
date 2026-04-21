@@ -1321,7 +1321,7 @@ void APTrapExecuteTrap(int trapType = 0)
     if (trapType == 15) { trGodPowerGrant(12, "Chaos",              1, 0, false, false); trGodPowerInvoke(12, "Chaos",              gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 16) { trGodPowerGrant(12, "Traitor",            1, 0, false, false); trGodPowerInvoke(12, "Traitor",            gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 17) { trGodPowerGrant(12, "Carnivora",          1, 0, false, false); trGodPowerInvoke(12, "Carnivora",          gAPTrapPos, gAPTrapPos, true); }
-    if (trapType == 18) { trGodPowerGrant(12, "Spider Lair",        1, 0, false, false); trGodPowerInvoke(12, "Spider Lair",        gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 18) { trGodPowerGrant(12, "SpiderLair",         1, 0, false, false); trGodPowerInvoke(12, "SpiderLair",         gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 19) { trGodPowerGrant(12, "Deconstruction",     1, 0, false, false); trGodPowerInvoke(12, "Deconstruction",     gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 20) { trGodPowerGrant(12, "Fimbulwinter",       1, 0, false, false); trGodPowerInvoke(12, "Fimbulwinter",       gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 21) { trGodPowerGrant(12, "Flaming Weapons",    1, 0, false, false); trGodPowerInvoke(12, "Flaming Weapons",    gAPTrapPos, gAPTrapPos, true); }
@@ -1349,22 +1349,22 @@ void APTrapExecuteTrap(int trapType = 0)
 // Helper: grant one of the scenario 25 random god power pool to player 1.
 void APGrantScen25Power(int idx = 0)
 {
-    if (idx ==  0) { trGodPowerGrant(1, "Restoration",        1, 0, false, false); }
-    if (idx ==  1) { trGodPowerGrant(1, "Underworld Passage", 1, 0, false, false); }
-    if (idx ==  2) { trGodPowerGrant(1, "Bronze",             1, 0, false, false); }
-    if (idx ==  3) { trGodPowerGrant(1, "Curse",              1, 0, false, false); }
-    if (idx ==  4) { trGodPowerGrant(1, "Shifting Sands",     1, 0, false, false); }
-    if (idx ==  5) { trGodPowerGrant(1, "Plague of Serpents", 1, 0, false, false); }
-    if (idx ==  6) { trGodPowerGrant(1, "Ancestors",          1, 0, false, false); }
-    if (idx ==  7) { trGodPowerGrant(1, "Undermine",          1, 0, false, false); }
-    if (idx ==  8) { trGodPowerGrant(1, "Healing Spring",     1, 0, false, false); }
-    if (idx ==  9) { trGodPowerGrant(1, "Walking Woods",      1, 0, false, false); }
-    if (idx == 10) { trGodPowerGrant(1, "Frost",              1, 0, false, false); }
-    if (idx == 11) { trGodPowerGrant(1, "Flaming Weapons",    1, 0, false, false); }
-    if (idx == 12) { trGodPowerGrant(1, "Spider Lair",        1, 0, false, false); }
-    if (idx == 13) { trGodPowerGrant(1, "Carnivora",          1, 0, false, false); }
-    if (idx == 14) { trGodPowerGrant(1, "Traitor",            1, 0, false, false); }
-    if (idx == 15) { trGodPowerGrant(1, "Chaos",              1, 0, false, false); }
+    if (idx ==  0) { trGodPowerGrant(1, "Restoration",        1, 30, true, false); }
+    if (idx ==  1) { trGodPowerGrant(1, "UnderworldPassage",  1, 30, true, false); }
+    if (idx ==  2) { trGodPowerGrant(1, "Bronze",             1, 30, true, false); }
+    if (idx ==  3) { trGodPowerGrant(1, "Curse",              1, 30, true, false); }
+    if (idx ==  4) { trGodPowerGrant(1, "ShiftingSands",      1, 30, true, false); }
+    if (idx ==  5) { trGodPowerGrant(1, "PlagueOfSerpents",   1, 30, true, false); }
+    if (idx ==  6) { trGodPowerGrant(1, "Ancestors",          1, 30, true, false); }
+    if (idx ==  7) { trGodPowerGrant(1, "Undermine",          1, 30, true, false); }
+    if (idx ==  8) { trGodPowerGrant(1, "HealingSpring",      1, 30, true, false); }
+    if (idx ==  9) { trGodPowerGrant(1, "WalkingWoods",       1, 30, true, false); }
+    if (idx == 10) { trGodPowerGrant(1, "Frost",              1, 30, true, false); }
+    if (idx == 11) { trGodPowerGrant(1, "FlamingWeapons",     1, 30, true, false); }
+    if (idx == 12) { trGodPowerGrant(1, "SpiderLair",         1, 30, true, false); }
+    if (idx == 13) { trGodPowerGrant(1, "Carnivora",          1, 30, true, false); }
+    if (idx == 14) { trGodPowerGrant(1, "Traitor",            1, 30, true, false); }
+    if (idx == 15) { trGodPowerGrant(1, "Chaos",              1, 30, true, false); }
 }
 
 // Grants 2 distinct random god powers to player 1 from the scenario 25 pool.
@@ -1599,8 +1599,8 @@ runImmediately
         trPlayerTechTreeEnabledGodPowers(1, true);
         if (gAPRandomMajorGods == false)
         {
-            trGodPowerGrant(1, "Healing Spring", 1, 0, false, false);
-            trGodPowerGrant(1, "Bronze",         1, 0, false, false);
+            trGodPowerGrant(1, "HealingSpring", 1, 30, true, false);
+            trGodPowerGrant(1, "Bronze", 1, 30, true, false);
         }
         else
         {
@@ -1906,6 +1906,34 @@ void APApplyAtlanteanMinorGods(int majorGod = 0, int ageCount = 0)
     }
 }
 
+// Grant the scenario's minimum starting ages unconditionally.
+// Called from APActivateScenario AFTER APSetPlayerCiv (which force-disables
+// all ages) so the scenario floor is always restored before APApplyAgeUnlocks
+// adds the player's earned unlock count on top.
+void APInitStartingAgeTechs()
+{
+    int floor = APGetStartingAgeCount(gAPScenarioId);
+    if (floor <= 0) { return; }
+
+    // Grant floor ages for whichever civ is currently assigned.
+    if (gAPMajorGod == cAPMajorZeus || gAPMajorGod == cAPMajorPoseidon || gAPMajorGod == cAPMajorHades)
+    {
+        APApplyGreekMinorGods(gAPMajorGod, floor);
+    }
+    if (gAPMajorGod == cAPMajorIsis || gAPMajorGod == cAPMajorRa || gAPMajorGod == cAPMajorSet)
+    {
+        APApplyEgyptianMinorGods(gAPMajorGod, floor);
+    }
+    if (gAPMajorGod == cAPMajorOdin || gAPMajorGod == cAPMajorThor || gAPMajorGod == cAPMajorLoki)
+    {
+        APApplyNorseMinorGods(gAPMajorGod, floor);
+    }
+    if (gAPMajorGod == cAPMajorKronos || gAPMajorGod == cAPMajorOranos || gAPMajorGod == cAPMajorGaia)
+    {
+        APApplyAtlanteanMinorGods(gAPMajorGod, floor);
+    }
+}
+
 int APGetStartingAgeCount(int scenarioId = 0)
 {
     if (scenarioId == 1) { return 1; }
@@ -1963,33 +1991,41 @@ void APApplyAgeUnlocks()
         if (id == cATLANTEAN_AGE_UNLOCK)  { atlanteanCount++; }
     }
 
-    // Use force-disable for non-assigned civs — scenario editor triggers can
-    // pre-research age techs after our APSetPlayerCiv force-disable, and the
-    // guarded APDisableAll* functions won't clear an already-active tech.
+    // Effective age count = max(scenario floor, player's earned unlocks).
+    // The scenario floor was already granted by APInitStartingAgeTechs; here
+    // we re-apply using the effective count so APApply*MinorGods always
+    // grants at least the floor and at most what the player has earned.
+    // Force-disabling the other three civs prevents scenario editor triggers
+    // from leaving stale age techs active for the unassigned civs.
+    int floor = APGetStartingAgeCount(gAPScenarioId);
     if (gAPMajorGod == cAPMajorZeus || gAPMajorGod == cAPMajorPoseidon || gAPMajorGod == cAPMajorHades)
     {
-        APApplyGreekMinorGods(gAPMajorGod, greekCount);
+        int effGreek = greekCount; if (floor > effGreek) { effGreek = floor; }
+        APApplyGreekMinorGods(gAPMajorGod, effGreek);
         APForceDisableAllEgyptianAgeTechs();
         APForceDisableAllNorseAgeTechs();
         APForceDisableAllAtlanteanAgeTechs();
     }
     if (gAPMajorGod == cAPMajorIsis || gAPMajorGod == cAPMajorRa || gAPMajorGod == cAPMajorSet)
     {
-        APApplyEgyptianMinorGods(gAPMajorGod, egyptianCount);
+        int effEgyptian = egyptianCount; if (floor > effEgyptian) { effEgyptian = floor; }
+        APApplyEgyptianMinorGods(gAPMajorGod, effEgyptian);
         APForceDisableAllGreekAgeTechs();
         APForceDisableAllNorseAgeTechs();
         APForceDisableAllAtlanteanAgeTechs();
     }
     if (gAPMajorGod == cAPMajorOdin || gAPMajorGod == cAPMajorThor || gAPMajorGod == cAPMajorLoki)
     {
-        APApplyNorseMinorGods(gAPMajorGod, norseCount);
+        int effNorse = norseCount; if (floor > effNorse) { effNorse = floor; }
+        APApplyNorseMinorGods(gAPMajorGod, effNorse);
         APForceDisableAllGreekAgeTechs();
         APForceDisableAllEgyptianAgeTechs();
         APForceDisableAllAtlanteanAgeTechs();
     }
     if (gAPMajorGod == cAPMajorKronos || gAPMajorGod == cAPMajorOranos || gAPMajorGod == cAPMajorGaia)
     {
-        APApplyAtlanteanMinorGods(gAPMajorGod, atlanteanCount);
+        int effAtlantean = atlanteanCount; if (floor > effAtlantean) { effAtlantean = floor; }
+        APApplyAtlanteanMinorGods(gAPMajorGod, effAtlantean);
         APForceDisableAllGreekAgeTechs();
         APForceDisableAllEgyptianAgeTechs();
         APForceDisableAllNorseAgeTechs();
