@@ -194,6 +194,10 @@ const int cEGYPTIAN_AGE_UNLOCK           = 1005;
 const int cNORSE_AGE_UNLOCK              = 1008;
 const int cATLANTEAN_AGE_UNLOCK          = 1011;
 
+// Progressive tech upgrade item IDs — raw values matching Items.py
+const int cPROGRESSIVE_ECONOMY_TECH      = 5100;
+const int cPROGRESSIVE_MILITARY_TECH     = 5101;
+
 
 // -----------------------------------------------------------------------
 // Unit unlock item IDs — raw values matching Items.py
@@ -480,11 +484,16 @@ void APSetPlayerCiv()
 {
     // Set civ first, then force-disable all age techs for non-assigned civs.
     // Force-disable (no guard) clears any pre-set vanilla scenario age techs.
+    // We also force-disable the ASSIGNED civ's own techs because trPlayerSetCiv
+    // auto-enables that civ's full age tech tree (status 1). Without this,
+    // APDisableAllNorseAgeTechs (etc.) would see them as "active" and skip
+    // them, leaving Mythic available even when the player lacks those unlocks.
     if (gAPMajorGod == cAPMajorZeus || gAPMajorGod == cAPMajorPoseidon || gAPMajorGod == cAPMajorHades)
     {
         if (gAPMajorGod == cAPMajorZeus)     { trPlayerSetCiv(1, "Zeus"); }
         if (gAPMajorGod == cAPMajorPoseidon) { trPlayerSetCiv(1, "Poseidon"); }
         if (gAPMajorGod == cAPMajorHades)    { trPlayerSetCiv(1, "Hades"); }
+        APForceDisableAllGreekAgeTechs();
         APForceDisableAllEgyptianAgeTechs();
         APForceDisableAllNorseAgeTechs();
         APForceDisableAllAtlanteanAgeTechs();
@@ -495,6 +504,7 @@ void APSetPlayerCiv()
         if (gAPMajorGod == cAPMajorRa)   { trPlayerSetCiv(1, "Ra"); }
         if (gAPMajorGod == cAPMajorSet)  { trPlayerSetCiv(1, "Set"); }
         APForceDisableAllGreekAgeTechs();
+        APForceDisableAllEgyptianAgeTechs();
         APForceDisableAllNorseAgeTechs();
         APForceDisableAllAtlanteanAgeTechs();
     }
@@ -505,6 +515,7 @@ void APSetPlayerCiv()
         if (gAPMajorGod == cAPMajorLoki) { trPlayerSetCiv(1, "Loki"); }
         APForceDisableAllGreekAgeTechs();
         APForceDisableAllEgyptianAgeTechs();
+        APForceDisableAllNorseAgeTechs();
         APForceDisableAllAtlanteanAgeTechs();
     }
     if (gAPMajorGod == cAPMajorKronos || gAPMajorGod == cAPMajorOranos || gAPMajorGod == cAPMajorGaia)
@@ -515,6 +526,7 @@ void APSetPlayerCiv()
         APForceDisableAllGreekAgeTechs();
         APForceDisableAllEgyptianAgeTechs();
         APForceDisableAllNorseAgeTechs();
+        APForceDisableAllAtlanteanAgeTechs();
     }
 }
 
@@ -565,9 +577,9 @@ void APAnnounceGod()
     string godName   = "";
     string colorOpen = "";
 
-    if (gAPMajorGod == cAPMajorZeus)     { godName = "Zeus";     colorOpen = "<color0,0,255>"; }
-    if (gAPMajorGod == cAPMajorPoseidon) { godName = "Poseidon"; colorOpen = "<color0,0,255>"; }
-    if (gAPMajorGod == cAPMajorHades)    { godName = "Hades";    colorOpen = "<color0,0,255>"; }
+    if (gAPMajorGod == cAPMajorZeus)     { godName = "Zeus";     colorOpen = "<color77,77,255>"; }
+    if (gAPMajorGod == cAPMajorPoseidon) { godName = "Poseidon"; colorOpen = "<color77,77,255>"; }
+    if (gAPMajorGod == cAPMajorHades)    { godName = "Hades";    colorOpen = "<color77,77,255>"; }
     if (gAPMajorGod == cAPMajorIsis)     { godName = "Isis";     colorOpen = "<color255,255,0>"; }
     if (gAPMajorGod == cAPMajorRa)       { godName = "Ra";       colorOpen = "<color255,255,0>"; }
     if (gAPMajorGod == cAPMajorSet)      { godName = "Set";      colorOpen = "<color255,255,0>"; }
@@ -1062,13 +1074,11 @@ void APTransformBuildings()
             string _t2     = gAPBldgTo2[i];
             string _target = _t1;
             if (_t2 != "" && xsRandInt(0, 1) == 1) { _target = _t2; }
-            trChatSend(1, "BLDG xform P" + _tp + ": [" + _from + "] -> [" + _target + "]");
             trPlayerChangeProtoUnit(_tp, _from, _target, false);
             matched++;
         }
         i++;
     }
-    trChatSend(1, "BLDG done: " + matched + " pairs matched scenId=" + scenId);
 }
 
 // -----------------------------------------------------------------------
@@ -1121,8 +1131,8 @@ int APTrapQueryRandom(int playerID = 1, string protoName = "default")
     return (res[0]);
 }
 
-// Query a random alive building for a player (for Pestilence, Deconstruction).
-// Prefers Town Center; falls back to any building.
+// Query a random alive building for a player (for Pestilence).
+// Returns any alive building for the given player.
 int APTrapQueryBuilding(int playerID = 1)
 {
     xsSetContextPlayer(playerID);
@@ -1137,6 +1147,47 @@ int APTrapQueryBuilding(int playerID = 1)
     if (res.size() > 0) { return (res[xsRandInt(0, res.size() - 1)]); }
     return (-1);
 }
+
+// Query a building target for Deconstruction:
+//   1st priority — Sentry Tower
+//   2nd priority — Temple
+//   Fallback     — any P1 building that is not a Town Center
+int APTrapQueryDeconBuilding()
+{
+    // Try Sentry Tower first
+    int _uid = APTrapQueryRandom(1, "SentryTower");
+    if (_uid >= 0) { return (_uid); }
+    // Try Temple
+    _uid = APTrapQueryRandom(1, "Temple");
+    if (_uid >= 0) { return (_uid); }
+    // Fallback: any alive P1 building except Town Center
+    xsSetContextPlayer(1);
+    int qid = kbUnitQueryCreate("APDeconBldQ");
+    kbUnitQuerySetPlayerID(qid, 1);
+    kbUnitQuerySetUnitType(qid, cUnitTypeBuilding);
+    kbUnitQuerySetState(qid, cUnitStateAlive);
+    kbUnitQueryExecute(qid);
+    int[] res = kbUnitQueryGetResults(qid);
+    kbUnitQueryDestroy(qid);
+    xsSetContextPlayer(12);
+    int sz = res.size();
+    if (sz <= 0) { return (-1); }
+    // Shuffle through candidates, skip Town Centers
+    int attempt = 0;
+    while (attempt < sz)
+    {
+        int candidate = res[xsRandInt(0, sz - 1)];
+        string pname = kbProtoUnitGetName(kbUnitGetProtoUnitID(candidate));
+        if (pname != "TownCenter" && pname != "TownCenterAbandoned")
+        {
+            return (candidate);
+        }
+        attempt++;
+    }
+    return (-1);
+}
+
+
 
 // Prefer myth units for single-unit targeted powers (Bolt, Traitor).
 // Falls back to cUnitTypeUnit if no myth units found.
@@ -1179,8 +1230,8 @@ string APTrapGetName(int trapType = 0)
     if (trapType == 21) { return ("Flaming Weapons"); }
     if (trapType == 22) { return ("Ancestors"); }
     if (trapType == 23) { return ("Pestilence"); }
-    if (trapType == 24) { return ("Bronze"); }
-    if (trapType == 25) { return ("Eclipse"); }
+    if (trapType == 25) { return ("Nidhogg"); }
+    if (trapType == 26) { return ("Shockwave"); }
     return ("Unknown Trap");
 }
 
@@ -1197,9 +1248,9 @@ void APTrapExecuteTrap(int trapType = 0)
 
     // Friendly powers target P2; unit-targeted powers pick cUnitTypeUnit;
     // hostile area powers pick random P1 cUnitTypeUnit
-    if (trapType == 7 || trapType == 24)
+    if (trapType == 7)
     {
-        // Restoration / Bronze → random P2 unit
+        // Restoration → random P2 unit
         _uid = APTrapQueryRandom(2, "default");
     }
     else if (trapType == 8)
@@ -1211,12 +1262,17 @@ void APTrapExecuteTrap(int trapType = 0)
         if (_uid < 0) { _uid = APTrapQueryRandom(6, "Town Center"); }
         // No fallback to generic unit — Citadel must target a TC or skip
     }
-
-    else if (trapType == 23 || trapType == 19)
+    else if (trapType == 23)
     {
-        // Pestilence / Deconstruction → random P1 building
+        // Pestilence → random P1 building
         _uid = APTrapQueryBuilding(1);
         if (_uid < 0) { _uid = APTrapQueryRandom(1, "default"); }
+    }
+    else if (trapType == 19)
+    {
+        // Deconstruction → Sentry Tower, then Temple, then any non-TC P1 building
+        _uid = APTrapQueryDeconBuilding();
+        // No unit fallback — Deconstruction must hit a building or skip
     }
     else if (trapType == 4 || trapType == 16)
     {
@@ -1232,15 +1288,7 @@ void APTrapExecuteTrap(int trapType = 0)
     if (_uid >= 0) { gAPTrapPos = trUnitGetPosition(_uid); }
 
     // Debug: show trap type and coordinates
-    string _dbgName = APTrapGetName(trapType);
-    if (_uid >= 0)
-    {
-        xsSetContextPlayer(1);
-        string _dbgUnit = kbProtoUnitGetName(kbUnitGetProtoUnitID(_uid));
-        xsSetContextPlayer(12);
-        trMessageSetText("<color0.788,0.412,0.373>Trap " + trapType + " (" + _dbgName + "): " + _dbgUnit + " (uid=" + _uid + ")</color>", 8);
-    }
-    if (_uid < 0)  { trMessageSetText("<color0.788,0.412,0.373>Trap " + trapType + " (" + _dbgName + "): no target</color>", 8); }
+    trMessageSetText("<color0.788,0.412,0.373>" + APTrapGetName(trapType) + " Trap!</color>", 6);
 
     // Disable god power blocking before invoke, re-enable after
     trGodPowerEnableBlocking(false);
@@ -1279,8 +1327,14 @@ void APTrapExecuteTrap(int trapType = 0)
     if (trapType == 21) { trGodPowerGrant(12, "Flaming Weapons",    1, 0, false, false); trGodPowerInvoke(12, "Flaming Weapons",    gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 22) { trGodPowerGrant(12, "Ancestors",          1, 0, false, false); trGodPowerInvoke(12, "Ancestors",          gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 23) { trGodPowerGrant(12, "Pestilence",         1, 0, false, false); trGodPowerInvoke(12, "Pestilence",         gAPTrapPos, gAPTrapPos, true); }
-    if (trapType == 24) { trGodPowerGrant(12, "Bronze",             1, 0, false, false); trGodPowerInvoke(12, "Bronze",             gAPTrapPos, gAPTrapPos, true); }
-    if (trapType == 25) { trGodPowerGrant(12, "Eclipse",            1, 0, false, false); trGodPowerInvoke(12, "Eclipse",            gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 25)
+    {
+        // Nidhogg: boost LOS so it can see target, then invoke at P1 unit position
+        trModifyProtounitData("Nidhogg", 12, 2, 50, 1);  // field 2=LOS, delta=50, relativity=1 (add)
+        trGodPowerGrant(12, "Nidhogg", 1, 0, false, false);
+        trGodPowerInvoke(12, "Nidhogg", gAPTrapPos, gAPTrapPos, true);
+    }
+    if (trapType == 26) { trGodPowerGrant(12, "Shockwave",          1, 0, false, false); trGodPowerInvoke(12, "Shockwave",          gAPTrapPos, gAPTrapPos, true); }
 
     trGodPowerEnableBlocking(true);
 
@@ -1292,6 +1346,133 @@ void APTrapExecuteTrap(int trapType = 0)
 // -----------------------------------------------------------------------
 
 
+// Helper: grant one of the scenario 25 random god power pool to player 1.
+void APGrantScen25Power(int idx = 0)
+{
+    if (idx ==  0) { trGodPowerGrant(1, "Restoration",        1, 0, false, false); }
+    if (idx ==  1) { trGodPowerGrant(1, "Underworld Passage", 1, 0, false, false); }
+    if (idx ==  2) { trGodPowerGrant(1, "Bronze",             1, 0, false, false); }
+    if (idx ==  3) { trGodPowerGrant(1, "Curse",              1, 0, false, false); }
+    if (idx ==  4) { trGodPowerGrant(1, "Shifting Sands",     1, 0, false, false); }
+    if (idx ==  5) { trGodPowerGrant(1, "Plague of Serpents", 1, 0, false, false); }
+    if (idx ==  6) { trGodPowerGrant(1, "Ancestors",          1, 0, false, false); }
+    if (idx ==  7) { trGodPowerGrant(1, "Undermine",          1, 0, false, false); }
+    if (idx ==  8) { trGodPowerGrant(1, "Healing Spring",     1, 0, false, false); }
+    if (idx ==  9) { trGodPowerGrant(1, "Walking Woods",      1, 0, false, false); }
+    if (idx == 10) { trGodPowerGrant(1, "Frost",              1, 0, false, false); }
+    if (idx == 11) { trGodPowerGrant(1, "Flaming Weapons",    1, 0, false, false); }
+    if (idx == 12) { trGodPowerGrant(1, "Spider Lair",        1, 0, false, false); }
+    if (idx == 13) { trGodPowerGrant(1, "Carnivora",          1, 0, false, false); }
+    if (idx == 14) { trGodPowerGrant(1, "Traitor",            1, 0, false, false); }
+    if (idx == 15) { trGodPowerGrant(1, "Chaos",              1, 0, false, false); }
+}
+
+// Grants 2 distinct random god powers to player 1 from the scenario 25 pool.
+// Logic lives in a proper void function so local variable declarations are
+// guaranteed function-scoped — declaring them inside an else block in a rule
+// body is unreliable in XS and was causing the second grant to silently fail.
+void APGrantScen25RandomPowers()
+{
+    trPlayerTechTreeEnabledGodPowers(1, true);
+    int p1 = xsRandInt(0, 15);
+    int p2 = xsRandInt(0, 14);
+    if (p2 >= p1) { p2++; }
+    APGrantScen25Power(p1);
+    APGrantScen25Power(p2);
+}
+
+// Returns the starting age (0=Archaic, 1=Classical, 2=Heroic, 3=Mythic)
+// for the current scenario, used to gate progressive tech upgrades.
+int APGetScenarioStartingAge()
+{
+    int s = gAPScenarioId;
+    // Mythic start
+    if (s == 9 || s == 16) { return (3); }
+    // Heroic start
+    if (s == 5  || s == 6  || s == 7  || s == 13 || s == 14 || s == 17 ||
+        s == 19 || s == 20 || s == 28 || s == 31 || s == 32) { return (2); }
+    // Archaic start
+    if (s == 2 || s == 3 || s == 10 || s == 11 || s == 12 ||
+        s == 22) { return (0); }
+    // Classical start (1, 4, 8, 15, 18, 23-27, 29-30)
+    return (1);
+}
+
+// Apply progressive economy and military tech upgrades.
+// Must be called AFTER APSetPlayerCiv() — changing civilization wipes researched techs.
+// Tier X techs are awarded when: playerCount >= X AND scenarioStartingAge >= X.
+void APApplyProgressiveTechs(int econCount = 0, int milCount = 0)
+{
+    int age = APGetScenarioStartingAge();
+
+    // --- Economy techs ---
+    if (econCount >= 1 && age >= 1)
+    {
+        trTechSetStatus(1, cTechHusbandry,  2);
+        trTechSetStatus(1, cTechPlow,       2);
+        trTechSetStatus(1, cTechPurseSeine, 2);
+        trTechSetStatus(1, cTechHandAxe,    2);
+        trTechSetStatus(1, cTechPickaxe,    2);
+    }
+    if (econCount >= 2 && age >= 2)
+    {
+        trTechSetStatus(1, cTechIrrigation,  2);
+        trTechSetStatus(1, cTechSaltAmphora, 2);
+        trTechSetStatus(1, cTechBowSaw,      2);
+        trTechSetStatus(1, cTechShaftMine,   2);
+    }
+    if (econCount >= 3 && age >= 3)
+    {
+        trTechSetStatus(1, cTechFloodControl, 2);
+        trTechSetStatus(1, cTechCarpenters,   2);
+        trTechSetStatus(1, cTechQuarry,       2);
+    }
+
+    // --- Military techs ---
+    if (milCount >= 1 && age >= 1)
+    {
+        trTechSetStatus(1, cTechCopperWeapons,  2);
+        trTechSetStatus(1, cTechCopperArmor,    2);
+        trTechSetStatus(1, cTechCopperShields,  2);
+        trTechSetStatus(1, cTechMediumInfantry, 2);
+        trTechSetStatus(1, cTechMediumArchers,  2);
+        trTechSetStatus(1, cTechMediumCavalry,  2);
+        trTechSetStatus(1, cTechMediumAxemen,   2);
+        trTechSetStatus(1, cTechMediumSlingers, 2);
+        trTechSetStatus(1, cTechMediumSpearmen, 2);
+    }
+    if (milCount >= 2 && age >= 2)
+    {
+        trTechSetStatus(1, cTechBronzeWeapons,        2);
+        trTechSetStatus(1, cTechBronzeArmor,          2);
+        trTechSetStatus(1, cTechBronzeShields,        2);
+        trTechSetStatus(1, cTechHeavyInfantry,        2);
+        trTechSetStatus(1, cTechHeavyArchers,         2);
+        trTechSetStatus(1, cTechHeavyCavalry,         2);
+        trTechSetStatus(1, cTechHeavyAxemen,          2);
+        trTechSetStatus(1, cTechHeavySlingers,        2);
+        trTechSetStatus(1, cTechHeavySpearmen,        2);
+        trTechSetStatus(1, cTechHeavyChariotArchers,  2);
+        trTechSetStatus(1, cTechHeavyCamelRiders,     2);
+        trTechSetStatus(1, cTechHeavyWarElephants,    2);
+    }
+    if (milCount >= 3 && age >= 3)
+    {
+        trTechSetStatus(1, cTechIronWeapons,             2);
+        trTechSetStatus(1, cTechIronArmor,               2);
+        trTechSetStatus(1, cTechIronShields,             2);
+        trTechSetStatus(1, cTechChampionInfantry,        2);
+        trTechSetStatus(1, cTechChampionArchers,         2);
+        trTechSetStatus(1, cTechChampionCavalry,         2);
+        trTechSetStatus(1, cTechChampionAxemen,          2);
+        trTechSetStatus(1, cTechChampionSlingers,        2);
+        trTechSetStatus(1, cTechChampionSpearmen,        2);
+        trTechSetStatus(1, cTechChampionChariotArchers,  2);
+        trTechSetStatus(1, cTechChampionCamelRiders,     2);
+        trTechSetStatus(1, cTechChampionWarElephants,    2);
+    }
+}
+
 // in each scenario via: xsEnableRule("APActivateScenario")
 // -----------------------------------------------------------------------
 
@@ -1299,8 +1480,8 @@ void APTrapExecuteTrap(int trapType = 0)
 void APTrapScheduleNext(bool firstInScenario = false)
 {
     if (gAPTrapQueueSize <= 0) { gAPTrapPending = false; return; }
-    // DEBUG: 10-20 seconds
-    float delay = xsRandInt(10, 20);
+    // 45-600 seconds (45s to 10 minutes)
+    float delay = xsRandInt(45, 600);
     gAPTrapFireTime = xsGetTime() + delay;
     gAPTrapPending  = true;
 }
@@ -1357,6 +1538,21 @@ runImmediately
     APInitStartingAgeTechs();
     APForbidItemGatedUnits();
 
+    // Apply progressive tech upgrades now — must come after APSetPlayerCiv()
+    // because changing civilization wipes any previously researched technologies.
+    // gAPItems is already populated by APInitItems() above.
+    int _econTechCount = 0;
+    int _milTechCount  = 0;
+    int _pti = 0;
+    while (_pti < gAPItemCount)
+    {
+        int _ptid = gAPItems[_pti];
+        if (_ptid == cPROGRESSIVE_ECONOMY_TECH)  { _econTechCount++; }
+        if (_ptid == cPROGRESSIVE_MILITARY_TECH) { _milTechCount++;  }
+        _pti++;
+    }
+    APApplyProgressiveTechs(_econTechCount, _milTechCount);
+
     // SPC campaign heroes
     trForbidProtounit(1, "Ajax");
     trForbidProtounit(1, "Chiron");
@@ -1365,18 +1561,61 @@ runImmediately
     // Scenario 12: Roc causes a game-breaking bug
     if (gAPScenarioId == 12) { trForbidProtounit(1, "Roc"); }
 
+    // Scenario 6: The Trojan Horse can only be built by Greek Villagers.
+    // Forbid all other villager types regardless of assigned god, and
+    // explicitly allow Greek Villagers in case a non-Greek god was assigned.
+    if (gAPScenarioId == 6)
+    {
+        trForbidProtounit(1, "VillagerEgyptian");
+        trForbidProtounit(1, "VillagerNorse");
+        trForbidProtounit(1, "VillagerAtlantean");
+        trUnforbidProtounit(1, "VillagerGreek");
+    }
+
+    // Scenarios that start at Classical Age or later get Sentry Tower ranged attack
+    // and the Watch Tower tech pre-researched. Archaic-start scenarios (2,3,10,11,12,21,22)
+    // are excluded — the player hasn't advanced far enough for towers to fire yet.
+    bool _classicalPlus = (gAPScenarioId != 2  && gAPScenarioId != 3  &&
+                           gAPScenarioId != 10 && gAPScenarioId != 11 &&
+                           gAPScenarioId != 12 && gAPScenarioId != 22);
+    if (_classicalPlus)
+    {
+        trProtoUnitActionSetEnabled("SentryTower", 1, "RangedAttack", true);
+        trTechSetStatus(1, cTechWatchTower, 2);
+    }
+
+    // Allow TartarianGate and Carnivora to place anywhere — removes terrain
+    // restrictions that prevent these god powers from invoking in some scenarios.
+    trProtoUnitSetFlag(12, "TartarianGate", "PlaceAnywhere", true);
+    trProtoUnitSetFlag(12, "Carnivora",     "PlaceAnywhere", true);
+
     gAPRandomMajorGods = (gAPItemCount > 5 && gAPItems[5] == 9010);
+
+    // Scenario 25: grant god powers to player 1.
+    // Vanilla: Healing Spring + Bronze (fixed).
+    // Godsanity: 2 distinct random powers from a pool of 16.
+    if (gAPScenarioId == 25)
+    {
+        trPlayerTechTreeEnabledGodPowers(1, true);
+        if (gAPRandomMajorGods == false)
+        {
+            trGodPowerGrant(1, "Healing Spring", 1, 0, false, false);
+            trGodPowerGrant(1, "Bronze",         1, 0, false, false);
+        }
+        else
+        {
+            APGrantScen25RandomPowers();
+        }
+    }
 
     xsEnableRule("APApplyItems");
     xsEnableRule("APAnnounceGod");
     // Initialize trap queue from aom_state.xs generated state
     // Transform buildings to match random god's civilization (if enabled)
     APLoadBuildingTransforms();
-    trChatSend(1, "BLDG: count=" + gAPBldgTransformCount + " scen=" + trQuestVarGet("APScenarioID"));
     if (gAPBldgTransformCount > 0)
     {
         APTransformBuildings();
-        trChatSend(1, "BLDG: transform done");
     }
 
     // Set Player 12 as ally with players 2-11 so god powers only damage Player 1
@@ -1546,7 +1785,7 @@ void APDisableAllNorseAgeTechs()
 
 void APApplyGreekMinorGods(int majorGod = 0, int ageCount = 0)
 {
-    APDisableAllGreekAgeTechs();
+    APForceDisableAllGreekAgeTechs();
 
     if (ageCount >= 1)
     {
@@ -1573,7 +1812,7 @@ void APApplyGreekMinorGods(int majorGod = 0, int ageCount = 0)
 
 void APApplyEgyptianMinorGods(int majorGod = 0, int ageCount = 0)
 {
-    APDisableAllEgyptianAgeTechs();
+    APForceDisableAllEgyptianAgeTechs();
 
     if (ageCount >= 1)
     {
@@ -1600,7 +1839,7 @@ void APApplyEgyptianMinorGods(int majorGod = 0, int ageCount = 0)
 
 void APApplyNorseMinorGods(int majorGod = 0, int ageCount = 0)
 {
-    APDisableAllNorseAgeTechs();
+    APForceDisableAllNorseAgeTechs();
 
     if (ageCount >= 1)
     {
@@ -1643,7 +1882,7 @@ void APDisableAllAtlanteanAgeTechs()
 
 void APApplyAtlanteanMinorGods(int majorGod = 0, int ageCount = 0)
 {
-    APDisableAllAtlanteanAgeTechs();
+    APForceDisableAllAtlanteanAgeTechs();
     if (ageCount >= 1)
     {
         if (trTechStatusActive(1, cTechClassicalAgeAtlantean) == false) { trTechSetStatus(1, cTechClassicalAgeAtlantean, 1); }
@@ -1724,30 +1963,36 @@ void APApplyAgeUnlocks()
         if (id == cATLANTEAN_AGE_UNLOCK)  { atlanteanCount++; }
     }
 
+    // Use force-disable for non-assigned civs — scenario editor triggers can
+    // pre-research age techs after our APSetPlayerCiv force-disable, and the
+    // guarded APDisableAll* functions won't clear an already-active tech.
     if (gAPMajorGod == cAPMajorZeus || gAPMajorGod == cAPMajorPoseidon || gAPMajorGod == cAPMajorHades)
     {
         APApplyGreekMinorGods(gAPMajorGod, greekCount);
-        APDisableAllEgyptianAgeTechs();
-        APDisableAllNorseAgeTechs();
+        APForceDisableAllEgyptianAgeTechs();
+        APForceDisableAllNorseAgeTechs();
+        APForceDisableAllAtlanteanAgeTechs();
     }
     if (gAPMajorGod == cAPMajorIsis || gAPMajorGod == cAPMajorRa || gAPMajorGod == cAPMajorSet)
     {
         APApplyEgyptianMinorGods(gAPMajorGod, egyptianCount);
-        APDisableAllGreekAgeTechs();
-        APDisableAllNorseAgeTechs();
+        APForceDisableAllGreekAgeTechs();
+        APForceDisableAllNorseAgeTechs();
+        APForceDisableAllAtlanteanAgeTechs();
     }
     if (gAPMajorGod == cAPMajorOdin || gAPMajorGod == cAPMajorThor || gAPMajorGod == cAPMajorLoki)
     {
         APApplyNorseMinorGods(gAPMajorGod, norseCount);
-        APDisableAllGreekAgeTechs();
-        APDisableAllEgyptianAgeTechs();
+        APForceDisableAllGreekAgeTechs();
+        APForceDisableAllEgyptianAgeTechs();
+        APForceDisableAllAtlanteanAgeTechs();
     }
     if (gAPMajorGod == cAPMajorKronos || gAPMajorGod == cAPMajorOranos || gAPMajorGod == cAPMajorGaia)
     {
         APApplyAtlanteanMinorGods(gAPMajorGod, atlanteanCount);
-        APDisableAllGreekAgeTechs();
-        APDisableAllEgyptianAgeTechs();
-        APDisableAllNorseAgeTechs();
+        APForceDisableAllGreekAgeTechs();
+        APForceDisableAllEgyptianAgeTechs();
+        APForceDisableAllNorseAgeTechs();
     }
 
 

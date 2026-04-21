@@ -211,6 +211,18 @@ class VillagerFoodCost:
     reduction: int    # food cost reduction (positive = cheaper)
 
 
+@dataclass
+class ProgressiveEconomyTech:
+    """Progressive economy technology upgrade. Count determines which tiers are applied."""
+    pass
+
+
+@dataclass
+class ProgressiveMilitaryTech:
+    """Progressive military technology upgrade. Count determines which tiers are applied."""
+    pass
+
+
 class Resource(enum.Enum):
     FOOD = 1
     WOOD = 2
@@ -254,8 +266,8 @@ item_type_to_classification: dict[type, ItemClassification] = {
     PassiveIncome:          ItemClassification.filler,
     Reinforcement:          ItemClassification.filler,
     HeroStatBoostFiller:    ItemClassification.filler,
-    StartingResourcesLarge: ItemClassification.useful,
-    PassiveIncomeLarge:     ItemClassification.useful,
+    StartingResourcesLarge: ItemClassification.filler,
+    PassiveIncomeLarge:     ItemClassification.filler,
     ReinforcementUseful:    ItemClassification.useful,
     UnitStatBonus:          ItemClassification.useful,
     UnitUnlockUseful:       ItemClassification.useful,
@@ -273,6 +285,8 @@ item_type_to_classification: dict[type, ItemClassification] = {
     AtlanteanUnitUnlockProgression: ItemClassification.progression,
     AtlanteanUnitUnlockUseful:      ItemClassification.useful,
     AtlanteanMythUnitUnlock:        ItemClassification.progression,
+    ProgressiveEconomyTech:         ItemClassification.useful,
+    ProgressiveMilitaryTech:        ItemClassification.useful,
 }
 
 
@@ -342,7 +356,8 @@ class aomItemData(enum.IntEnum):
     TRAP_ANCESTORS       = 9955, "Trap: Ancestors",        Trap(trap_type=22)
     TRAP_PESTILENCE      = 9956, "Trap: Pestilence",       Trap(trap_type=23)
     TRAP_BRONZE          = 9957, "Trap: Bronze",           Trap(trap_type=24)
-    TRAP_ECLIPSE         = 9958, "Trap: Eclipse",          Trap(trap_type=25)
+    TRAP_NIDHOGG         = 9958, "Trap: Nidhogg",          Trap(trap_type=25)
+    TRAP_SHOCKWAVE       = 9959, "Trap: Shockwave",         Trap(trap_type=26)
 
 
     # -----------------------------------------------------------------------
@@ -470,10 +485,10 @@ class aomItemData(enum.IntEnum):
     # Strong units or workers that provide meaningful advantage.
     # -----------------------------------------------------------------------
     REINFORCEMENT_FIRE_GIANT      = 4012, f"{REINFORCEMENT_AMOUNT} Fire Giants",       ReinforcementUseful("FireGiant",         REINFORCEMENT_AMOUNT)
-    REINFORCEMENT_CITIZEN         = 4014, f"{REINFORCEMENT_AMOUNT} Citizens",          ReinforcementUseful("VillagerAtlantean", REINFORCEMENT_AMOUNT)
+    REINFORCEMENT_CITIZEN         = 4014, f"{REINFORCEMENT_AMOUNT} Citizens",          Reinforcement("VillagerAtlantean", REINFORCEMENT_AMOUNT)
     REINFORCEMENT_ROC             = 4017, f"{REINFORCEMENT_AMOUNT} Rocs",              ReinforcementUseful("Roc",               REINFORCEMENT_AMOUNT)
-    REINFORCEMENT_PRIEST          = 4018, f"{REINFORCEMENT_AMOUNT} Priests",           ReinforcementUseful("Priest",            REINFORCEMENT_AMOUNT)
-    REINFORCEMENT_CALADRIA        = 4019, f"{REINFORCEMENT_AMOUNT} Caladrias",         ReinforcementUseful("Caladria",          REINFORCEMENT_AMOUNT)
+    REINFORCEMENT_PRIEST          = 4018, f"{REINFORCEMENT_AMOUNT} Priests",           Reinforcement("Priest",            REINFORCEMENT_AMOUNT)
+    REINFORCEMENT_CALADRIA        = 4019, f"{REINFORCEMENT_AMOUNT} Caladrias",         Reinforcement("Caladria",          REINFORCEMENT_AMOUNT)
     REINFORCEMENT_LAMPADES        = 4025, f"{REINFORCEMENT_AMOUNT} Lampades",          ReinforcementUseful("Lampades",          REINFORCEMENT_AMOUNT)
     REINFORCEMENT_PHOENIX         = 4026, f"{REINFORCEMENT_AMOUNT} Phoenixes",         ReinforcementUseful("Phoenix",           REINFORCEMENT_AMOUNT)
     REINFORCEMENT_COLOSSUS        = 4027, f"{REINFORCEMENT_AMOUNT} Colossi",           ReinforcementUseful("Colossus",          REINFORCEMENT_AMOUNT)
@@ -489,7 +504,7 @@ class aomItemData(enum.IntEnum):
     EGYPTIAN_CLASSICAL_MYTH_UNITS            = 5019, "Can train Egyptian Classical Myth Units", MythUnitUnlockProgression(['Sphinx', 'Wadjet', 'Anubite'], "Egyptian", "Classical")
     EGYPTIAN_HEROIC_MYTH_UNITS               = 5020, "Can train Egyptian Heroic Myth Units", MythUnitUnlockProgression(['Petsuchos', 'Scarab', 'ScorpionMan', 'Roc', 'Leviathan'], "Egyptian", "Heroic")
     EGYPTIAN_MYTHIC_MYTH_UNITS               = 5021, "Can train Egyptian Mythic Myth Units", MythUnitUnlockProgression(['Mummy', 'Avenger', 'Phoenix', 'WarTurtle'], "Egyptian", "Mythic")
-    NORSE_CLASSICAL_MYTH_UNITS               = 5022, "Can train Norse Classical Myth Units", MythUnitUnlockProgression(['Valkyrie', 'Troll', 'Einherjar', 'Draugr'], "Norse", "Classical")
+    NORSE_CLASSICAL_MYTH_UNITS               = 5022, "Can train Norse Classical Myth Units", MythUnitUnlockProgression(['Valkyrie', 'Troll', 'Einheri', 'Draugr'], "Norse", "Classical")
     NORSE_HEROIC_MYTH_UNITS                  = 5023, "Can train Norse Heroic Myth Units", MythUnitUnlockProgression(['FrostGiant', 'BattleBoar', 'MountainGiant', 'RockGiant', 'Kraken'], "Norse", "Heroic")
     NORSE_MYTHIC_MYTH_UNITS                  = 5024, "Can train Norse Mythic Myth Units", MythUnitUnlockProgression(['FireGiant', 'FenrisWolfBrood', 'Fafnir', 'JormunElver'], "Norse", "Mythic")
 
@@ -497,6 +512,15 @@ class aomItemData(enum.IntEnum):
     ATLANTEAN_CLASSICAL_MYTH_UNITS = 5025, "Can train Atlantean Classical Myth Units", AtlanteanMythUnitUnlock(['Promethean', 'Automaton', 'Caladria', 'Servant'], "Atlantean", "Classical")
     ATLANTEAN_HEROIC_MYTH_UNITS    = 5026, "Can train Atlantean Heroic Myth Units",    AtlanteanMythUnitUnlock(['Behemoth', 'Satyr', 'StymphalianBird', 'Nereid'], "Atlantean", "Heroic")
     ATLANTEAN_MYTHIC_MYTH_UNITS    = 5027, "Can train Atlantean Mythic Myth Units",    AtlanteanMythUnitUnlock(['Centimanus', 'Argus', 'Lampades', 'ManOWar'], "Atlantean", "Mythic")
+
+    # -----------------------------------------------------------------------
+    # Progressive Tech Upgrades — IDs 5100-5101
+    # 3 copies of each are placed in the useful pool (added explicitly in
+    # create_items). Count of received copies gates which tech tiers apply,
+    # and tiers are only applied if the scenario starting age >= the tier.
+    # -----------------------------------------------------------------------
+    PROGRESSIVE_ECONOMY_TECH  = 5100, "Progressive Economy Tech",  ProgressiveEconomyTech()
+    PROGRESSIVE_MILITARY_TECH = 5101, "Progressive Military Tech", ProgressiveMilitaryTech()
 
     # -----------------------------------------------------------------------
     # Reinforcements — Additional Filler
@@ -523,7 +547,7 @@ class aomItemData(enum.IntEnum):
 
     # --- Arkantos — 2000-2099 ---
     ARKANTOS_HP_25       = 2000, "Arkantos +25 HP",           HeroStatBoostFiller("Arkantos", "Hitpoints", 25)
-    ARKANTOS_HP_200      = 2002, "Arkantos +200 HP",          HeroStatBoost("Arkantos", "Hitpoints", 200)
+    ARKANTOS_HP_200      = 2002, "Arkantos +200 HP",          HeroStatBoostFiller("Arkantos", "Hitpoints", 200)
     ARKANTOS_ATK_1       = 2003, "Arkantos +1 Attack",        HeroStatBoostFiller("Arkantos", "HandAttack", 1, "HandAttack")
     ARKANTOS_ATK_10      = 2005, "Arkantos +10 Attack",       HeroStatBoost("Arkantos", "HandAttack", 10, "HandAttack")
     ARKANTOS_RECHARGE_2  = 2006, "Arkantos -2 Recharge Time", HeroStatBoostFiller("Arkantos", "RechargeTime", -2)
@@ -533,7 +557,7 @@ class aomItemData(enum.IntEnum):
 
     # --- Ajax — 2100-2199 ---
     AJAX_HP_25           = 2100, "Ajax +25 HP",               HeroStatBoostFiller("Ajax", "Hitpoints", 25)
-    AJAX_HP_200          = 2102, "Ajax +200 HP",              HeroStatBoost("Ajax", "Hitpoints", 200)
+    AJAX_HP_200          = 2102, "Ajax +200 HP",              HeroStatBoostFiller("Ajax", "Hitpoints", 200)
     AJAX_ATK_1           = 2103, "Ajax +1 Attack",            HeroStatBoostFiller("Ajax", "HandAttack", 1, "HandAttack")
     AJAX_ATK_10          = 2105, "Ajax +10 Attack",           HeroStatBoost("Ajax", "HandAttack", 10, "HandAttack")
     AJAX_RECHARGE_2      = 2106, "Ajax -2 Recharge Time",     HeroStatBoostFiller("Ajax", "RechargeTime", -2)
@@ -543,7 +567,7 @@ class aomItemData(enum.IntEnum):
 
     # --- Chiron — 2200-2299 ---
     CHIRON_HP_25         = 2200, "Chiron +25 HP",             HeroStatBoostFiller("Chiron", "Hitpoints", 25)
-    CHIRON_HP_200        = 2202, "Chiron +200 HP",            HeroStatBoost("Chiron", "Hitpoints", 200)
+    CHIRON_HP_200        = 2202, "Chiron +200 HP",            HeroStatBoostFiller("Chiron", "Hitpoints", 200)
     CHIRON_ATK_1         = 2203, "Chiron +1 Attack",          HeroStatBoostFiller("Chiron", "RangedAttack", 1, "RangedAttack")
     CHIRON_ATK_10        = 2205, "Chiron +10 Attack",         HeroStatBoost("Chiron", "RangedAttack", 10, "RangedAttack")
     CHIRON_RECHARGE_2    = 2206, "Chiron -2 Recharge Time",   HeroStatBoostFiller("Chiron", "RechargeTime", -2)
@@ -553,7 +577,7 @@ class aomItemData(enum.IntEnum):
 
     # --- Amanra — 2300-2399 ---
     AMANRA_HP_25         = 2300, "Amanra +25 HP",             HeroStatBoostFiller("Amanra", "Hitpoints", 25)
-    AMANRA_HP_200        = 2302, "Amanra +200 HP",            HeroStatBoost("Amanra", "Hitpoints", 200)
+    AMANRA_HP_200        = 2302, "Amanra +200 HP",            HeroStatBoostFiller("Amanra", "Hitpoints", 200)
     AMANRA_ATK_1         = 2303, "Amanra +1 Attack",          HeroStatBoostFiller("Amanra", "HandAttack", 1, "HandAttack")
     AMANRA_ATK_10        = 2305, "Amanra +10 Attack",         HeroStatBoost("Amanra", "HandAttack", 10, "HandAttack")
     AMANRA_RECHARGE_2    = 2306, "Amanra -2 Recharge Time",   HeroStatBoostFiller("Amanra", "RechargeTime", -2)
@@ -563,7 +587,7 @@ class aomItemData(enum.IntEnum):
 
     # --- Odysseus — 2400-2499 ---
     ODYSSEUS_HP_25       = 2400, "Odysseus +25 HP",           HeroStatBoostFiller("Odysseus", "Hitpoints", 25)
-    ODYSSEUS_HP_200      = 2402, "Odysseus +200 HP",          HeroStatBoost("Odysseus", "Hitpoints", 200)
+    ODYSSEUS_HP_200      = 2402, "Odysseus +200 HP",          HeroStatBoostFiller("Odysseus", "Hitpoints", 200)
     ODYSSEUS_ATK_1       = 2403, "Odysseus +1 Attack",        HeroStatBoostFiller("Odysseus", "RangedAttack", 1, "RangedAttack")
     ODYSSEUS_ATK_10      = 2405, "Odysseus +10 Attack",       HeroStatBoost("Odysseus", "RangedAttack", 10, "RangedAttack")
     ODYSSEUS_RECHARGE_2  = 2406, "Odysseus -2 Recharge Time", HeroStatBoostFiller("Odysseus", "RechargeTime", -2)
@@ -574,7 +598,7 @@ class aomItemData(enum.IntEnum):
     # --- Reginleif — 2500-2599 ---
     # Note: Reginleif has no rechargeable special attack, so no RECHARGE items.
     REGINLEIF_HP_25      = 2500, "Reginleif +25 HP",          HeroStatBoostFiller("Reginleif", "Hitpoints", 25)
-    REGINLEIF_HP_200     = 2502, "Reginleif +200 HP",         HeroStatBoost("Reginleif", "Hitpoints", 200)
+    REGINLEIF_HP_200     = 2502, "Reginleif +200 HP",         HeroStatBoostFiller("Reginleif", "Hitpoints", 200)
     REGINLEIF_ATK_1      = 2503, "Reginleif +1 Attack",       HeroStatBoostFiller("Reginleif", "RangedAttack", 1, "RangedAttack")
     REGINLEIF_ATK_10     = 2505, "Reginleif +10 Attack",      HeroStatBoost("Reginleif", "RangedAttack", 10, "RangedAttack")
     REGINLEIF_REGEN_1    = 2508, "Reginleif +1 Regen",        HeroStatBoostFiller("Reginleif", "UnitRegenRate", 1)

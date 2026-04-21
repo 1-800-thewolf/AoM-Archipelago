@@ -158,7 +158,7 @@ _SCENARIO_DATA: dict[int, tuple[int, int, float, bool, bool]] = {
     4:  (2, 3, 16.0,  False, False),
     5:  (3, 3, 16.0,  False, False),
     6:  (3, 2,  9.0,  False, False),
-    7:  (3, 2,  1.0,  False, False),   # special: 1pt required, human units excluded
+    7:  (3, 0,  1.0,  False, False),   # special: 1pt required, human units excluded
     8:  (2, 3, 16.0,  False, False),
     9:  (4, 3,  0.0,  True,  False),
     10: (1, 3,  0.0,  True,  False),
@@ -172,7 +172,7 @@ _SCENARIO_DATA: dict[int, tuple[int, int, float, bool, bool]] = {
     18: (2, 3, 16.0,  False, False),
     19: (3, 3, 16.0,  False, False),
     20: (3, 3, 16.0,  False, False),
-    21: (1, 3, 16.0,  False, False),
+    21: (2, 3, 16.0,  False, False),
     22: (1, 2,  9.0,  False, False),
     23: (2, 3, 16.0,  False, False),
     24: (2, 2,  9.0,  False, False),
@@ -496,7 +496,7 @@ def set_scenario_age_and_point_rules(world, point_table: dict[str, float]) -> No
         entrance = multiworld.get_entrance(ent_name, player)
 
         # Scenario 7: human unit unlocks don't count toward points,
-        # and the threshold is just 1pt.
+        # no age or military unit unlock required — just 1 point of non-unit items.
         if n == 7:
             human_unit_types = (UnitUnlockProgression, UnitUnlockUseful)
             if _ATLANTEAN_TYPES:
@@ -511,6 +511,12 @@ def set_scenario_age_and_point_rules(world, point_table: dict[str, float]) -> No
                 name: (0.0 if name in human_unit_names else val)
                 for name, val in point_table.items()
             }
+            add_rule(entrance,
+                lambda state, t=effective_table, p=points_needed:
+                    count_points(state, player, t) >= p
+            )
+            continue
+
         else:
             effective_table = point_table
 
@@ -647,8 +653,14 @@ def set_shop_rules(world) -> None:
             loc = multiworld.get_location(pi_name, player)
             set_rule(loc, lambda state, r=required: count_completed_scenarios(state, player) >= r)
 
+    # The Marsh shop (tier A) is always open and accessible early, so progression
+    # items must never appear there — players buy blind and could otherwise lock
+    # themselves out of required items. Useful items are still allowed.
+    marsh_item_ids = set(TIER_ITEM_IDS.get("A", []))
+
     # Item classification per location:
-    #   - exactly 1 progression slot per shop (no restriction)
+    #   - exactly 1 progression slot per non-Marsh shop (no restriction)
+    #   - Marsh shop: filler/useful/trap only (no progression)
     #   - randomly excluded locations get no item_rule (filler/trap fills them via AP)
     #   - ~half of the remaining non-excluded are filler-only
     #   - the rest accept filler or useful (not progression)
@@ -670,11 +682,18 @@ def set_shop_rules(world) -> None:
         if not name:
             continue
         loc = multiworld.get_location(name, player)
-        is_prog_slot = any(loc_id == prog_slots.get(tier) for tier, *_ in SHOP_TIER_CONFIGS)
+        is_marsh = loc_id in marsh_item_ids
+        # Marsh shop slots are never progression — skip the prog_slot exception
+        is_prog_slot = (not is_marsh) and any(loc_id == prog_slots.get(tier) for tier, *_ in SHOP_TIER_CONFIGS)
         if is_prog_slot:
-            pass  # no restriction
+            pass  # no restriction on non-Marsh progression slots
         elif loc_id in excluded_ids:
             loc.progress_type = LocationProgressType.EXCLUDED  # filled with filler/trap
+        elif is_marsh:
+            # Marsh shop: useful/filler/trap but never progression
+            loc.item_rule = lambda item: item.classification in (
+                ItemClassification.filler, ItemClassification.useful, ItemClassification.trap
+            )
         elif loc_id in filler_only:
             loc.item_rule = lambda item: item.classification in (
                 ItemClassification.filler, ItemClassification.trap

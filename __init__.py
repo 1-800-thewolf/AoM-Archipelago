@@ -160,7 +160,7 @@ _AGE_BASE_TECHS: dict[str, dict] = {
 }
 
 _SCENARIO_STARTING_AGE: dict[int, int] = {
-    1:1, 2:0, 3:0, 10:0, 11:0, 12:0, 21:0, 22:0, 25:1,
+    1:1, 2:0, 3:0, 10:0, 11:0, 12:0, 21:1, 22:0, 25:1,
     4:1, 8:1, 15:1, 18:1, 23:1, 24:1, 26:1, 27:1, 29:1, 30:1,
     5:2, 6:2, 7:2, 13:2, 14:2, 17:2, 19:2, 20:2, 28:2, 31:2, 32:2,
     9:3, 16:3,
@@ -196,6 +196,7 @@ _VANILLA_MINOR_GOD_TECHS: dict[int, list] = {
          "cTechHeroicAgeEgyptian",    "cTechHeroicAgeSobek"],
     20: ["cTechClassicalAgeEgyptian", "cTechClassicalAgeBast",
          "cTechHeroicAgeEgyptian",    "cTechHeroicAgeNephthys"],
+    21: ["cTechClassicalAgeGreek",    "cTechClassicalAgeHermes"],  # Zeus (vanilla god for scen 21)
     23: ["cTechClassicalAgeNorse",    "cTechClassicalAgeFreyja"],
     24: ["cTechClassicalAgeNorse",    "cTechClassicalAgeForseti"],
     25: ["cTechClassicalAgeNorse",    "cTechClassicalAgeForseti"],
@@ -519,6 +520,10 @@ class aomWorld(World):
             if isinstance(item.type, atlantean_types) and not random_major_gods_on:
                 continue
 
+            # Progressive tech items are added explicitly below with 3 copies each
+            if isinstance(item.type, (Items.ProgressiveEconomyTech, Items.ProgressiveMilitaryTech)):
+                continue
+
             # All remaining items bucketed by classification
             if classification == ItemClassification.progression:
                 progression_pool.append(self.create_item(item.item_name))
@@ -562,6 +567,16 @@ class aomWorld(World):
                 else:
                     progression_pool.append(ap_item)
 
+        # Progressive tech items — exactly 3 copies each in the useful pool.
+        # Each copy found by the player unlocks one additional tier of techs
+        # in scenarios whose starting age matches or exceeds that tier.
+        for prog_item in [
+            Items.aomItemData.PROGRESSIVE_ECONOMY_TECH,
+            Items.aomItemData.PROGRESSIVE_MILITARY_TECH,
+        ]:
+            for _ in range(3):
+                useful_groups.setdefault(type(prog_item.type), []).append(prog_item.item_name)
+
         # Visible location count:
         #   Campaign non-COMPLETION locations minus all 32 Victory locations
         #   Plus shop locations if gem_shop is enabled (60 item + 4 progressive info)
@@ -604,15 +619,16 @@ class aomWorld(World):
             Items.aomItemData.TRAP_TARTARIAN_GATE.item_name,
             Items.aomItemData.TRAP_CHAOS.item_name,
             Items.aomItemData.TRAP_TRAITOR.item_name,
-            # Items.aomItemData.TRAP_CARNIVORA.item_name,  # disabled: buggy
+            Items.aomItemData.TRAP_CARNIVORA.item_name,
             # Items.aomItemData.TRAP_SPIDER_LAIR.item_name,  # disabled: buggy
             Items.aomItemData.TRAP_DECONSTRUCTION.item_name,
             Items.aomItemData.TRAP_FIMBULWINTER.item_name,
             # Items.aomItemData.TRAP_FLAMING_WEAPONS.item_name,  # disabled: fails to cast
             Items.aomItemData.TRAP_ANCESTORS.item_name,
             Items.aomItemData.TRAP_PESTILENCE.item_name,
-            Items.aomItemData.TRAP_BRONZE.item_name,
-            Items.aomItemData.TRAP_ECLIPSE.item_name,
+            # Items.aomItemData.TRAP_BRONZE.item_name,  # disabled: can't cast on allies
+            Items.aomItemData.TRAP_NIDHOGG.item_name,
+            Items.aomItemData.TRAP_SHOCKWAVE.item_name,
         ]
         # Build infinite deck: reshuffle each time a full cycle completes
         _trap_deck: list[str] = []
@@ -628,19 +644,23 @@ class aomWorld(World):
         # Flatten useful and filler into shuffled lists
         all_useful  = [n for names in useful_groups.values() for n in names]
         all_filler  = [n for names in filler_groups.values() for n in names]
-        all_filler_inf = [
+        # Infinite padding pool: filler items only, excluding reinforcements.
+        # Used when all distinct filler items are exhausted, and as the sole
+        # fallback when useful items run out (we never repeat useful items).
+        all_nonreinf_filler_inf = [
             item.item_name for item in Items.aomItemData
-            if Items.item_type_to_classification[item.type_data] == ItemClassification.filler
+            if Items.item_type_to_classification.get(type(item.type)) == ItemClassification.filler
+            and not isinstance(item.type, Items.Reinforcement)
         ]
         self.random.shuffle(all_useful)
         self.random.shuffle(all_filler)
-        self.random.shuffle(all_filler_inf)
+        self.random.shuffle(all_nonreinf_filler_inf)
 
         # Fill remaining slots with 1:1 useful:filler ratio.
         # When a filler item is drawn, roll against trap_pct — if hit, replace with a trap.
-        # If useful exhausted → use filler instead (no trap replacement for those).
-        # If filler exhausted → use useful instead (no trap replacement for those).
-        # If both exhausted → infinite filler padding (no trap replacement).
+        # Useful slots: use useful; if exhausted → draw from filler instead.
+        # Filler slots: use filler; if exhausted → cycle non-reinforcement filler (no useful repeats).
+        # Both exhaust paths use non-reinforcement filler duplicates for infinite padding.
         itempool: list[Item] = []
         itempool.extend(progression_pool)
         remaining_slots = visible_location_count - len(itempool)
@@ -648,33 +668,31 @@ class aomWorld(World):
         u_idx = f_idx = inf_idx = 0
         want_useful = True  # alternates between useful and filler
         for _ in range(remaining_slots):
-            placed_filler_slot = False
             if want_useful:
                 if u_idx < len(all_useful):
                     itempool.append(self.create_item(all_useful[u_idx])); u_idx += 1
-                elif f_idx < len(all_filler):
-                    placed_filler_slot = True  # exhausted useful, using filler
-                    filler_name = all_filler[f_idx]; f_idx += 1
+                else:
+                    # Useful exhausted — draw filler instead
+                    if f_idx < len(all_filler):
+                        filler_name = all_filler[f_idx]; f_idx += 1
+                    else:
+                        filler_name = all_nonreinf_filler_inf[inf_idx % len(all_nonreinf_filler_inf)]
+                        inf_idx += 1
                     if trap_pct > 0 and self.random.randint(1, 100) <= trap_pct:
                         itempool.append(self.create_item(_next_trap()))
                     else:
                         itempool.append(self.create_item(filler_name))
-                else:
-                    itempool.append(self.create_item(all_filler_inf[inf_idx % len(all_filler_inf)]))
-                    inf_idx += 1
             else:
+                # Filler turn — never fall back to useful
                 if f_idx < len(all_filler):
-                    placed_filler_slot = True
                     filler_name = all_filler[f_idx]; f_idx += 1
-                    if trap_pct > 0 and self.random.randint(1, 100) <= trap_pct:
-                        itempool.append(self.create_item(_next_trap()))
-                    else:
-                        itempool.append(self.create_item(filler_name))
-                elif u_idx < len(all_useful):
-                    itempool.append(self.create_item(all_useful[u_idx])); u_idx += 1
                 else:
-                    itempool.append(self.create_item(all_filler_inf[inf_idx % len(all_filler_inf)]))
+                    filler_name = all_nonreinf_filler_inf[inf_idx % len(all_nonreinf_filler_inf)]
                     inf_idx += 1
+                if trap_pct > 0 and self.random.randint(1, 100) <= trap_pct:
+                    itempool.append(self.create_item(_next_trap()))
+                else:
+                    itempool.append(self.create_item(filler_name))
             want_useful = not want_useful
 
         if len(itempool) != visible_location_count:

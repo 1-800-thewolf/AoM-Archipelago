@@ -46,8 +46,9 @@ MOD_AI_DIR_NAME = "fott_ap_campaign"
 APAI_INIT_FILENAME = "ap_ai_init.xs"
 APAI_RUNTIME_FILENAME = "ap_ai_runtime.xs"
 
-TRIGGER_FOLDER_NAME = "trigger"
-AOM_STATE_FILENAME = "aom_state.xs"
+TRIGGER_FOLDER_NAME  = "trigger"
+CACHE_DIR_NAME       = "ap_randomizer_cache"
+AOM_STATE_FILENAME   = "aom_state.xs"
 
 AP_CHECK_PREFIX  = "AP_CHECK:"
 AP_LOCKED_PREFIX = "AP_LOCKED:"
@@ -77,7 +78,6 @@ class AoMGameContext:
     user_folder: str = ""
     received_items: list[int] = field(default_factory=list)
     sent_checks: set[int] = field(default_factory=set)
-    last_ai_output_offset: int = 0  # byte offset into log file; reset when file shrinks
     client_interface: object = None
     # Slot data cached on connect for state file logic
     final_mode: int = -1           # 0=beat_x, 1=always_open, 2=atlantis_key
@@ -87,6 +87,10 @@ class AoMGameContext:
     god_assignments: dict = None         # scenario_id (int) → major_god int
     minor_god_assignments: dict = None   # scenario_id (int) → [tech_name, ...]\n
     archaic_forbids: dict = None         # scenario_id (int) → [unit_name, ...]
+    # Cache identity — set on connect, used to build cache_folder path
+    ap_server:   str = ""   # e.g. "archipelago.gg:38281"
+    ap_seed:     str = ""   # seed_name from RoomInfo
+    ap_slot:     str = ""   # slot name (auth) the player connected with
     # Shop state
     starting_gems: int = 0
     wins_to_open_shop: int = 5
@@ -100,10 +104,34 @@ class AoMGameContext:
     shop_item_details: dict = field(default_factory=dict)         # loc_id → {player, name, cls}
     shop_hint_config: dict  = field(default_factory=dict)         # slot_id → {type, ...}
     shop_slot_order: list   = field(default_factory=list)
+    # Checks the AP server has already confirmed — used for in-memory
+    # deduplication only. Never persisted to disk.
+    server_known_checks: set[int] = field(default_factory=set)
+    # Byte offset into the AI log file at the time this session connected.
+    # read_new_checks only processes content written after this point,
+    # ensuring old sessions' AP_CHECK lines are never replayed.
+    log_start_offset: int = 0
 
     @property
     def trigger_folder(self) -> Path:
         return Path(self.user_folder) / TRIGGER_FOLDER_NAME
+
+    @property
+    def cache_folder(self) -> Path:
+        """Per-session cache directory, uniquely scoped by server/seed/slot/world_id.
+        Sanitises each component so the path is valid on Windows.
+        """
+        def _sanitise(s: str) -> str:
+            # Replace characters invalid in Windows directory names
+            for ch in r'\/:*?"<>|':
+                s = s.replace(ch, "_")
+            return s.strip("._") or "_"
+
+        server  = _sanitise(self.ap_server  or "unknown_server")
+        seed    = _sanitise(self.ap_seed    or "unknown_seed")
+        slot    = _sanitise(self.ap_slot    or "unknown_slot")
+        world   = str(self.world_id)
+        return (Path(self.user_folder) / CACHE_DIR_NAME / server / seed / slot / world)
 
     @property
     def ai_output_file(self) -> Path:
@@ -307,8 +335,9 @@ _HEROIC_BLDGS = {
     "Norse":     ["HillFort"],
     "Atlantean": ["Palace"],
 }
-# Scenario 7 uses player 3 instead of player 1
-_BLDG_PLAYER_OVERRIDE = {7: 3}
+# Scenarios 7 and 26 use player 3 instead of player 1 for building transforms.
+# Scenario 26 also transforms players 4 and 5.
+_BLDG_PLAYER_OVERRIDE = {7: [3], 26: [3, 4, 5]}
 
 def write_aom_state(ctx: AoMGameContext) -> None:
 
@@ -435,7 +464,7 @@ def write_aom_state(ctx: AoMGameContext) -> None:
 
     def _xs(s): lines.append(s)
     def _cls_rank(c): return {"trap":-1,"filler":0,"useful":1,"progression":2}.get(c,-1)
-    def _cls_disp(c): return {"trap":"Trap","filler":"Filler","useful":"Useful","progression":"Progression"}.get(c,"?")
+    def _cls_disp(c): return {"trap":"Trap","filler":"Filler","useful":"Useful","progression":"Advancement"}.get(c,"?")
 
     _xs("")
     _xs("void APShopStateInit()")
@@ -486,7 +515,7 @@ def write_aom_state(ctx: AoMGameContext) -> None:
 
     for _sid, _hcfg in ctx.shop_hint_config.items():
         if _hcfg.get("type") == "progressive_info":
-            _lbl = "Progressive shop info\\nUpgrades item labels"
+            _lbl = "Better Shop Information"
         else:
             _rng = _hcfg.get("missions_range", (1,2))
             _lbl = "Hints for " + str(_rng[0]) + "-" + str(_rng[1]) + " missions"
@@ -543,13 +572,14 @@ def write_aom_state(ctx: AoMGameContext) -> None:
             _rc   = _GOD_TO_CIV.get(_rgod, "Greek")
             if _vc == _rc:
                 continue
-            _tp = _BLDG_PLAYER_OVERRIDE.get(_sid, 1)
-            for _from in _CLASSICAL_BLDGS[_vc]:
-                _to = _CLASSICAL_BLDGS[_rc]
-                _pairs.append((_sid, _tp, _from, _to[0], _to[1] if len(_to)>1 else ""))
-            for _from in _HEROIC_BLDGS[_vc]:
-                _to = _HEROIC_BLDGS[_rc]
-                _pairs.append((_sid, _tp, _from, _to[0], _to[1] if len(_to)>1 else ""))
+            _players = _BLDG_PLAYER_OVERRIDE.get(_sid, [1])
+            for _tp in _players:
+                for _from in _CLASSICAL_BLDGS[_vc]:
+                    _to = _CLASSICAL_BLDGS[_rc]
+                    _pairs.append((_sid, _tp, _from, _to[0], _to[1] if len(_to)>1 else ""))
+                for _from in _HEROIC_BLDGS[_vc]:
+                    _to = _HEROIC_BLDGS[_rc]
+                    _pairs.append((_sid, _tp, _from, _to[0], _to[1] if len(_to)>1 else ""))
         # Size all arrays before assigning by index (XS requires this)
         _xs(f"    gAPBldgScen   = new int({len(_pairs)}, 0);")
         _xs(f"    gAPBldgPlayer = new int({len(_pairs)}, 1);")
@@ -586,20 +616,21 @@ def write_aom_state(ctx: AoMGameContext) -> None:
 # -----------------------------------------------------------------------
 
 def save_trap_state(ctx: AoMGameContext) -> None:
-    """Persist trap_queue to a per-seed JSON sidecar."""
+    """Persist trap_queue to the session cache directory."""
     import json
     try:
-        path = ctx.trigger_folder / f"ap_trap_state_{ctx.world_id}.json"
+        ctx.cache_folder.mkdir(parents=True, exist_ok=True)
+        path = ctx.cache_folder / "ap_trap_state.json"
         path.write_text(json.dumps({"trap_queue": ctx.trap_queue}), encoding="utf-8")
     except Exception as ex:
         logger.warning(f"Failed to save trap state: {ex}")
 
 
 def load_trap_state(ctx: AoMGameContext) -> None:
-    """Load persisted trap_queue for the current seed."""
+    """Load persisted trap_queue for the current session."""
     import json
     try:
-        path = ctx.trigger_folder / f"ap_trap_state_{ctx.world_id}.json"
+        path = ctx.cache_folder / "ap_trap_state.json"
         if path.exists():
             data = json.loads(path.read_text(encoding="utf-8"))
             ctx.trap_queue = data.get("trap_queue", [])
@@ -612,30 +643,58 @@ def load_trap_state(ctx: AoMGameContext) -> None:
 
 
 def save_shop_state(ctx: AoMGameContext) -> None:
-    """Persist purchased_slots to a per-seed JSON sidecar."""
+    """Persist purchased_slots to the session cache directory."""
     import json
     try:
-        path = ctx.trigger_folder / f"ap_shop_state_{ctx.world_id}.json"
+        ctx.cache_folder.mkdir(parents=True, exist_ok=True)
+        path = ctx.cache_folder / "ap_shop_state.json"
         path.write_text(json.dumps({"purchased_slots": list(ctx.purchased_slots)}), encoding="utf-8")
     except Exception as ex:
         logger.warning(f"Failed to save shop state: {ex}")
 
 
 def load_shop_state(ctx: AoMGameContext) -> None:
-    """Load persisted purchased_slots for the current seed. Ignores other seeds."""
+    """Load persisted purchased_slots for the current session."""
     import json
     try:
-        path = ctx.trigger_folder / f"ap_shop_state_{ctx.world_id}.json"
+        path = ctx.cache_folder / "ap_shop_state.json"
         if path.exists():
             data = json.loads(path.read_text(encoding="utf-8"))
             ctx.purchased_slots = set(data.get("purchased_slots", []))
-            logger.info(f"Loaded shop state (world {ctx.world_id}): {len(ctx.purchased_slots)} purchased slot(s).")
+            logger.info(f"Loaded shop state: {len(ctx.purchased_slots)} purchased slot(s).")
         else:
             ctx.purchased_slots = set()
-            logger.info(f"No shop state found for world {ctx.world_id} — starting fresh.")
+            logger.info("No shop state found for this session — starting fresh.")
     except Exception as ex:
         logger.warning(f"Failed to load shop state: {ex}")
         ctx.purchased_slots = set()
+
+
+def save_sent_checks(ctx: AoMGameContext) -> None:
+    """Persist sent_checks to the session cache directory so dropped checks survive restarts."""
+    import json
+    try:
+        ctx.cache_folder.mkdir(parents=True, exist_ok=True)
+        path = ctx.cache_folder / "ap_sent_checks.json"
+        path.write_text(json.dumps({"sent_checks": list(ctx.sent_checks)}), encoding="utf-8")
+    except Exception as ex:
+        logger.warning(f"Failed to save sent checks: {ex}")
+
+
+def load_sent_checks(ctx: AoMGameContext) -> None:
+    """Load persisted sent_checks for the current session."""
+    import json
+    try:
+        path = ctx.cache_folder / "ap_sent_checks.json"
+        if path.exists():
+            data = json.loads(path.read_text(encoding="utf-8"))
+            ctx.sent_checks = set(data.get("sent_checks", []))
+            logger.info(f"Loaded sent checks: {len(ctx.sent_checks)} check(s).")
+        else:
+            ctx.sent_checks = set()
+    except Exception as ex:
+        logger.warning(f"Failed to load sent checks: {ex}")
+        ctx.sent_checks = set()
 
 
 def _resolve_shop_signal(ctx: AoMGameContext, slot_id: str) -> list[int]:
@@ -685,8 +744,10 @@ def _send_shop_hints(ctx: AoMGameContext, slot_id: str) -> None:
         loc_id = hint_cfg.get("loc_id")
         if loc_id and loc_id not in ctx.sent_checks:
             ctx.sent_checks.add(loc_id)
-            ctx.client_interface.on_location_received(loc_id)
+            save_sent_checks(ctx)
+            asyncio.ensure_future(ctx.client_interface.on_location_received(loc_id))
             logger.info(f"Progressive Shop Info purchased: {slot_id} → location {loc_id}")
+            logger.info("Shop Information upgraded! Go back to the shop to see more details.")
         return
 
     if hint_cfg.get("type") == "mission_hints":
@@ -696,88 +757,127 @@ def _send_shop_hints(ctx: AoMGameContext, slot_id: str) -> None:
 
 def read_new_checks(ctx: AoMGameContext) -> list[int]:
     """
-    Read new lines from MythRetoldAIOutputPlayer12.txt since last read.
-    Uses a byte offset so we only process genuinely new lines even if mtime
-    is unchanged (AoM flushes the log at scenario end, not continuously).
-    Resets offset if the file shrank (new scenario overwrote the log).
+    Read the AI output log from log_start_offset onward on every poll.
+
+    log_start_offset is set to the log file's byte size at the moment the
+    client connected, so only content written during the current session is
+    ever processed. This prevents AP_CHECK lines from old sessions replaying
+    when the player connects to a new server with an empty sent_checks cache.
+
+    Missed checks within the current session are recovered via the
+    sent_checks cache + unconfirmed-resend path in _on_connected, not by
+    rescanning historical log content.
     """
+    import re
     ai_file = ctx.ai_output_file
 
     if not ai_file.exists():
         return []
 
     try:
-        file_size = ai_file.stat().st_size
+        file_bytes = ai_file.read_bytes()
     except OSError:
         return []
 
-    # File shrank → new scenario started, log was reset
-    if file_size < ctx.last_ai_output_offset:
-        ctx.last_ai_output_offset = 0
+    # Trim to content written after this session started.
+    # log_start_offset is a raw byte offset; align it to an even boundary
+    # for UTF-16-LE correctness before slicing.
+    start = ctx.log_start_offset
+    if start % 2 != 0:
+        start += 1
+    file_bytes = file_bytes[start:]
 
-    if file_size <= ctx.last_ai_output_offset:
+    if not file_bytes:
         return []
 
-    new_checks = []
+    # Ensure even byte count for UTF-16-LE alignment
+    if len(file_bytes) % 2 != 0:
+        file_bytes = file_bytes[:-1]
+
+    content = file_bytes.decode("utf-16-le", errors="ignore")
+
+    # If content doesn't end on a line boundary AoM is mid-write; truncate to
+    # the last complete line so we never process a partial signal.
+    last_newline = max(content.rfind('\n'), content.rfind('\r'))
+    if last_newline >= 0 and last_newline < len(content) - 1:
+        content = content[:last_newline + 1]
+
+    new_checks   = []
+    trap_signals = 0   # AP_TRAP_FIRED lines since the last "APAI startup." in this file
+
     try:
-        with ai_file.open("rb") as f:
-            f.seek(ctx.last_ai_output_offset)
-            raw = f.read()
-            ctx.last_ai_output_offset += len(raw)
-        content = raw.decode("utf-16-le", errors="ignore")
         for line in content.splitlines():
             line = line.strip()
+            if not line:
+                continue
+
+            # Each new scenario writes "APAI startup." as the first log line.
+            # Reset trap counters so trap_ack_nonce is scoped to the current scenario.
+            if "APAI startup." in line:
+                trap_signals = 0
+                ctx.trap_ack_nonce = 0
+                continue
+
             if AP_LOCKED_PREFIX in line:
-                idx = line.find(AP_LOCKED_PREFIX)
-                campaign = line[idx + len(AP_LOCKED_PREFIX):].strip()
+                m = re.search(r'AP_LOCKED:(\S+)', line)
+                campaign = m.group(1) if m else "unknown"
                 logger.warning(f"Archipelago: You need the {campaign} Scenarios item to play this campaign.")
                 continue
+
             if "AP_TRAP_FIRED:" in line:
-                # Trap fired — pop front of queue
-                if ctx.trap_queue:
-                    fired = ctx.trap_queue.pop(0)
-                    logger.info(f"Trap fired: type {fired}, {len(ctx.trap_queue)} remaining")
-                ctx.trap_ack_nonce += 1
-                save_trap_state(ctx)
-                write_aom_state(ctx)
+                trap_signals += 1
                 continue
+
             if AP_SHOP_PREFIX in line:
-                idx_pos  = line.find(AP_SHOP_PREFIX)
-                raw      = line[idx_pos + len(AP_SHOP_PREFIX):].strip()
-                # New format: "AP_SHOP:IDX:N" where N is the slot index (1-based)
-                # Legacy format: "AP_SHOP:A_ITEM_1" (slot ID directly)
-                if raw.startswith("IDX:"):
+                m = re.search(r'AP_SHOP:IDX:(\d+)', line)
+                if m:
                     try:
-                        slot_num = int(raw[4:])
+                        slot_num = int(m.group(1))
                         from ..locations.Locations import SHOP_SLOT_ORDER
                         slot_id = SHOP_SLOT_ORDER[slot_num - 1] if 1 <= slot_num <= len(SHOP_SLOT_ORDER) else ""
                     except (ValueError, IndexError):
                         slot_id = ""
                 else:
-                    slot_id = raw  # legacy format
+                    m2 = re.search(r'AP_SHOP:(\S+)', line)
+                    slot_id = m2.group(1) if m2 else ""
                 if not slot_id:
-                    logger.warning(f"Unrecognised shop signal: {raw}")
+                    logger.warning(f"Unrecognised shop signal in line: {line!r}")
                     continue
                 shop_checks = _resolve_shop_signal(ctx, slot_id)
                 for loc_id in shop_checks:
-                    if loc_id not in ctx.sent_checks:
+                    if loc_id not in ctx.sent_checks and loc_id not in ctx.server_known_checks:
                         new_checks.append(loc_id)
                         ctx.sent_checks.add(loc_id)
+                if shop_checks:
+                    save_sent_checks(ctx)
                 continue
-            if AP_CHECK_PREFIX not in line:
-                continue
-            idx = line.find(AP_CHECK_PREFIX)
-            raw = line[idx + len(AP_CHECK_PREFIX):].strip()
-            try:
-                loc_id = int(raw)
-                if loc_id not in ctx.sent_checks:
-                    new_checks.append(loc_id)
-                    ctx.sent_checks.add(loc_id)
-            except ValueError:
-                logger.warning(f"Could not parse location ID from line: {line}")
-    except Exception as ex:
-        logger.error(f"Failed to read AI output file: {ex}")
 
+            m = re.search(r'AP_CHECK:(\d+)', line)
+            if not m:
+                continue
+            loc_id = int(m.group(1))
+            if loc_id not in ctx.sent_checks and loc_id not in ctx.server_known_checks:
+                new_checks.append(loc_id)
+                ctx.sent_checks.add(loc_id)
+
+    except Exception as ex:
+        logger.error(f"Failed to parse AI output file: {ex}")
+
+    # Process trap signals: trap_signals counts only AP_TRAP_FIRED lines since
+    # the last "APAI startup." line, so it's already scoped to the current
+    # scenario. trap_ack_nonce tracks how many we've popped this session.
+    new_trap_count = max(0, trap_signals - ctx.trap_ack_nonce)
+    if new_trap_count > 0:
+        for _ in range(new_trap_count):
+            if ctx.trap_queue:
+                fired = ctx.trap_queue.pop(0)
+                logger.info(f"Trap fired: type {fired}, {len(ctx.trap_queue)} remaining")
+            ctx.trap_ack_nonce += 1
+        save_trap_state(ctx)
+        write_aom_state(ctx)
+
+    if new_checks:
+        save_sent_checks(ctx)
     return new_checks
 
 
@@ -806,19 +906,14 @@ async def game_loop(ctx: AoMGameContext) -> None:
     logger.info("AoMR game loop started. Watching for scenario completions...")
     logger.info(f"Watching file: {ctx.ai_output_file}")
     logger.info("Age of Mythology: Retold client commands:")
-    logger.info("  /status              — show connection info and Atlantis Key progress")
-    logger.info("  /scenarios (/progress) — list beaten, in-progress, and untouched scenarios")
+    logger.info("  /status                — show connection info and Atlantis Key progress")
+    logger.info("  /progress (/scenarios) — list beaten, in-progress, and untouched scenarios")
     logger.info("  /gods                  — show randomized god per scenario (random_major_gods only)")
     logger.info("  /greek /egypt /norse /atlantean — show unit/myth/age unlock items for that civ")
     logger.info("  /generic               — show all other received items (heroes, resources, etc.)")
 
-    # Start reading from end of current log so we only see new lines
+    # The log is read from byte 0 on every poll; no offset initialization needed.
     ai_file = ctx.ai_output_file
-    if ai_file.exists():
-        try:
-            ctx.last_ai_output_offset = ai_file.stat().st_size
-        except OSError:
-            pass
     while ctx.running:
         new_checks = read_new_checks(ctx)
 
@@ -826,6 +921,15 @@ async def game_loop(ctx: AoMGameContext) -> None:
             for loc_id in new_checks:
                 loc_name = location_id_to_name.get(loc_id, str(loc_id))
                 logger.debug(f"Check found: {loc_name}")
-                ctx.client_interface.on_location_received(loc_id)
+                for attempt in range(3):
+                    try:
+                        await ctx.client_interface.on_location_received(loc_id)
+                        break
+                    except Exception as ex:
+                        if attempt < 2:
+                            logger.warning(f"Send attempt {attempt+1} failed for {loc_name}: {ex}. Retrying...")
+                            await asyncio.sleep(1.0)
+                        else:
+                            logger.error(f"Failed to send check {loc_id} ({loc_name}) after 3 attempts: {ex}. Will retry on reconnect.")
 
         await asyncio.sleep(2.0)

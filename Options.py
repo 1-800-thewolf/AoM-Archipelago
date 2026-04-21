@@ -49,7 +49,7 @@ class StartingGreekAgeUnlocks(Range):
   3rd unlock = Mythic Age available
 
 Scenarios will not be in logic until you can reach a reasonable age to beat them.
-Starting with unlocks makes more scenarios accessible earlier and a much easier experience.
+Starting with unlocks makes more scenarios accessible earlier and an easier experience.
 
 ---
 
@@ -160,10 +160,8 @@ class StartingGems(Range):
 
 class WinsToOpenShop(Range):
     """
-    Number of scenario victories required to open each additional shop tier
-    (only used when Gem Shop is enabled).
-    Shop A (Marsh) is always open. Shop B (Desert) opens after this many wins.
-    Shop C (Grass) opens after 2x wins. Shop D (Hades) opens after 3x wins.
+    Number of scenario victories required to open each additional shop tier (only used when Gem Shop is enabled).
+    Shop A (Marsh) is always open. Shop B (Desert) opens after this many wins. Shop C (Grass) opens after 2x wins. Shop D (Hades) opens after 3x wins.
     Set to 0 to open all shops immediately.
     """
     internal_name = "wins_to_open_shop"
@@ -198,7 +196,7 @@ class MythUnitSanity(Toggle):
 When enabled, all myth units are forbidden at the start and must be unlocked by finding the corresponding tier item.
 Turn this off for an easier time."""
     internal_name = "myth_unit_sanity"
-    display_name = "Myth Unit Sanity"
+    display_name = "Shuffle Myth Unit Unlocks"
     default = 1
 
 
@@ -255,14 +253,14 @@ filler. Removing these makes the game much harder and less hero-focused."""
 class TrapPercentage(Range):
     """
     Percentage of filler items to replace with traps (0 = no traps, 100 = all filler becomes traps).
-    Traps fire randomly during scenarios — god powers, hostile units, and other chaos.
-    Only filler items are replaced; useful items are never swapped for traps.
+    Traps fire randomly during scenarios. Only filler items are replaced; useful items are never swapped for traps.
+    At 20%, there will be roughly 15 traps total.
     """
     internal_name = "trap_percentage"
     display_name  = "Trap Percentage"
     range_start   = 0
     range_end     = 100
-    default       = 10
+    default       = 20
 
 class UpdateBuildingsForRandomGod(Toggle):
     """

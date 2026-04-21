@@ -244,19 +244,17 @@ def _update_atlantis_ui(ctx: "AoMContext") -> None:
     if hasattr(ctx.ui, "update_trap_status"):
         _TRAP_NAMES = {
             1: "Meteor", 2: "Lightning Storm", 3: "Locust Swarm", 4: "Bolt",
-            7: "Restoration", 8: "Citadel", 9: "Tornado", 10: "Earthquake",
-            11: "Curse", 12: "Plague of Serpents", 13: "Implode",
-            14: "Tartarian Gate", 15: "Chaos", 16: "Traitor", 17: "Carnivora",
-            18: "Spider Lair", 19: "Deconstruction", 20: "Fimbulwinter",
-            21: "Flaming Weapons", 22: "Ancestors", 23: "Pestilence",
-            24: "Bronze", 25: "Eclipse",
+            5: "Spawn Units", 6: "Transform Drops", 7: "Restoration", 8: "Citadel",
+            9: "Tornado", 10: "Earthquake", 11: "Curse", 12: "Plague of Serpents",
+            13: "Implode", 14: "Tartarian Gate", 15: "Chaos", 16: "Traitor",
+            17: "Carnivora", 18: "Spider Lair", 19: "Deconstruction",
+            20: "Fimbulwinter", 21: "Flaming Weapons", 22: "Ancestors",
+            23: "Pestilence", 25: "Nidhogg",
+            26: "Shockwave",
         }
         queue = ctx.game_ctx.trap_queue
-        if queue:
-            next_name = _TRAP_NAMES.get(queue[0], f"Trap {queue[0]}")
-            ctx.ui.update_trap_status(len(queue), next_name)
-        else:
-            ctx.ui.update_trap_status(0, "")
+        next_name = _TRAP_NAMES.get(queue[0], f"Trap {queue[0]}") if queue else ""
+        ctx.ui.update_trap_status(len(queue), next_name)
 
 
 def _format_progress(ctx: "AoMContext") -> str:
@@ -459,28 +457,124 @@ class AoMCommandProcessor(ClientCommandProcessor):
             self.output(f"  {name}")
 
     def _cmd_greek(self) -> None:
-        """Show received Greek unit and myth unlock items."""
-        self._cmd_civ_items("Greek", lambda item:
-            self._is_civ_item(item) and
-            hasattr(item.type, "culture") and item.type.culture == "Greek")
+        """Show Greek age progress and received items."""
+        ctx = self.ctx
+        try:
+            from ..items.Items import aomItemData, AgeUnlock
+        except Exception:
+            self.output("Could not load item data.")
+            return
+        received_set = set(ctx.game_ctx.received_items)
+        age_item = next(
+            (it for it in aomItemData
+             if isinstance(it.type, AgeUnlock)
+             and getattr(it.type, "culture", None) == "Greek"),
+            None
+        )
+        age_count = ctx.game_ctx.received_items.count(age_item.id) if age_item else 0
+        age_names = ["Archaic", "Classical", "Heroic", "Mythic"]
+        self.output(f"Can reach the Greek {age_names[min(age_count, 3)]} Age")
+        items = [it.item_name for it in aomItemData
+                 if it.id in received_set
+                 and "Age Unlock" not in it.item_name
+                 and (
+                     getattr(getattr(it, "type", None), "culture", None) == "Greek"
+                     or "Greek" in getattr(getattr(it, "type", None), "unit_name", "")
+                 )]
+        if items:
+            self.output(f"Items received ({len(items)}):")
+            for name in items:
+                self.output(f"  {name}")
 
     def _cmd_egypt(self) -> None:
-        """Show received Egyptian unit and myth unlock items."""
-        self._cmd_civ_items("Egyptian", lambda item:
-            self._is_civ_item(item) and
-            hasattr(item.type, "culture") and item.type.culture == "Egyptian")
+        """Show Egyptian age progress and received items."""
+        ctx = self.ctx
+        try:
+            from ..items.Items import aomItemData, AgeUnlock
+        except Exception:
+            self.output("Could not load item data.")
+            return
+        received_set = set(ctx.game_ctx.received_items)
+        age_item = next(
+            (it for it in aomItemData
+             if isinstance(it.type, AgeUnlock)
+             and getattr(it.type, "culture", None) == "Egyptian"),
+            None
+        )
+        age_count = ctx.game_ctx.received_items.count(age_item.id) if age_item else 0
+        age_names = ["Archaic", "Classical", "Heroic", "Mythic"]
+        self.output(f"Can reach the Egyptian {age_names[min(age_count, 3)]} Age")
+        items = [it.item_name for it in aomItemData
+                 if it.id in received_set
+                 and "Age Unlock" not in it.item_name
+                 and (
+                     getattr(getattr(it, "type", None), "culture", None) == "Egyptian"
+                     or "Egyptian" in getattr(getattr(it, "type", None), "unit_name", "")
+                 )]
+        if items:
+            self.output(f"Items received ({len(items)}):")
+            for name in items:
+                self.output(f"  {name}")
 
     def _cmd_norse(self) -> None:
-        """Show received Norse unit and myth unlock items."""
-        self._cmd_civ_items("Norse", lambda item:
-            self._is_civ_item(item) and
-            hasattr(item.type, "culture") and item.type.culture == "Norse")
+        """Show Norse age progress and received items."""
+        ctx = self.ctx
+        try:
+            from ..items.Items import aomItemData, AgeUnlock
+        except Exception:
+            self.output("Could not load item data.")
+            return
+        received_set = set(ctx.game_ctx.received_items)
+        age_item = next(
+            (it for it in aomItemData
+             if isinstance(it.type, AgeUnlock)
+             and getattr(it.type, "culture", None) == "Norse"),
+            None
+        )
+        age_count = ctx.game_ctx.received_items.count(age_item.id) if age_item else 0
+        age_names = ["Archaic", "Classical", "Heroic", "Mythic"]
+        self.output(f"Can reach the Norse {age_names[min(age_count, 3)]} Age")
+        items = [it.item_name for it in aomItemData
+                 if it.id in received_set
+                 and "Age Unlock" not in it.item_name
+                 and (
+                     getattr(getattr(it, "type", None), "culture", None) == "Norse"
+                     or "Norse" in getattr(getattr(it, "type", None), "unit_name", "")
+                 )]
+        if items:
+            self.output(f"Items received ({len(items)}):")
+            for name in items:
+                self.output(f"  {name}")
 
     def _cmd_atlantean(self) -> None:
-        """Show received Atlantean unit and myth unlock items."""
-        self._cmd_civ_items("Atlantean", lambda item:
-            self._is_civ_item(item) and
-            hasattr(item.type, "culture") and item.type.culture == "Atlantean")
+        """Show Atlantean age progress and received items."""
+        ctx = self.ctx
+        try:
+            from ..items.Items import aomItemData, AgeUnlock
+        except Exception:
+            self.output("Could not load item data.")
+            return
+        received_set = set(ctx.game_ctx.received_items)
+        age_item = next(
+            (it for it in aomItemData
+             if isinstance(it.type, AgeUnlock)
+             and getattr(it.type, "culture", None) == "Atlantean"),
+            None
+        )
+        age_count = ctx.game_ctx.received_items.count(age_item.id) if age_item else 0
+        age_names = ["Archaic", "Classical", "Heroic", "Mythic"]
+        self.output(f"Can reach the Atlantean {age_names[min(age_count, 3)]} Age")
+        items = [it.item_name for it in aomItemData
+                 if it.id in received_set
+                 and "Age Unlock" not in it.item_name
+                 and (
+                     getattr(getattr(it, "type", None), "culture", None) == "Atlantean"
+                     or "Atlantean" in getattr(getattr(it, "type", None), "unit_name", "")
+                 )]
+        if items:
+            self.output(f"Items received ({len(items)}):")
+            for name in items:
+                self.output(f"  {name}")
 
     def _cmd_generic(self) -> None:
         """Show received non-civ items: heroes, resources, reinforcements, etc."""
@@ -492,7 +586,6 @@ class AoMCommandProcessor(ClientCommandProcessor):
     # Aliases for civ commands
     _cmd_egyptian = _cmd_egypt
     _cmd_atlant   = _cmd_atlantean
-    _cmd_atlants  = _cmd_atlantean
     _cmd_atlantis = _cmd_atlantean
 
     # Aliases for /scenarios
@@ -503,18 +596,58 @@ class AoMCommandProcessor(ClientCommandProcessor):
 
 
 
+    def _cmd_purge_aom_cache(self) -> None:
+        """Delete all cached session state (sent checks, shop state, trap state).
+        Use this as a troubleshooting step if checks or shop items appear incorrectly
+        after switching to a new world. The ap_randomizer_cache folder is kept but all
+        session subdirectories and their contents are removed."""
+        import shutil
+        from pathlib import Path
+        from .GameClient import CACHE_DIR_NAME
+        cache_root = Path(self.ctx.game_ctx.user_folder) / CACHE_DIR_NAME
+        if not cache_root.exists():
+            self.output("Cache directory does not exist — nothing to purge.")
+            return
+        deleted = 0
+        errors  = 0
+        for child in list(cache_root.iterdir()):
+            if child.is_dir():
+                try:
+                    shutil.rmtree(child)
+                    deleted += 1
+                except Exception as ex:
+                    self.output(f"Failed to delete {child.name}: {ex}")
+                    errors += 1
+        if errors == 0:
+            self.output(f"Cache purged: {deleted} session folder(s) removed.")
+        else:
+            self.output(f"Cache partially purged: {deleted} removed, {errors} failed.")
+
+
     def _cmd_gods(self) -> None:
         """Show the randomized major god for each scenario (random_major_gods mode only)."""
         ctx = self.ctx
         if not ctx.game_ctx.random_major_gods:
             self.output("Random_Major_Gods is not enabled for this seed.")
             return
+
+        try:
+            from ..rules.Rules import _SCENARIO_DATA
+        except Exception:
+            self.output("Could not load scenario logic data.")
+            return
+
         god_names = {
             1: "Zeus",   2: "Poseidon", 3: "Hades",
             4: "Isis",   5: "Ra",       6: "Set",
             7: "Odin",   8: "Thor",     9: "Loki",
             10: "Kronos", 11: "Oranos", 12: "Gaia",
         }
+        # max_unlock_count in _SCENARIO_DATA is the number of age unlocks logic requires (0-3).
+        # Exempt scenarios have no age rule → No Age Expected.
+        # Non-exempt: if the scenario already starts at or above the required
+        # age (start_age_num - 1 >= max_unlock_count), no advancement needed.
+        age_names = ["Classical", "Heroic", "Mythic"]
         scenario_names = {
             1:"1. Omens", 2:"2. Consequences", 3:"3. Scratching the Surface",
             4:"4. A Fine Plan", 5:"5. Just Enough Rope", 6:"6. I Hope This Works",
@@ -535,7 +668,15 @@ class AoMCommandProcessor(ClientCommandProcessor):
             god_id = ctx.game_ctx.god_assignments.get(n, 0)
             god    = god_names.get(god_id, "Unknown")
             name   = scenario_names.get(n, str(n))
-            self.output(f"  {name}: {god}")
+            data   = _SCENARIO_DATA.get(n, (1, 0, 0.0, True, False))
+            start_age_num, max_unlock_count, _, is_exempt, _ = data
+            if is_exempt or max_unlock_count == 0 or (start_age_num - 1) >= max_unlock_count:
+                age_label = "No Age Expected"
+            else:
+                # tier 1→Classical, 2→Heroic, 3→Mythic (capped at start+1 and 3)
+                age_tier  = min(max_unlock_count, start_age_num + 1, 3)
+                age_label = f"{age_names[age_tier - 1]} Age Expected"
+            self.output(f"  {name} ({god} - {age_label})")
 
 
     # ---------------------------------------------------------------------------
@@ -546,14 +687,16 @@ class AoMCommandProcessor(ClientCommandProcessor):
     _CIV_ITEM_TYPES = None  # populated lazily
 
     def _get_civ_item_types(self):
-        """Return the set of type classes that are civ-specific (unit/myth/age unlocks)."""
+        """Return the set of type classes that are civ-specific (unit/myth/age unlocks, villager items)."""
         try:
             from ..items.Items import (
                 AgeUnlock, UnitUnlockProgression, UnitUnlockUseful,
                 MythUnitUnlockProgression, MythUnitUnlockUseful, MythUnitUnlockFiller,
+                VillagerCarryCapacity, VillagerFoodCost,
             )
             types = (AgeUnlock, UnitUnlockProgression, UnitUnlockUseful,
-                     MythUnitUnlockProgression, MythUnitUnlockUseful, MythUnitUnlockFiller)
+                     MythUnitUnlockProgression, MythUnitUnlockUseful, MythUnitUnlockFiller,
+                     VillagerCarryCapacity, VillagerFoodCost)
             try:
                 from ..items.Items import (
                     AtlanteanUnitUnlockProgression, AtlanteanUnitUnlockUseful,
@@ -597,10 +740,10 @@ class AoMCommandProcessor(ClientCommandProcessor):
                 self.output(f"  {name}")
 
     def _cmd_generic(self) -> None:
-        """Show received items that are not unit unlocks, myth unit unlocks, or age unlocks."""
+        """Show received items that are not unit unlocks, myth unit unlocks, age unlocks, villager items, or traps."""
         ctx = self.ctx
         try:
-            from ..items.Items import aomItemData, Victory, Campaign, FinalUnlock
+            from ..items.Items import aomItemData, Victory, Campaign, FinalUnlock, Trap
         except Exception:
             self.output("Could not load item data.")
             return
@@ -608,7 +751,7 @@ class AoMCommandProcessor(ClientCommandProcessor):
         civ_types = self._get_civ_item_types()
         skip_types = civ_types
         try:
-            skip_types = skip_types + (Victory, Campaign, FinalUnlock)
+            skip_types = skip_types + (Victory, Campaign, FinalUnlock, Trap)
         except Exception:
             pass
 
@@ -634,38 +777,6 @@ class AoMCommandProcessor(ClientCommandProcessor):
         else:
             for line in matched:
                 self.output(line)
-
-    def _cmd_greek(self) -> None:
-        """Show received Greek unit, myth unit, and age unlock items."""
-        self._cmd_civ_items("Greek", "Greek")
-
-    def _cmd_egypt(self) -> None:
-        """Show received Egyptian unit, myth unit, and age unlock items."""
-        self._cmd_civ_items("Egyptian", "Egyptian")
-
-    def _cmd_norse(self) -> None:
-        """Show received Norse unit, myth unit, and age unlock items."""
-        self._cmd_civ_items("Norse", "Norse")
-
-    def _cmd_atlantean(self) -> None:
-        """Show received Atlantean unit, myth unit, and age unlock items."""
-        self._cmd_civ_items("Atlantean", "Atlantean")
-
-    # Aliases for /gods
-    _cmd_god = _cmd_gods
-
-    # Aliases for civ commands
-    _cmd_egyptian = _cmd_egypt
-    _cmd_atlant   = _cmd_atlantean
-    _cmd_atlants  = _cmd_atlantean
-    _cmd_atlantis = _cmd_atlantean
-
-    # Aliases for /scenarios
-    _cmd_scenario  = _cmd_scenarios
-    _cmd_mission   = _cmd_scenarios
-    _cmd_missions  = _cmd_scenarios
-    _cmd_progress  = _cmd_scenarios
-
 
 class AoMContext(CommonContext):
     game = AOMR
@@ -713,25 +824,78 @@ class AoMContext(CommonContext):
         await self.send_connect()
 
     def on_package(self, cmd: str, args: dict) -> None:
+        if cmd == "RoomInfo":
+            # Capture seed_name directly from the RoomInfo packet rather than
+            # relying on the base class attribute name, which may not yet be set
+            # by the time our Connected handler runs.
+            self.game_ctx.ap_seed = args.get("seed_name", "") or ""
         if cmd == "Connected":
             self._on_connected(args)
         if cmd == "ReceivedItems":
             self._handle_received_items(args)
 
     def _on_connected(self, args: dict) -> None:
-        # Seed sent_checks so already-found locations aren't re-reported
-        self.game_ctx.sent_checks = set(args.get("checked_locations", []))
-        # Cache slot_data for UI and game state file
         slot_data = args.get("slot_data", {})
+
+        # Populate cache identity fields FIRST — cache_folder is derived from these,
+        # and all disk state (sent_checks, shop state, trap state) is loaded from it.
+        # Using server + seed_name + slot_name + world_id as the cache key guarantees
+        # each unique session gets its own subdirectory with no cross-contamination.
+        self.game_ctx.ap_server  = getattr(self, "server_address", "") or ""
+        self.game_ctx.ap_slot    = getattr(self, "auth",           "") or ""
+        self.game_ctx.world_id   = int(slot_data.get("world_id", 0))
+        # ap_seed is set by the RoomInfo handler (on_package) before Connected fires;
+        # do not overwrite it here — getattr(self, "seed_name") may return "" on
+        # some AP versions and would clobber the correctly captured value.
+
+        # Clear all in-memory game state before applying the new session.
+        # Without this, received_items from the previous connection persist in
+        # memory and get written into aom_state.xs before the new ReceivedItems
+        # packet arrives, causing the new slot to start with the old slot's items.
+        self.game_ctx.received_items      = []
+        self.game_ctx.sent_checks          = set()
+        self.game_ctx.server_known_checks  = set()
+        self.game_ctx.trap_queue           = []
+        self.game_ctx.trap_ack_nonce       = 0
+        self.game_ctx.purchased_slots      = set()
+
+        server_checks = set(args.get("checked_locations", []))
+
+        # Load persisted state for this session from disk.
+        # Because cache_folder is uniquely scoped to server/seed/slot/world_id,
+        # a new world always resolves to an empty (non-existent) directory,
+        # so stale checks from previous sessions can never load here.
+        from .GameClient import load_sent_checks, save_sent_checks, load_shop_state, load_trap_state
+        load_sent_checks(self.game_ctx)
+        load_shop_state(self.game_ctx)
+        load_trap_state(self.game_ctx)
+
+        # If we have locally-tracked checks that the server doesn't know about,
+        # the send_msgs call failed previously (transient disconnect, client
+        # restart, etc.). Resend them now before updating from the server's list.
+        unconfirmed = self.game_ctx.sent_checks - server_checks
+        if unconfirmed:
+            logger.warning(
+                f"Resending {len(unconfirmed)} location(s) the server hasn't acknowledged: {sorted(unconfirmed)}"
+            )
+            asyncio.create_task(
+                self.send_msgs([{"cmd": "LocationChecks", "locations": list(unconfirmed)}])
+            )
+
+        # Store server's confirmed checks in a separate set used only for
+        # in-memory deduplication. Never merged into sent_checks (which is
+        # persisted) — keeping them separate ensures server-known checks are
+        # never written to the local cache and cannot contaminate future sessions.
+        self.game_ctx.server_known_checks = server_checks
+
+        # Cache slot_data for UI and game state file
         final_mode  = slot_data.get("final_mode", -1)
         x_scenarios = slot_data.get("x_scenarios", 0)
         self._final_mode_value = final_mode
         self._x_scenarios_threshold = int(x_scenarios) if final_mode == 0 else None
-        # Also store on game_ctx so write_aom_state can use them
         self.game_ctx.final_mode = final_mode
         self.game_ctx.x_scenarios_threshold = int(x_scenarios)
         self.game_ctx.random_major_gods = bool(slot_data.get("random_major_gods", False))
-        self.game_ctx.update_buildings_for_random_god = bool(slot_data.get("update_buildings_for_random_god", True))
         raw_gods = slot_data.get("god_assignments", {})
         self.game_ctx.god_assignments = {int(k): int(v) for k, v in raw_gods.items()} if raw_gods else {}
         raw_minor = slot_data.get("minor_god_assignments", {})
@@ -742,7 +906,6 @@ class AoMContext(CommonContext):
         self.game_ctx.archaic_forbids = (
             {int(k): v for k, v in raw_forbids.items()} if raw_forbids else {}
         )
-        self.game_ctx.world_id              = int(slot_data.get("world_id", 0))
         self.game_ctx.gem_shop_enabled      = bool(slot_data.get("gem_shop", True))
         self.game_ctx.starting_gems         = int(slot_data.get("starting_gems", 0))
         self.game_ctx.wins_to_open_shop     = int(slot_data.get("wins_to_open_shop", 4))
@@ -758,10 +921,13 @@ class AoMContext(CommonContext):
         _ensure_user_cfg(self.game_ctx.user_folder)
         mods_local = _resolve_mods_local_dir(self.game_ctx.user_folder)
         generate_ap_ai_xs(self.game_ctx, mods_local)
-        from .GameClient import write_aom_state, load_shop_state, load_trap_state
-        load_shop_state(self.game_ctx)
-        load_trap_state(self.game_ctx)
+        from .GameClient import write_aom_state
         write_aom_state(self.game_ctx)
+        # Record the current log file size as the session start offset.
+        # read_new_checks will only process bytes written after this point,
+        # so AP_CHECK lines from previous sessions are never replayed.
+        log_file = self.game_ctx.ai_output_file
+        self.game_ctx.log_start_offset = log_file.stat().st_size if log_file.exists() else 0
         self._start_game_loop()
 
     def _handle_received_items(self, args: dict) -> None:
@@ -791,6 +957,9 @@ class AoMContext(CommonContext):
             on_items_received(self.game_ctx, combined)
 
         new_info_level = self.game_ctx.received_items.count(PROG_INFO_ID)
+        if old_info_level < 4 <= new_info_level:
+            logger.info("4th Progressive Shop Info received — sending hints for 5 missions")
+            self.send_mission_hints((5, 5))
 
         # Queue newly received traps — only for incremental updates (index > 0).
         # On full resend (index == 0), load_trap_state already holds the correct
@@ -855,7 +1024,7 @@ class AoMContext(CommonContext):
         mission_nums = [n for n, _ in chosen]
         logger.info(f"Hinted {len(hint_ids)} location(s) across missions {mission_nums}")
 
-    def on_location_received(self, location_id: int) -> None:
+    async def on_location_received(self, location_id: int) -> None:
         from ..locations.Locations import aomLocationData, aomLocationType
 
         # Look up this location to determine its type
@@ -880,9 +1049,7 @@ class AoMContext(CommonContext):
                     logger.info(f"[AoMR] {progress}")
                 _update_atlantis_ui(self)
 
-        Utils.async_start(
-            self.send_msgs([{"cmd": "LocationChecks", "locations": locations_to_send}])
-        )
+        await self.send_msgs([{"cmd": "LocationChecks", "locations": locations_to_send}])
 
     def _start_game_loop(self) -> None:
         if self._game_loop_task is None or self._game_loop_task.done():
