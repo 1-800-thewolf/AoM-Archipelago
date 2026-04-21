@@ -1906,34 +1906,6 @@ void APApplyAtlanteanMinorGods(int majorGod = 0, int ageCount = 0)
     }
 }
 
-// Grant the scenario's minimum starting ages unconditionally.
-// Called from APActivateScenario AFTER APSetPlayerCiv (which force-disables
-// all ages) so the scenario floor is always restored before APApplyAgeUnlocks
-// adds the player's earned unlock count on top.
-void APInitStartingAgeTechs()
-{
-    int floor = APGetStartingAgeCount(gAPScenarioId);
-    if (floor <= 0) { return; }
-
-    // Grant floor ages for whichever civ is currently assigned.
-    if (gAPMajorGod == cAPMajorZeus || gAPMajorGod == cAPMajorPoseidon || gAPMajorGod == cAPMajorHades)
-    {
-        APApplyGreekMinorGods(gAPMajorGod, floor);
-    }
-    if (gAPMajorGod == cAPMajorIsis || gAPMajorGod == cAPMajorRa || gAPMajorGod == cAPMajorSet)
-    {
-        APApplyEgyptianMinorGods(gAPMajorGod, floor);
-    }
-    if (gAPMajorGod == cAPMajorOdin || gAPMajorGod == cAPMajorThor || gAPMajorGod == cAPMajorLoki)
-    {
-        APApplyNorseMinorGods(gAPMajorGod, floor);
-    }
-    if (gAPMajorGod == cAPMajorKronos || gAPMajorGod == cAPMajorOranos || gAPMajorGod == cAPMajorGaia)
-    {
-        APApplyAtlanteanMinorGods(gAPMajorGod, floor);
-    }
-}
-
 int APGetStartingAgeCount(int scenarioId = 0)
 {
     if (scenarioId == 1) { return 1; }
@@ -1992,15 +1964,15 @@ void APApplyAgeUnlocks()
     }
 
     // Effective age count = max(scenario floor, player's earned unlocks).
-    // The scenario floor was already granted by APInitStartingAgeTechs; here
-    // we re-apply using the effective count so APApply*MinorGods always
+    // Re-apply using the effective count so APApply*MinorGods always
+    // grants at least the scenario floor and at most what the player has earned.
     // grants at least the floor and at most what the player has earned.
     // Force-disabling the other three civs prevents scenario editor triggers
     // from leaving stale age techs active for the unassigned civs.
-    int floor = APGetStartingAgeCount(gAPScenarioId);
+    int scenarioFloor = APGetStartingAgeCount(gAPScenarioId);
     if (gAPMajorGod == cAPMajorZeus || gAPMajorGod == cAPMajorPoseidon || gAPMajorGod == cAPMajorHades)
     {
-        int effGreek = greekCount; if (floor > effGreek) { effGreek = floor; }
+        int effGreek = greekCount; if (scenarioFloor > effGreek) { effGreek = scenarioFloor; }
         APApplyGreekMinorGods(gAPMajorGod, effGreek);
         APForceDisableAllEgyptianAgeTechs();
         APForceDisableAllNorseAgeTechs();
@@ -2008,7 +1980,7 @@ void APApplyAgeUnlocks()
     }
     if (gAPMajorGod == cAPMajorIsis || gAPMajorGod == cAPMajorRa || gAPMajorGod == cAPMajorSet)
     {
-        int effEgyptian = egyptianCount; if (floor > effEgyptian) { effEgyptian = floor; }
+        int effEgyptian = egyptianCount; if (scenarioFloor > effEgyptian) { effEgyptian = scenarioFloor; }
         APApplyEgyptianMinorGods(gAPMajorGod, effEgyptian);
         APForceDisableAllGreekAgeTechs();
         APForceDisableAllNorseAgeTechs();
@@ -2016,7 +1988,7 @@ void APApplyAgeUnlocks()
     }
     if (gAPMajorGod == cAPMajorOdin || gAPMajorGod == cAPMajorThor || gAPMajorGod == cAPMajorLoki)
     {
-        int effNorse = norseCount; if (floor > effNorse) { effNorse = floor; }
+        int effNorse = norseCount; if (scenarioFloor > effNorse) { effNorse = scenarioFloor; }
         APApplyNorseMinorGods(gAPMajorGod, effNorse);
         APForceDisableAllGreekAgeTechs();
         APForceDisableAllEgyptianAgeTechs();
@@ -2024,7 +1996,7 @@ void APApplyAgeUnlocks()
     }
     if (gAPMajorGod == cAPMajorKronos || gAPMajorGod == cAPMajorOranos || gAPMajorGod == cAPMajorGaia)
     {
-        int effAtlantean = atlanteanCount; if (floor > effAtlantean) { effAtlantean = floor; }
+        int effAtlantean = atlanteanCount; if (scenarioFloor > effAtlantean) { effAtlantean = scenarioFloor; }
         APApplyAtlanteanMinorGods(gAPMajorGod, effAtlantean);
         APForceDisableAllGreekAgeTechs();
         APForceDisableAllEgyptianAgeTechs();
