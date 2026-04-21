@@ -1296,7 +1296,7 @@ void APTrapExecuteTrap(int trapType = 0)
     trUnitSelectClear();
 
     if (trapType == 1)  { trGodPowerGrant(12, "Meteor",             1, 0, false, false); trGodPowerInvoke(12, "Meteor",             gAPTrapPos, gAPTrapPos, true); }
-    if (trapType == 2)  { trGodPowerGrant(12, "Lightning Storm",    1, 0, false, false); trGodPowerInvoke(12, "Lightning Storm",    gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 2)  { trGodPowerGrant(12, "LightningStorm",    1, 0, false, false); trGodPowerInvoke(12, "LightningStorm",    gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 3)
     {
         // Locust Swarm: pos1=start, pos2=direction. Pick a random cardinal offset.
@@ -1306,8 +1306,8 @@ void APTrapExecuteTrap(int trapType = 0)
         if (_lsDir == 1) { _lsEnd = gAPTrapPos + vector(-30, 0, 0); }
         if (_lsDir == 2) { _lsEnd = gAPTrapPos + vector(0, 0, 30); }
         if (_lsDir == 3) { _lsEnd = gAPTrapPos + vector(0, 0, -30); }
-        trGodPowerGrant(12, "Locust Swarm", 1, 0, false, false);
-        trGodPowerInvoke(12, "Locust Swarm", gAPTrapPos, _lsEnd, true);
+        trGodPowerGrant(12, "LocustSwarm", 1, 0, false, false);
+        trGodPowerInvoke(12, "LocustSwarm", gAPTrapPos, _lsEnd, true);
     }
     if (trapType == 4)  { trGodPowerGrant(12, "Bolt",               1, 0, false, false); trGodPowerInvoke(12, "Bolt",               gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 7)  { trGodPowerGrant(12, "Restoration",        1, 0, false, false); trGodPowerInvoke(12, "Restoration",        gAPTrapPos, gAPTrapPos, true); }
@@ -1315,16 +1315,16 @@ void APTrapExecuteTrap(int trapType = 0)
     if (trapType == 9)  { trGodPowerGrant(12, "Tornado",            1, 0, false, false); trGodPowerInvoke(12, "Tornado",            gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 10) { trGodPowerGrant(12, "Earthquake",         1, 0, false, false); trGodPowerInvoke(12, "Earthquake",         gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 11) { trGodPowerGrant(12, "Curse",              1, 0, false, false); trGodPowerInvoke(12, "Curse",              gAPTrapPos, gAPTrapPos, true); }
-    if (trapType == 12) { trGodPowerGrant(12, "Plague of Serpents", 1, 0, false, false); trGodPowerInvoke(12, "Plague of Serpents", gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 12) { trGodPowerGrant(12, "PlagueOfSerpents", 1, 0, false, false); trGodPowerInvoke(12, "PlagueOfSerpents", gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 13) { trGodPowerGrant(12, "Implode",            1, 0, false, false); trGodPowerInvoke(12, "Implode",            gAPTrapPos, gAPTrapPos, true); }
-    if (trapType == 14) { trGodPowerGrant(12, "Tartarian Gate",     1, 0, false, false); trGodPowerInvoke(12, "Tartarian Gate",     gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 14) { trGodPowerGrant(12, "TartarianGate",     1, 0, false, false); trGodPowerInvoke(12, "TartarianGate",     gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 15) { trGodPowerGrant(12, "Chaos",              1, 0, false, false); trGodPowerInvoke(12, "Chaos",              gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 16) { trGodPowerGrant(12, "Traitor",            1, 0, false, false); trGodPowerInvoke(12, "Traitor",            gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 17) { trGodPowerGrant(12, "Carnivora",          1, 0, false, false); trGodPowerInvoke(12, "Carnivora",          gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 18) { trGodPowerGrant(12, "SpiderLair",         1, 0, false, false); trGodPowerInvoke(12, "SpiderLair",         gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 19) { trGodPowerGrant(12, "Deconstruction",     1, 0, false, false); trGodPowerInvoke(12, "Deconstruction",     gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 20) { trGodPowerGrant(12, "Fimbulwinter",       1, 0, false, false); trGodPowerInvoke(12, "Fimbulwinter",       gAPTrapPos, gAPTrapPos, true); }
-    if (trapType == 21) { trGodPowerGrant(12, "Flaming Weapons",    1, 0, false, false); trGodPowerInvoke(12, "Flaming Weapons",    gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 21) { trGodPowerGrant(12, "FlamingWeapons",    1, 0, false, false); trGodPowerInvoke(12, "FlamingWeapons",    gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 22) { trGodPowerGrant(12, "Ancestors",          1, 0, false, false); trGodPowerInvoke(12, "Ancestors",          gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 23) { trGodPowerGrant(12, "Pestilence",         1, 0, false, false); trGodPowerInvoke(12, "Pestilence",         gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 25)
@@ -1584,6 +1584,13 @@ runImmediately
         trTechSetStatus(1, cTechWatchTower, 2);
     }
 
+    // Egyptian major gods get Watch Tower on every scenario regardless of starting age,
+    // since their tower playstyle is civ-core and shouldn't depend on scenario gating.
+    if (gAPMajorGod == cAPMajorIsis || gAPMajorGod == cAPMajorRa || gAPMajorGod == cAPMajorSet)
+    {
+        trTechSetStatus(1, cTechWatchTower, 2);
+    }
+
     // Allow TartarianGate and Carnivora to place anywhere — removes terrain
     // restrictions that prevent these god powers from invoking in some scenarios.
     trProtoUnitSetFlag(12, "TartarianGate", "PlaceAnywhere", true);
@@ -1605,6 +1612,29 @@ runImmediately
         else
         {
             APGrantScen25RandomPowers();
+        }
+    }
+
+    // Scenario 11: grant 1 starting god power based on the assigned civilization.
+    // Greek → Restoration, Egyptian → ShiftingSands, Norse → HealingSpring, Atlantean → SpiderLair
+    if (gAPScenarioId == 11)
+    {
+        trPlayerTechTreeEnabledGodPowers(1, true);
+        if (gAPMajorGod == cAPMajorZeus || gAPMajorGod == cAPMajorPoseidon || gAPMajorGod == cAPMajorHades)
+        {
+            trGodPowerGrant(1, "Restoration", 1, 30, true, false);
+        }
+        if (gAPMajorGod == cAPMajorIsis || gAPMajorGod == cAPMajorRa || gAPMajorGod == cAPMajorSet)
+        {
+            trGodPowerGrant(1, "ShiftingSands", 1, 30, true, false);
+        }
+        if (gAPMajorGod == cAPMajorOdin || gAPMajorGod == cAPMajorThor || gAPMajorGod == cAPMajorLoki)
+        {
+            trGodPowerGrant(1, "HealingSpring", 1, 30, true, false);
+        }
+        if (gAPMajorGod == cAPMajorKronos || gAPMajorGod == cAPMajorOranos || gAPMajorGod == cAPMajorGaia)
+        {
+            trGodPowerGrant(1, "SpiderLair", 1, 30, true, false);
         }
     }
 
@@ -1928,11 +1958,11 @@ int APGetStartingAgeCount(int scenarioId = 0)
     if (scenarioId == 18) { return 1; }
     if (scenarioId == 19) { return 2; }
     if (scenarioId == 20) { return 2; }
-    if (scenarioId == 21) { return 0; }
+    if (scenarioId == 21) { return 1; }
     if (scenarioId == 22) { return 0; }
     if (scenarioId == 23) { return 1; }
     if (scenarioId == 24) { return 1; }
-    if (scenarioId == 25) { return 0; }
+    if (scenarioId == 25) { return 1; }
     if (scenarioId == 26) { return 1; }
     if (scenarioId == 27) { return 1; }
     if (scenarioId == 28) { return 2; }
