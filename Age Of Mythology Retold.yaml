@@ -72,6 +72,90 @@ Age Of Mythology Retold:
     # (the Mythic Age is needed to build the Wonder).
     fott_32_victory: 50
 
+  gem_shop:
+    # Enable the Gem Shop.
+    # 
+    # When enabled: beating scenarios earns Gems (currency), which are spent
+    # in the shop to receive items and hints. The shop scenario is accessible
+    # from the campaign map.
+    # 
+    # When disabled: victories award random multiworld items instead of Gems,
+    # the shop scenario returns the player to the menu immediately, and no
+    # shop-related items or locations are generated.
+    'false': 0
+    'true': 50
+
+  starting_gems:
+    # Number of Gems to start with (only used when Gem Shop is enabled).
+    # Gems are earned by beating scenarios (1 per scenario, up to 31).
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 10
+    0: 50
+    random: 0
+    random-low: 0 # random value weighted towards lower values
+    random-high: 0 # random value weighted towards higher values
+    random-range-0-10: 0 # random value between 0 and 10
+
+  wins_to_open_shop:
+    # Number of scenario victories required to open each additional shop tier (only used when Gem Shop is enabled).
+    # Shop A (Marsh) is always open. Shop B (Desert) opens after this many wins. Shop C (Grass) opens after 2x wins. Shop D (Hades) opens after 3x wins.
+    # Set to 0 to open all shops immediately.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 10
+    4: 50
+    random: 0
+    random-low: 0 # random value weighted towards lower values
+    random-high: 0 # random value weighted towards higher values
+    random-range-0-10: 0 # random value between 0 and 10
+
+  random_major_gods:
+    # Randomize the major god for each scenario at generation time. The assigned god determines which techs and minor gods are available.
+    # Be ready to think on your feat with this turned on.
+    'false': 0
+    'true': 50
+
+  force_different_god:
+    # When random_major_gods is enabled, forces the random god to never be the vanilla major god for that scenario and makes it more likely to play a civilization different from the vanilla.
+    # (e.g. If 1. Omens is normally Poseidon, you'll never play Poseidon on that mission with this on, and Zeus and Hades are much less likely)
+    'false': 0
+    'true': 50
+
+  myth_unit_sanity:
+    # Include myth unit tier unlock items in the pool.
+    # When enabled, all myth units are forbidden at the start and must be unlocked by finding the corresponding tier item.
+    # Turn this off for an easier time.
+    'false': 0
+    'true': 50
+
+  trap_percentage:
+    # Percentage of filler items to replace with traps (0 = no traps, 100 = all filler becomes traps).
+    # Traps fire randomly during scenarios. Only filler items are replaced; useful items are never swapped for traps.
+    # At 20%, there will be roughly 15 traps total.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 100
+    20: 50
+    random: 0
+    random-low: 0 # random value weighted towards lower values
+    random-high: 0 # random value weighted towards higher values
+    random-range-0-100: 0 # random value between 0 and 100
+
+  update_buildings_for_random_god:
+    # When Random_Major_Gods is enabled, transform Player 1's military buildings
+    # at scenario start to match the randomly assigned civilization.
+    # For example, if a normally Greek scenario is assigned an Egyptian god,
+    # Greek military buildings (Military Academy, Archery Range, etc.) are
+    # transformed into their Egyptian equivalents (Barracks, Migdol Stronghold, etc.).
+    # Scenario 7 is a special case: Player 3's buildings are transformed instead
+    # of Player 1's, since Player 3's army is captured in that scenario.
+    'false': 0
+    'true': 50
+
   ##################
   # Starting Setup #
   ##################
@@ -82,10 +166,9 @@ Age Of Mythology Retold:
     # egyptian: Scenarios 11-20
     # norse:    Scenarios 21-30
     # 
-    # The other two sections must be found as items in the pool.
-    # Within a section, all scenarios are immediately accessible.
+    # The other two sections must be found as items in the pool. Within a section, all scenarios are immediately accessible.
     # 
-    # Starting with the Greek block is the easiest and Norse block is hardest.
+    # Starting with the Greek block is the easiest.
     greek: 50
     egyptian: 0
     norse: 0
@@ -97,7 +180,7 @@ Age Of Mythology Retold:
     #   3rd unlock = Mythic Age available
     # 
     # Scenarios will not be in logic until you can reach a reasonable age to beat them.
-    # Starting with unlocks makes more scenarios accessible earlier and a much easier experience.
+    # Starting with unlocks makes more scenarios accessible earlier and an easier experience.
     # 
     # ---
     # 
@@ -143,32 +226,26 @@ Age Of Mythology Retold:
     # What unlocks the Final scenario block (scenarios 31-32)?
     # 
     # beat_x_scenarios (recommended):
-    # Beat the chosen number of scenarios (set via x_scenarios below) to receive the
-    # Atlantis Key and open the Final section.
+    # Beat the chosen number of scenarios (set via x_scenarios below) to receive the Atlantis Key and open the Final section.
     # 
     # always_open:
-    # The Final section is available from the start. 
-    # This can result in a
-    # much shorter experience.
+    # The Final section is available from the start. This can result in a much shorter experience.
     # 
     # atlantis_key:
-    # The Atlantis Key is shuffled randomly into the item pool. 
-    # Finding it
-    # anywhere opens the Final section.
+    # The Atlantis Key is shuffled randomly into the item pool. Finding it anywhere opens the Final section.
     beat_x_scenarios: 50
     always_open: 0
     atlantis_key: 0
 
   x_scenarios:
-    # If Final Scenarios (above) is set to beat_x_scenarios, this is how many scenarios
-    # must be completed before you receive the Atlantis Key.
+    # If Final Scenarios (above) is set to beat_x_scenarios, this is how many scenarios must be completed before you receive the Atlantis Key.
     # 
     # You may beat any combination of the 30 non-final scenarios.
     #
     # You can define additional values between the minimum and maximum values.
     # Minimum value is 0
     # Maximum value is 30
-    10: 50
+    12: 50
     random: 0
     random-low: 0 # random value weighted towards lower values
     random-high: 0 # random value weighted towards higher values
@@ -177,6 +254,21 @@ Age Of Mythology Retold:
   #############
   # Item Pool #
   #############
+  extra_final_mission_age_unlocks:
+    # Scenario 32 requires 3 Age Unlock items to reach the Mythic Age and build the Wonder. 
+    # This adds extra copies of whichever civilization's Age Unlock corresponds to the god assigned to scenario 32 (Greek by default, or randomized if godsanity is enabled). These replace filler items.
+    # 
+    # At the default of 1, there are 4 total copies of that unlock in the pool.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 5
+    1: 50
+    random: 0
+    random-low: 0 # random value weighted towards lower values
+    random-high: 0 # random value weighted towards higher values
+    random-range-0-5: 0 # random value between 0 and 5
+
   hero_abilities:
     # Include custom hero special ability items in the item pool?
     # 
@@ -201,7 +293,7 @@ Age Of Mythology Retold:
     #   - Chiron Shotgun Special     (special shot fires a ton of extra arrows)
     # 
     # Amanra:
-    #   - Amanra Shockwave Jump      (leap attack sends targets flying)
+    #   - Amanra Whirlwind Throw     (leap attack sends targets flying)
     #   - Amanra Army of the Dead    (enemies slain by Amanra are reincarnated as allied minions)
     #   - Amanra Divine Smite        (melee attacks deal +5 divine damage)
     # 
