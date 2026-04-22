@@ -855,6 +855,7 @@ class AoMContext(CommonContext):
         self.game_ctx.received_items      = []
         self.game_ctx.sent_checks          = set()
         self.game_ctx.server_known_checks  = set()
+        self.game_ctx.locked_warning_campaigns = set()
         self.game_ctx.trap_queue           = []
         self.game_ctx.trap_ack_nonce       = 0
         self.game_ctx.purchased_slots      = set()
@@ -923,11 +924,24 @@ class AoMContext(CommonContext):
         generate_ap_ai_xs(self.game_ctx, mods_local)
         from .GameClient import write_aom_state
         write_aom_state(self.game_ctx)
-        # Record the current log file size as the session start offset.
-        # read_new_checks will only process bytes written after this point,
-        # so AP_CHECK lines from previous sessions are never replayed.
+
+        # Start each connection with a fresh AI output log so AP_CHECK lines
+        # from previous worlds cannot be replayed into the new session.
+        # v0.3.3 previously relied on a byte offset into the existing log,
+        # which could still cause current-session checks to be missed if the
+        # offset/session state became misaligned. Truncating here lets the
+        # runtime parser read the recreated log from byte 0.
         log_file = self.game_ctx.ai_output_file
-        self.game_ctx.log_start_offset = log_file.stat().st_size if log_file.exists() else 0
+        try:
+            log_file.parent.mkdir(parents=True, exist_ok=True)
+            log_file.write_bytes(b"")
+            logger.info(f"Cleared AI output log for new session: {log_file}")
+        except Exception as ex:
+            logger.warning(f"Failed to clear AI output log {log_file}: {ex}")
+
+        # After truncating the log, always parse from the beginning of the new
+        # session output.
+        self.game_ctx.log_start_offset = 0
         self._start_game_loop()
 
     def _handle_received_items(self, args: dict) -> None:

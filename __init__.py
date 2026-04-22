@@ -512,8 +512,12 @@ class aomWorld(World):
             if isinstance(item.type, hero_ability_types) and not hero_abilities_on:
                 continue
 
-            # Myth unit items — skip if myth_unit_sanity is off
+            # Myth unit items — when myth_unit_sanity is off, precollect them all
+            # so the player starts with the full set of myth unit unlocks.
             if isinstance(item.type, myth_unit_types) and not myth_unit_sanity_on:
+                if isinstance(item.type, Items.AtlanteanMythUnitUnlock) and not random_major_gods_on:
+                    continue
+                self.multiworld.push_precollected(self.create_item(item.item_name))
                 continue
 
             # Atlantean items — skip if random_major_gods is off (Atlantis not in the pool)
@@ -578,14 +582,15 @@ class aomWorld(World):
                 useful_groups.setdefault(type(prog_item.type), []).append(prog_item.item_name)
 
         # Visible location count:
-        #   Campaign non-COMPLETION locations minus all 32 Victory locations
+        #   Campaign non-COMPLETION locations minus only the final Victory location
+        #   (scenarios 1-31 Victory locations are normal fill slots when not locked to Gems)
         #   Plus shop locations if gem_shop is enabled (60 item + 4 progressive info)
         #   Plus "The Way to Atlantis" when key is in pool (added below)
         gem_shop_on = self.gem_shop_enabled
         visible_location_count = (
             sum(1 for loc in Locations.aomLocationData
                 if loc.type != Locations.aomLocationType.COMPLETION)
-            - 32  # all Victory locations are locked (31 Gems + 1 Victory item)
+            - 1  # only scenario 32 Victory is always locked to the Victory item
         )
         if gem_shop_on:
             visible_location_count += len(Locations.ALL_SHOP_ITEM_IDS)           # 60

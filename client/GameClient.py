@@ -107,9 +107,10 @@ class AoMGameContext:
     # Checks the AP server has already confirmed — used for in-memory
     # deduplication only. Never persisted to disk.
     server_known_checks: set[int] = field(default_factory=set)
-    # Byte offset into the AI log file at the time this session connected.
-    # read_new_checks only processes content written after this point,
-    # ensuring old sessions' AP_CHECK lines are never replayed.
+    # Locked-scenario warnings already shown this connection.
+    locked_warning_campaigns: set[str] = field(default_factory=set)
+    # Reserved for compatibility with older logic. The runtime log parser now
+    # scans from byte 0 on every poll after the connect-time log purge.
     log_start_offset: int = 0
 
     @property
@@ -757,16 +758,16 @@ def _send_shop_hints(ctx: AoMGameContext, slot_id: str) -> None:
 
 def read_new_checks(ctx: AoMGameContext) -> list[int]:
     """
-    Read the AI output log from log_start_offset onward on every poll.
+    Read the entire AI output log from byte 0 on every poll.
 
-    log_start_offset is set to the log file's byte size at the moment the
-    client connected, so only content written during the current session is
-    ever processed. This prevents AP_CHECK lines from old sessions replaying
-    when the player connects to a new server with an empty sent_checks cache.
+    The log is purged on connect, so scanning from the start of the recreated
+    file is safe and aggressively picks up newly written AP_CHECK lines even if
+    offset tracking would otherwise become misaligned.
 
-    Missed checks within the current session are recovered via the
-    sent_checks cache + unconfirmed-resend path in _on_connected, not by
-    rescanning historical log content.
+    Deduplication is still handled by in-memory and persisted state:
+      - AP_CHECK / AP_SHOP -> sent_checks and server_known_checks
+      - AP_TRAP_FIRED      -> trap_ack_nonce
+      - AP_LOCKED          -> locked_warning_campaigns
     """
     import re
     ai_file = ctx.ai_output_file
@@ -779,18 +780,10 @@ def read_new_checks(ctx: AoMGameContext) -> list[int]:
     except OSError:
         return []
 
-    # Trim to content written after this session started.
-    # log_start_offset is a raw byte offset; align it to an even boundary
-    # for UTF-16-LE correctness before slicing.
-    start = ctx.log_start_offset
-    if start % 2 != 0:
-        start += 1
-    file_bytes = file_bytes[start:]
-
     if not file_bytes:
         return []
 
-    # Ensure even byte count for UTF-16-LE alignment
+    # Ensure even byte count for UTF-16-LE alignment.
     if len(file_bytes) % 2 != 0:
         file_bytes = file_bytes[:-1]
 
@@ -798,12 +791,13 @@ def read_new_checks(ctx: AoMGameContext) -> list[int]:
 
     # If content doesn't end on a line boundary AoM is mid-write; truncate to
     # the last complete line so we never process a partial signal.
-    last_newline = max(content.rfind('\n'), content.rfind('\r'))
+    last_newline = max(content.rfind("\n"), content.rfind("\r"))
     if last_newline >= 0 and last_newline < len(content) - 1:
         content = content[:last_newline + 1]
 
-    new_checks   = []
+    new_checks = []
     trap_signals = 0   # AP_TRAP_FIRED lines since the last "APAI startup." in this file
+    in_current_session = False
 
     try:
         for line in content.splitlines():
@@ -812,16 +806,26 @@ def read_new_checks(ctx: AoMGameContext) -> list[int]:
                 continue
 
             # Each new scenario writes "APAI startup." as the first log line.
-            # Reset trap counters so trap_ack_nonce is scoped to the current scenario.
+            # Reset trap counters when we see it so trap handling is scoped to
+            # the current scenario.
             if "APAI startup." in line:
                 trap_signals = 0
                 ctx.trap_ack_nonce = 0
+                in_current_session = True
+                continue
+
+            # Ignore anything before the first startup line in the current log.
+            if not in_current_session:
                 continue
 
             if AP_LOCKED_PREFIX in line:
-                m = re.search(r'AP_LOCKED:(\S+)', line)
+                m = re.search(r"AP_LOCKED:(\S+)", line)
                 campaign = m.group(1) if m else "unknown"
-                logger.warning(f"Archipelago: You need the {campaign} Scenarios item to play this campaign.")
+                if campaign not in ctx.locked_warning_campaigns:
+                    logger.warning(
+                        f"Archipelago: You need the {campaign} Scenarios item to play this campaign."
+                    )
+                    ctx.locked_warning_campaigns.add(campaign)
                 continue
 
             if "AP_TRAP_FIRED:" in line:
@@ -829,7 +833,7 @@ def read_new_checks(ctx: AoMGameContext) -> list[int]:
                 continue
 
             if AP_SHOP_PREFIX in line:
-                m = re.search(r'AP_SHOP:IDX:(\d+)', line)
+                m = re.search(r"AP_SHOP:IDX:(\d+)", line)
                 if m:
                     try:
                         slot_num = int(m.group(1))
@@ -838,7 +842,7 @@ def read_new_checks(ctx: AoMGameContext) -> list[int]:
                     except (ValueError, IndexError):
                         slot_id = ""
                 else:
-                    m2 = re.search(r'AP_SHOP:(\S+)', line)
+                    m2 = re.search(r"AP_SHOP:(\S+)", line)
                     slot_id = m2.group(1) if m2 else ""
                 if not slot_id:
                     logger.warning(f"Unrecognised shop signal in line: {line!r}")
@@ -852,7 +856,7 @@ def read_new_checks(ctx: AoMGameContext) -> list[int]:
                     save_sent_checks(ctx)
                 continue
 
-            m = re.search(r'AP_CHECK:(\d+)', line)
+            m = re.search(r"AP_CHECK:(\d+)", line)
             if not m:
                 continue
             loc_id = int(m.group(1))
@@ -865,7 +869,7 @@ def read_new_checks(ctx: AoMGameContext) -> list[int]:
 
     # Process trap signals: trap_signals counts only AP_TRAP_FIRED lines since
     # the last "APAI startup." line, so it's already scoped to the current
-    # scenario. trap_ack_nonce tracks how many we've popped this session.
+    # scenario. trap_ack_nonce tracks how many we've popped this scenario.
     new_trap_count = max(0, trap_signals - ctx.trap_ack_nonce)
     if new_trap_count > 0:
         for _ in range(new_trap_count):
@@ -879,7 +883,6 @@ def read_new_checks(ctx: AoMGameContext) -> list[int]:
     if new_checks:
         save_sent_checks(ctx)
     return new_checks
-
 
 # -----------------------------------------------------------------------
 # Items received
