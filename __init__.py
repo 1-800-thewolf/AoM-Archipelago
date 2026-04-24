@@ -16,14 +16,11 @@ from worlds.AutoWorld import WebWorld, World
 from worlds.LauncherComponents import Component, Type, components, launch as launch_subprocess
 import worlds.LauncherComponents as components_module
 
-from .Options import (Random_Major_Gods, ForceDifferentGod, MythUnitSanity, ExtraFinalMissionAgeUnlocks, 
+from .Options import (Random_Major_Gods, ForceDifferentGod, MythUnitSanity, ExtraFinalMissionAgeUnlocks,
     AomOptions,
     FinalScenarios,
     HeroAbilities,
     StartingScenarios,
-    StartingGreekAgeUnlocks,
-    StartingEgyptianAgeUnlocks,
-    StartingNorseAgeUnlocks,
     XScenarios,
 )
 from .items import Items
@@ -50,9 +47,6 @@ class aomWebWorld(WebWorld):
     option_groups = [
         OptionGroup("Starting Setup", [
             StartingScenarios,
-            StartingGreekAgeUnlocks,
-            StartingEgyptianAgeUnlocks,
-            StartingNorseAgeUnlocks,
         ]),
         OptionGroup("Final Section", [
             FinalScenarios,
@@ -461,12 +455,10 @@ class aomWorld(World):
         myth_unit_sanity_on = bool(self.options.myth_unit_sanity.value)
         random_major_gods_on        = bool(self.options.random_major_gods.value)
 
-        # How many age unlocks to precollect per civ
+        # Age unlocks are never precollected — players use start_inventory or
+        # start_inventory_from_pool in their YAML if they want starting unlocks.
         starting_age_unlocks = {
-            "Greek":     int(self.options.starting_greek_age_unlocks.value),
-            "Egyptian":  int(self.options.starting_egyptian_age_unlocks.value),
-            "Norse":     int(self.options.starting_norse_age_unlocks.value),
-            "Atlantean": 0,  # no starting Atlantean unlocks option
+            "Greek": 0, "Egyptian": 0, "Norse": 0, "Atlantean": 0,
         }
         age_unlock_counts: dict[str, int] = {"Greek": 0, "Egyptian": 0, "Norse": 0}
 
@@ -524,8 +516,9 @@ class aomWorld(World):
             if isinstance(item.type, atlantean_types) and not random_major_gods_on:
                 continue
 
-            # Progressive tech items are added explicitly below with 3 copies each
-            if isinstance(item.type, (Items.ProgressiveEconomyTech, Items.ProgressiveMilitaryTech)):
+            # Starting tech items are added explicitly below (1 copy each)
+            if isinstance(item.type, (Items.StartingEconomyTech, Items.StartingMilitaryTech,
+                                       Items.StartingDockTech, Items.StartingBuildingsTech)):
                 continue
 
             # All remaining items bucketed by classification
@@ -571,15 +564,19 @@ class aomWorld(World):
                 else:
                     progression_pool.append(ap_item)
 
-        # Progressive tech items — exactly 3 copies each in the useful pool.
-        # Each copy found by the player unlocks one additional tier of techs
-        # in scenarios whose starting age matches or exceeds that tier.
-        for prog_item in [
-            Items.aomItemData.PROGRESSIVE_ECONOMY_TECH,
-            Items.aomItemData.PROGRESSIVE_MILITARY_TECH,
+        # Starting Tech items — 1 copy each.
+        # Economy and Military are Useful; Dock and Buildings are Filler.
+        # Each item grants all techs of that category up to the scenario's starting age.
+        for tech_item in [
+            Items.aomItemData.STARTING_ECONOMY_TECH,
+            Items.aomItemData.STARTING_MILITARY_TECH,
         ]:
-            for _ in range(3):
-                useful_groups.setdefault(type(prog_item.type), []).append(prog_item.item_name)
+            useful_groups.setdefault(type(tech_item.type), []).append(tech_item.item_name)
+        for tech_item in [
+            Items.aomItemData.STARTING_DOCK_TECH,
+            Items.aomItemData.STARTING_BUILDINGS_TECH,
+        ]:
+            filler_groups.setdefault(type(tech_item.type), []).append(tech_item.item_name)
 
         # Visible location count:
         #   Campaign non-COMPLETION locations minus only the final Victory location
@@ -707,11 +704,6 @@ class aomWorld(World):
                 f"items in pool: {len(itempool)}."
             )
 
-        # Pre-collect starting gems (only when gem_shop is enabled)
-        if self.gem_shop_enabled:
-            for _ in range(int(self.options.starting_gems.value)):
-                self.multiworld.push_precollected(self.create_item(Items.aomItemData.GEM.item_name))
-
         self.multiworld.itempool += itempool
 
     def set_rules(self) -> None:
@@ -747,7 +739,6 @@ class aomWorld(World):
         data["archaic_forbids"]       = self.archaic_forbids
 
         if self.gem_shop_enabled:
-            data["starting_gems"]       = int(self.options.starting_gems.value)
             data["wins_to_open_shop"]   = int(self.options.wins_to_open_shop.value)
 
             # Obelisk → location_id list (determined at generation)

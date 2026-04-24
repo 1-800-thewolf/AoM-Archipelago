@@ -195,8 +195,10 @@ const int cNORSE_AGE_UNLOCK              = 1008;
 const int cATLANTEAN_AGE_UNLOCK          = 1011;
 
 // Progressive tech upgrade item IDs — raw values matching Items.py
-const int cPROGRESSIVE_ECONOMY_TECH      = 5100;
-const int cPROGRESSIVE_MILITARY_TECH     = 5101;
+const int cSTARTING_ECONOMY_TECH         = 5100;
+const int cSTARTING_MILITARY_TECH        = 5101;
+const int cSTARTING_DOCK_TECH            = 5102;
+const int cSTARTING_BUILDINGS_TECH       = 5103;
 
 
 // -----------------------------------------------------------------------
@@ -1043,7 +1045,14 @@ void APShowQueuedCheckMessage(int id = 0)
 
     if (objectiveText == "Scenario Victory")
     {
-        trMessageSetText("<color0,1,0><icon=(25)(resources\egyptian\static_color\technologies\funeral_rites_icon.png)> Gem Received</color>", 5);
+        if (gAPGemShopEnabled)
+        {
+            trMessageSetText("<color0,1,0><icon=(25)(resources\egyptian\static_color\technologies\funeral_rites_icon.png)> Gem Received</color>", 5);
+        }
+        else
+        {
+            trMessageSetText("<color0,1,0>Checked <color1,1,0>Scenario Victory</color>\n\nComplete or quit the mission to send or receive items.", 5);
+        }
     }
     else
     {
@@ -1401,35 +1410,42 @@ int APGetScenarioStartingAge()
 // Apply progressive economy and military tech upgrades.
 // Must be called AFTER APSetPlayerCiv() — changing civilization wipes researched techs.
 // Tier X techs are awarded when: playerCount >= X AND scenarioStartingAge >= X.
-void APApplyProgressiveTechs(int econCount = 0, int milCount = 0)
+// Grant starting tech packages based on the scenario's starting age.
+// econHas/milHas/dockHas/bldgsHas are 1 if the player has that item, 0 otherwise.
+// Each category grants ALL technologies up to and including the scenario's starting age.
+// Archaic (age 0) still grants Archaic-tier economy techs (Hand Axe, Pickaxe, Husbandry)
+// since every scenario starts in at least the Archaic age.
+void APApplyStartingTechs(int econHas = 0, int milHas = 0, int dockHas = 0, int bldgsHas = 0)
 {
     int age = APGetScenarioStartingAge();
 
-    // --- Economy techs ---
-    if (econCount >= 1 && age >= 1)
+    // --- Starting Economy Tech ---
+    // Archaic techs always granted (every scenario starts at Archaic or later)
+    if (econHas >= 1)
     {
-        trTechSetStatus(1, cTechHusbandry,  2);
-        trTechSetStatus(1, cTechPlow,       2);
-        trTechSetStatus(1, cTechPurseSeine, 2);
         trTechSetStatus(1, cTechHandAxe,    2);
         trTechSetStatus(1, cTechPickaxe,    2);
+        trTechSetStatus(1, cTechHusbandry,  2);
     }
-    if (econCount >= 2 && age >= 2)
+    if (econHas >= 1 && age >= 1)  // Classical+
     {
-        trTechSetStatus(1, cTechIrrigation,  2);
-        trTechSetStatus(1, cTechSaltAmphora, 2);
-        trTechSetStatus(1, cTechBowSaw,      2);
-        trTechSetStatus(1, cTechShaftMine,   2);
+        trTechSetStatus(1, cTechPlow,       2);
+        trTechSetStatus(1, cTechBowSaw,     2);
+        trTechSetStatus(1, cTechShaftMine,  2);
     }
-    if (econCount >= 3 && age >= 3)
+    if (econHas >= 1 && age >= 2)  // Heroic+
+    {
+        trTechSetStatus(1, cTechIrrigation, 2);
+        trTechSetStatus(1, cTechCarpenters, 2);
+        trTechSetStatus(1, cTechQuarry,     2);
+    }
+    if (econHas >= 1 && age >= 3)  // Mythic
     {
         trTechSetStatus(1, cTechFloodControl, 2);
-        trTechSetStatus(1, cTechCarpenters,   2);
-        trTechSetStatus(1, cTechQuarry,       2);
     }
 
-    // --- Military techs ---
-    if (milCount >= 1 && age >= 1)
+    // --- Starting Military Tech ---
+    if (milHas >= 1 && age >= 1)  // Classical+
     {
         trTechSetStatus(1, cTechCopperWeapons,  2);
         trTechSetStatus(1, cTechCopperArmor,    2);
@@ -1441,7 +1457,7 @@ void APApplyProgressiveTechs(int econCount = 0, int milCount = 0)
         trTechSetStatus(1, cTechMediumSlingers, 2);
         trTechSetStatus(1, cTechMediumSpearmen, 2);
     }
-    if (milCount >= 2 && age >= 2)
+    if (milHas >= 1 && age >= 2)  // Heroic+
     {
         trTechSetStatus(1, cTechBronzeWeapons,        2);
         trTechSetStatus(1, cTechBronzeArmor,          2);
@@ -1456,7 +1472,7 @@ void APApplyProgressiveTechs(int econCount = 0, int milCount = 0)
         trTechSetStatus(1, cTechHeavyCamelRiders,     2);
         trTechSetStatus(1, cTechHeavyWarElephants,    2);
     }
-    if (milCount >= 3 && age >= 3)
+    if (milHas >= 1 && age >= 3)  // Mythic
     {
         trTechSetStatus(1, cTechIronWeapons,             2);
         trTechSetStatus(1, cTechIronArmor,               2);
@@ -1470,6 +1486,73 @@ void APApplyProgressiveTechs(int econCount = 0, int milCount = 0)
         trTechSetStatus(1, cTechChampionChariotArchers,  2);
         trTechSetStatus(1, cTechChampionCamelRiders,     2);
         trTechSetStatus(1, cTechChampionWarElephants,    2);
+    }
+
+    // --- Starting Dock Tech ---
+    if (dockHas >= 1 && age >= 1)  // Classical+
+    {
+        trTechSetStatus(1, cTechPurseSeine,   2);
+        trTechSetStatus(1, cTechEnclosedDeck, 2);
+        trTechSetStatus(1, cTechHeroicFleet,  2);
+    }
+    if (dockHas >= 1 && age >= 2)  // Heroic+
+    {
+        trTechSetStatus(1, cTechSaltAmphora,   2);
+        trTechSetStatus(1, cTechHeavyWarships, 2);
+    }
+    if (dockHas >= 1 && age >= 3)  // Mythic
+    {
+        trTechSetStatus(1, cTechChampionWarships,  2);
+        trTechSetStatus(1, cTechConscriptSailors,  2);
+    }
+
+    // --- Starting Buildings Tech ---
+    // Civ-specific techs gated on gAPMajorGod.
+    // Greek: 1,2,3   Egyptian: 4,5,6   Norse: 7,8,9   Atlantean: 10,11,12
+    bool _isGreek     = (gAPMajorGod == cAPMajorZeus || gAPMajorGod == cAPMajorPoseidon || gAPMajorGod == cAPMajorHades);
+    bool _isEgyptian  = (gAPMajorGod == cAPMajorIsis  || gAPMajorGod == cAPMajorRa      || gAPMajorGod == cAPMajorSet);
+    bool _isNorse     = (gAPMajorGod == cAPMajorOdin  || gAPMajorGod == cAPMajorThor    || gAPMajorGod == cAPMajorLoki);
+    bool _isAtlantean = (gAPMajorGod == cAPMajorKronos || gAPMajorGod == cAPMajorOranos || gAPMajorGod == cAPMajorGaia);
+
+    if (bldgsHas >= 1 && age >= 1)  // Classical+ (all civs)
+    {
+        trTechSetStatus(1, cTechCrenellations, 2);
+        trTechSetStatus(1, cTechBoilingOil,    2);
+        trTechSetStatus(1, cTechSignalFires,   2);
+        trTechSetStatus(1, cTechMasons,        2);
+        trTechSetStatus(1, cTechStoneWall,     2);
+        trTechSetStatus(1, cTechWatchTower,    2);
+    }
+    if (bldgsHas >= 1 && age >= 1 && _isAtlantean)  // Classical+ Atlantean only
+    {
+        trTechSetStatus(1, cTechBronzeWall, 2);
+    }
+    if (bldgsHas >= 1 && age >= 1 && (_isGreek || _isEgyptian))  // Classical+ Greek/Egyptian only
+    {
+        trTechSetStatus(1, cTechFortifiedWall, 2);
+    }
+    if (bldgsHas >= 1 && age >= 2)  // Heroic+ (all civs)
+    {
+        trTechSetStatus(1, cTechCarrierPigeons,     2);
+        trTechSetStatus(1, cTechArchitects,         2);
+        trTechSetStatus(1, cTechFortifiedTownCenter, 2);
+    }
+    if (bldgsHas >= 1 && age >= 2 && (_isGreek || _isEgyptian || _isAtlantean))  // Heroic+ non-Norse
+    {
+        trTechSetStatus(1, cTechGuardTower, 2);
+    }
+    if (bldgsHas >= 1 && age >= 2 && _isAtlantean)  // Heroic+ Atlantean only
+    {
+        trTechSetStatus(1, cTechIronWall, 2);
+    }
+    if (bldgsHas >= 1 && age >= 3)  // Mythic (all civs)
+    {
+        trTechSetStatus(1, cTechOrichalcumWall, 2);
+    }
+    if (bldgsHas >= 1 && age >= 3 && _isEgyptian)  // Mythic Egyptian only
+    {
+        trTechSetStatus(1, cTechCitadelWall,  2);
+        trTechSetStatus(1, cTechBallistaTower, 2);
     }
 }
 
@@ -1543,15 +1626,19 @@ runImmediately
     // gAPItems is already populated by APInitItems() above.
     int _econTechCount = 0;
     int _milTechCount  = 0;
+    int _dockTechCount = 0;
+    int _bldgTechCount = 0;
     int _pti = 0;
     while (_pti < gAPItemCount)
     {
         int _ptid = gAPItems[_pti];
-        if (_ptid == cPROGRESSIVE_ECONOMY_TECH)  { _econTechCount++; }
-        if (_ptid == cPROGRESSIVE_MILITARY_TECH) { _milTechCount++;  }
+        if (_ptid == cSTARTING_ECONOMY_TECH)    { _econTechCount++;  }
+        if (_ptid == cSTARTING_MILITARY_TECH)   { _milTechCount++;  }
+        if (_ptid == cSTARTING_DOCK_TECH)       { _dockTechCount++; }
+        if (_ptid == cSTARTING_BUILDINGS_TECH)  { _bldgTechCount++; }
         _pti++;
     }
-    APApplyProgressiveTechs(_econTechCount, _milTechCount);
+    APApplyStartingTechs(_econTechCount, _milTechCount, _dockTechCount, _bldgTechCount);
 
     // SPC campaign heroes
     trForbidProtounit(1, "Ajax");
@@ -1593,7 +1680,7 @@ runImmediately
 
     // Allow TartarianGate and Carnivora to place anywhere — removes terrain
     // restrictions that prevent these god powers from invoking in some scenarios.
-    trProtoUnitSetFlag(12, "TartarianGate", "PlaceAnywhere", true);
+    trProtoUnitSetFlag(12, "TartarianGatePlacement", "PlaceAnywhere", true);
     trProtoUnitSetFlag(12, "Carnivora",     "PlaceAnywhere", true);
 
     gAPRandomMajorGods = (gAPItemCount > 5 && gAPItems[5] == 9010);
@@ -1813,84 +1900,155 @@ void APDisableAllNorseAgeTechs()
     if (trTechStatusActive(1, cTechMythicAgeNorse) == false) { trTechSetStatus(1, cTechMythicAgeNorse, 0); }
 }
 
-void APApplyGreekMinorGods(int majorGod = 0, int ageCount = 0)
+void APApplyGreekMinorGods(int majorGod = 0, int ageCount = 0, int startingFloor = 0)
 {
+    // Force-disable all Greek age techs. APInitStartingAgeTechs has already set
+    // floor tiers to status 2 (active); we only set tiers ABOVE the floor to
+    // status 1 (researchable), based on the player's age unlock count.
     APForceDisableAllGreekAgeTechs();
 
-    if (ageCount >= 1)
+    // Re-activate floor tiers (force-disable cleared them)
+    if (startingFloor >= 1)
     {
-        if (trTechStatusActive(1, cTechClassicalAgeGreek) == false) { trTechSetStatus(1, cTechClassicalAgeGreek, 1); }
-        if (majorGod == cAPMajorZeus) { if (trTechStatusActive(1, cTechClassicalAgeAthena) == false) { trTechSetStatus(1, cTechClassicalAgeAthena, 1); } if (trTechStatusActive(1, cTechClassicalAgeHermes) == false) { trTechSetStatus(1, cTechClassicalAgeHermes, 1); } }
-        if (majorGod == cAPMajorPoseidon) { if (trTechStatusActive(1, cTechClassicalAgeHermes) == false) { trTechSetStatus(1, cTechClassicalAgeHermes, 1); } if (trTechStatusActive(1, cTechClassicalAgeAres) == false) { trTechSetStatus(1, cTechClassicalAgeAres, 1); } }
-        if (majorGod == cAPMajorHades) { if (trTechStatusActive(1, cTechClassicalAgeAthena) == false) { trTechSetStatus(1, cTechClassicalAgeAthena, 1); } if (trTechStatusActive(1, cTechClassicalAgeAres) == false) { trTechSetStatus(1, cTechClassicalAgeAres, 1); } }
+        trTechSetStatus(1, cTechClassicalAgeGreek, 2);
+        if (majorGod == cAPMajorZeus)     { trTechSetStatus(1, cTechClassicalAgeAthena, 2); trTechSetStatus(1, cTechClassicalAgeHermes, 2); }
+        if (majorGod == cAPMajorPoseidon) { trTechSetStatus(1, cTechClassicalAgeHermes, 2); trTechSetStatus(1, cTechClassicalAgeAres, 2);   }
+        if (majorGod == cAPMajorHades)    { trTechSetStatus(1, cTechClassicalAgeAthena, 2); trTechSetStatus(1, cTechClassicalAgeAres, 2);    }
     }
-    if (ageCount >= 2)
+    if (startingFloor >= 2)
     {
-        if (trTechStatusActive(1, cTechHeroicAgeGreek) == false) { trTechSetStatus(1, cTechHeroicAgeGreek, 1); }
-        if (majorGod == cAPMajorZeus) { if (trTechStatusActive(1, cTechHeroicAgeApollo) == false) { trTechSetStatus(1, cTechHeroicAgeApollo, 1); } if (trTechStatusActive(1, cTechHeroicAgeDionysus) == false) { trTechSetStatus(1, cTechHeroicAgeDionysus, 1); } }
-        if (majorGod == cAPMajorPoseidon) { if (trTechStatusActive(1, cTechHeroicAgeDionysus) == false) { trTechSetStatus(1, cTechHeroicAgeDionysus, 1); } if (trTechStatusActive(1, cTechHeroicAgeAphrodite) == false) { trTechSetStatus(1, cTechHeroicAgeAphrodite, 1); } }
-        if (majorGod == cAPMajorHades) { if (trTechStatusActive(1, cTechHeroicAgeApollo) == false) { trTechSetStatus(1, cTechHeroicAgeApollo, 1); } if (trTechStatusActive(1, cTechHeroicAgeAphrodite) == false) { trTechSetStatus(1, cTechHeroicAgeAphrodite, 1); } }
+        trTechSetStatus(1, cTechHeroicAgeGreek, 2);
+        if (majorGod == cAPMajorZeus)     { trTechSetStatus(1, cTechHeroicAgeApollo, 2);     trTechSetStatus(1, cTechHeroicAgeDionysus, 2);   }
+        if (majorGod == cAPMajorPoseidon) { trTechSetStatus(1, cTechHeroicAgeDionysus, 2);   trTechSetStatus(1, cTechHeroicAgeAphrodite, 2);  }
+        if (majorGod == cAPMajorHades)    { trTechSetStatus(1, cTechHeroicAgeApollo, 2);     trTechSetStatus(1, cTechHeroicAgeAphrodite, 2);  }
     }
-    if (ageCount >= 3)
+    if (startingFloor >= 3)
     {
-        if (trTechStatusActive(1, cTechMythicAgeGreek) == false) { trTechSetStatus(1, cTechMythicAgeGreek, 1); }
-        if (majorGod == cAPMajorZeus) { if (trTechStatusActive(1, cTechMythicAgeHera) == false) { trTechSetStatus(1, cTechMythicAgeHera, 1); } if (trTechStatusActive(1, cTechMythicAgeHephaestus) == false) { trTechSetStatus(1, cTechMythicAgeHephaestus, 1); } }
-        if (majorGod == cAPMajorPoseidon) { if (trTechStatusActive(1, cTechMythicAgeHephaestus) == false) { trTechSetStatus(1, cTechMythicAgeHephaestus, 1); } if (trTechStatusActive(1, cTechMythicAgeArtemis) == false) { trTechSetStatus(1, cTechMythicAgeArtemis, 1); } }
-        if (majorGod == cAPMajorHades) { if (trTechStatusActive(1, cTechMythicAgeHera) == false) { trTechSetStatus(1, cTechMythicAgeHera, 1); } if (trTechStatusActive(1, cTechMythicAgeArtemis) == false) { trTechSetStatus(1, cTechMythicAgeArtemis, 1); } }
+        trTechSetStatus(1, cTechMythicAgeGreek, 2);
+        if (majorGod == cAPMajorZeus)     { trTechSetStatus(1, cTechMythicAgeHera, 2);        trTechSetStatus(1, cTechMythicAgeHephaestus, 2); }
+        if (majorGod == cAPMajorPoseidon) { trTechSetStatus(1, cTechMythicAgeHephaestus, 2); trTechSetStatus(1, cTechMythicAgeArtemis, 2);    }
+        if (majorGod == cAPMajorHades)    { trTechSetStatus(1, cTechMythicAgeHera, 2);        trTechSetStatus(1, cTechMythicAgeArtemis, 2);    }
+    }
+
+    // Set researchable (status 1) only for tiers above the starting floor
+    if (ageCount >= 1 && startingFloor < 1)
+    {
+        trTechSetStatus(1, cTechClassicalAgeGreek, 1);
+        if (majorGod == cAPMajorZeus)     { trTechSetStatus(1, cTechClassicalAgeAthena, 1); trTechSetStatus(1, cTechClassicalAgeHermes, 1); }
+        if (majorGod == cAPMajorPoseidon) { trTechSetStatus(1, cTechClassicalAgeHermes, 1); trTechSetStatus(1, cTechClassicalAgeAres, 1);   }
+        if (majorGod == cAPMajorHades)    { trTechSetStatus(1, cTechClassicalAgeAthena, 1); trTechSetStatus(1, cTechClassicalAgeAres, 1);    }
+    }
+    if (ageCount >= 2 && startingFloor < 2)
+    {
+        trTechSetStatus(1, cTechHeroicAgeGreek, 1);
+        if (majorGod == cAPMajorZeus)     { trTechSetStatus(1, cTechHeroicAgeApollo, 1);     trTechSetStatus(1, cTechHeroicAgeDionysus, 1);   }
+        if (majorGod == cAPMajorPoseidon) { trTechSetStatus(1, cTechHeroicAgeDionysus, 1);   trTechSetStatus(1, cTechHeroicAgeAphrodite, 1);  }
+        if (majorGod == cAPMajorHades)    { trTechSetStatus(1, cTechHeroicAgeApollo, 1);     trTechSetStatus(1, cTechHeroicAgeAphrodite, 1);  }
+    }
+    if (ageCount >= 3 && startingFloor < 3)
+    {
+        trTechSetStatus(1, cTechMythicAgeGreek, 1);
+        if (majorGod == cAPMajorZeus)     { trTechSetStatus(1, cTechMythicAgeHera, 1);        trTechSetStatus(1, cTechMythicAgeHephaestus, 1); }
+        if (majorGod == cAPMajorPoseidon) { trTechSetStatus(1, cTechMythicAgeHephaestus, 1); trTechSetStatus(1, cTechMythicAgeArtemis, 1);    }
+        if (majorGod == cAPMajorHades)    { trTechSetStatus(1, cTechMythicAgeHera, 1);        trTechSetStatus(1, cTechMythicAgeArtemis, 1);    }
     }
 }
 
-void APApplyEgyptianMinorGods(int majorGod = 0, int ageCount = 0)
+void APApplyEgyptianMinorGods(int majorGod = 0, int ageCount = 0, int startingFloor = 0)
 {
     APForceDisableAllEgyptianAgeTechs();
 
-    if (ageCount >= 1)
+    if (startingFloor >= 1)
     {
-        if (trTechStatusActive(1, cTechClassicalAgeEgyptian) == false) { trTechSetStatus(1, cTechClassicalAgeEgyptian, 1); }
-        if (majorGod == cAPMajorRa) { if (trTechStatusActive(1, cTechClassicalAgeBast) == false) { trTechSetStatus(1, cTechClassicalAgeBast, 1); } if (trTechStatusActive(1, cTechClassicalAgePtah) == false) { trTechSetStatus(1, cTechClassicalAgePtah, 1); } }
-        if (majorGod == cAPMajorIsis) { if (trTechStatusActive(1, cTechClassicalAgeAnubis) == false) { trTechSetStatus(1, cTechClassicalAgeAnubis, 1); } if (trTechStatusActive(1, cTechClassicalAgePtah) == false) { trTechSetStatus(1, cTechClassicalAgePtah, 1); } }
-        if (majorGod == cAPMajorSet) { if (trTechStatusActive(1, cTechClassicalAgeAnubis) == false) { trTechSetStatus(1, cTechClassicalAgeAnubis, 1); } if (trTechStatusActive(1, cTechClassicalAgeBast) == false) { trTechSetStatus(1, cTechClassicalAgeBast, 1); } }
+        trTechSetStatus(1, cTechClassicalAgeEgyptian, 2);
+        if (majorGod == cAPMajorRa)   { trTechSetStatus(1, cTechClassicalAgeBast, 2);   trTechSetStatus(1, cTechClassicalAgePtah, 2);   }
+        if (majorGod == cAPMajorIsis) { trTechSetStatus(1, cTechClassicalAgeAnubis, 2); trTechSetStatus(1, cTechClassicalAgePtah, 2);   }
+        if (majorGod == cAPMajorSet)  { trTechSetStatus(1, cTechClassicalAgeAnubis, 2); trTechSetStatus(1, cTechClassicalAgeBast, 2);   }
     }
-    if (ageCount >= 2)
+    if (startingFloor >= 2)
     {
-        if (trTechStatusActive(1, cTechHeroicAgeEgyptian) == false) { trTechSetStatus(1, cTechHeroicAgeEgyptian, 1); }
-        if (majorGod == cAPMajorRa) { if (trTechStatusActive(1, cTechHeroicAgeSekhmet) == false) { trTechSetStatus(1, cTechHeroicAgeSekhmet, 1); } if (trTechStatusActive(1, cTechHeroicAgeSobek) == false) { trTechSetStatus(1, cTechHeroicAgeSobek, 1); } }
-        if (majorGod == cAPMajorIsis) { if (trTechStatusActive(1, cTechHeroicAgeSobek) == false) { trTechSetStatus(1, cTechHeroicAgeSobek, 1); } if (trTechStatusActive(1, cTechHeroicAgeNephthys) == false) { trTechSetStatus(1, cTechHeroicAgeNephthys, 1); } }
-        if (majorGod == cAPMajorSet) { if (trTechStatusActive(1, cTechHeroicAgeSekhmet) == false) { trTechSetStatus(1, cTechHeroicAgeSekhmet, 1); } if (trTechStatusActive(1, cTechHeroicAgeNephthys) == false) { trTechSetStatus(1, cTechHeroicAgeNephthys, 1); } }
+        trTechSetStatus(1, cTechHeroicAgeEgyptian, 2);
+        if (majorGod == cAPMajorRa)   { trTechSetStatus(1, cTechHeroicAgeSekhmet, 2);   trTechSetStatus(1, cTechHeroicAgeSobek, 2);     }
+        if (majorGod == cAPMajorIsis) { trTechSetStatus(1, cTechHeroicAgeSobek, 2);     trTechSetStatus(1, cTechHeroicAgeNephthys, 2);  }
+        if (majorGod == cAPMajorSet)  { trTechSetStatus(1, cTechHeroicAgeSekhmet, 2);   trTechSetStatus(1, cTechHeroicAgeNephthys, 2);  }
     }
-    if (ageCount >= 3)
+    if (startingFloor >= 3)
     {
-        if (trTechStatusActive(1, cTechMythicAgeEgyptian) == false) { trTechSetStatus(1, cTechMythicAgeEgyptian, 1); }
-        if (majorGod == cAPMajorRa) { if (trTechStatusActive(1, cTechMythicAgeOsiris) == false) { trTechSetStatus(1, cTechMythicAgeOsiris, 1); } if (trTechStatusActive(1, cTechMythicAgeHorus) == false) { trTechSetStatus(1, cTechMythicAgeHorus, 1); } }
-        if (majorGod == cAPMajorIsis) { if (trTechStatusActive(1, cTechMythicAgeHorus) == false) { trTechSetStatus(1, cTechMythicAgeHorus, 1); } if (trTechStatusActive(1, cTechMythicAgeThoth) == false) { trTechSetStatus(1, cTechMythicAgeThoth, 1); } }
-        if (majorGod == cAPMajorSet) { if (trTechStatusActive(1, cTechMythicAgeOsiris) == false) { trTechSetStatus(1, cTechMythicAgeOsiris, 1); } if (trTechStatusActive(1, cTechMythicAgeThoth) == false) { trTechSetStatus(1, cTechMythicAgeThoth, 1); } }
+        trTechSetStatus(1, cTechMythicAgeEgyptian, 2);
+        if (majorGod == cAPMajorRa)   { trTechSetStatus(1, cTechMythicAgeOsiris, 2);    trTechSetStatus(1, cTechMythicAgeHorus, 2);     }
+        if (majorGod == cAPMajorIsis) { trTechSetStatus(1, cTechMythicAgeHorus, 2);     trTechSetStatus(1, cTechMythicAgeThoth, 2);     }
+        if (majorGod == cAPMajorSet)  { trTechSetStatus(1, cTechMythicAgeOsiris, 2);    trTechSetStatus(1, cTechMythicAgeThoth, 2);     }
+    }
+
+    if (ageCount >= 1 && startingFloor < 1)
+    {
+        trTechSetStatus(1, cTechClassicalAgeEgyptian, 1);
+        if (majorGod == cAPMajorRa)   { trTechSetStatus(1, cTechClassicalAgeBast, 1);   trTechSetStatus(1, cTechClassicalAgePtah, 1);   }
+        if (majorGod == cAPMajorIsis) { trTechSetStatus(1, cTechClassicalAgeAnubis, 1); trTechSetStatus(1, cTechClassicalAgePtah, 1);   }
+        if (majorGod == cAPMajorSet)  { trTechSetStatus(1, cTechClassicalAgeAnubis, 1); trTechSetStatus(1, cTechClassicalAgeBast, 1);   }
+    }
+    if (ageCount >= 2 && startingFloor < 2)
+    {
+        trTechSetStatus(1, cTechHeroicAgeEgyptian, 1);
+        if (majorGod == cAPMajorRa)   { trTechSetStatus(1, cTechHeroicAgeSekhmet, 1);   trTechSetStatus(1, cTechHeroicAgeSobek, 1);     }
+        if (majorGod == cAPMajorIsis) { trTechSetStatus(1, cTechHeroicAgeSobek, 1);     trTechSetStatus(1, cTechHeroicAgeNephthys, 1);  }
+        if (majorGod == cAPMajorSet)  { trTechSetStatus(1, cTechHeroicAgeSekhmet, 1);   trTechSetStatus(1, cTechHeroicAgeNephthys, 1);  }
+    }
+    if (ageCount >= 3 && startingFloor < 3)
+    {
+        trTechSetStatus(1, cTechMythicAgeEgyptian, 1);
+        if (majorGod == cAPMajorRa)   { trTechSetStatus(1, cTechMythicAgeOsiris, 1);    trTechSetStatus(1, cTechMythicAgeHorus, 1);     }
+        if (majorGod == cAPMajorIsis) { trTechSetStatus(1, cTechMythicAgeHorus, 1);     trTechSetStatus(1, cTechMythicAgeThoth, 1);     }
+        if (majorGod == cAPMajorSet)  { trTechSetStatus(1, cTechMythicAgeOsiris, 1);    trTechSetStatus(1, cTechMythicAgeThoth, 1);     }
     }
 }
 
-void APApplyNorseMinorGods(int majorGod = 0, int ageCount = 0)
+void APApplyNorseMinorGods(int majorGod = 0, int ageCount = 0, int startingFloor = 0)
 {
     APForceDisableAllNorseAgeTechs();
 
-    if (ageCount >= 1)
+    if (startingFloor >= 1)
     {
-        if (trTechStatusActive(1, cTechClassicalAgeNorse) == false) { trTechSetStatus(1, cTechClassicalAgeNorse, 1); }
-        if (majorGod == cAPMajorOdin) { if (trTechStatusActive(1, cTechClassicalAgeFreyja) == false) { trTechSetStatus(1, cTechClassicalAgeFreyja, 1); } if (trTechStatusActive(1, cTechClassicalAgeHeimdall) == false) { trTechSetStatus(1, cTechClassicalAgeHeimdall, 1); } }
-        if (majorGod == cAPMajorThor) { if (trTechStatusActive(1, cTechClassicalAgeFreyja) == false) { trTechSetStatus(1, cTechClassicalAgeFreyja, 1); } if (trTechStatusActive(1, cTechClassicalAgeForseti) == false) { trTechSetStatus(1, cTechClassicalAgeForseti, 1); } }
-        if (majorGod == cAPMajorLoki) { if (trTechStatusActive(1, cTechClassicalAgeForseti) == false) { trTechSetStatus(1, cTechClassicalAgeForseti, 1); } if (trTechStatusActive(1, cTechClassicalAgeHeimdall) == false) { trTechSetStatus(1, cTechClassicalAgeHeimdall, 1); } }
+        trTechSetStatus(1, cTechClassicalAgeNorse, 2);
+        if (majorGod == cAPMajorOdin) { trTechSetStatus(1, cTechClassicalAgeFreyja, 2);   trTechSetStatus(1, cTechClassicalAgeHeimdall, 2); }
+        if (majorGod == cAPMajorThor) { trTechSetStatus(1, cTechClassicalAgeFreyja, 2);   trTechSetStatus(1, cTechClassicalAgeForseti, 2);  }
+        if (majorGod == cAPMajorLoki) { trTechSetStatus(1, cTechClassicalAgeForseti, 2);  trTechSetStatus(1, cTechClassicalAgeHeimdall, 2); }
     }
-    if (ageCount >= 2)
+    if (startingFloor >= 2)
     {
-        if (trTechStatusActive(1, cTechHeroicAgeNorse) == false) { trTechSetStatus(1, cTechHeroicAgeNorse, 1); }
-        if (majorGod == cAPMajorOdin) { if (trTechStatusActive(1, cTechHeroicAgeNjord) == false) { trTechSetStatus(1, cTechHeroicAgeNjord, 1); } if (trTechStatusActive(1, cTechHeroicAgeSkadi) == false) { trTechSetStatus(1, cTechHeroicAgeSkadi, 1); } }
-        if (majorGod == cAPMajorThor) { if (trTechStatusActive(1, cTechHeroicAgeBragi) == false) { trTechSetStatus(1, cTechHeroicAgeBragi, 1); } if (trTechStatusActive(1, cTechHeroicAgeSkadi) == false) { trTechSetStatus(1, cTechHeroicAgeSkadi, 1); } }
-        if (majorGod == cAPMajorLoki) { if (trTechStatusActive(1, cTechHeroicAgeBragi) == false) { trTechSetStatus(1, cTechHeroicAgeBragi, 1); } if (trTechStatusActive(1, cTechHeroicAgeNjord) == false) { trTechSetStatus(1, cTechHeroicAgeNjord, 1); } }
+        trTechSetStatus(1, cTechHeroicAgeNorse, 2);
+        if (majorGod == cAPMajorOdin) { trTechSetStatus(1, cTechHeroicAgeNjord, 2);  trTechSetStatus(1, cTechHeroicAgeSkadi, 2); }
+        if (majorGod == cAPMajorThor) { trTechSetStatus(1, cTechHeroicAgeBragi, 2);  trTechSetStatus(1, cTechHeroicAgeSkadi, 2); }
+        if (majorGod == cAPMajorLoki) { trTechSetStatus(1, cTechHeroicAgeBragi, 2);  trTechSetStatus(1, cTechHeroicAgeNjord, 2); }
     }
-    if (ageCount >= 3)
+    if (startingFloor >= 3)
     {
-        if (trTechStatusActive(1, cTechMythicAgeNorse) == false) { trTechSetStatus(1, cTechMythicAgeNorse, 1); }
-        if (majorGod == cAPMajorOdin) { if (trTechStatusActive(1, cTechMythicAgeBaldr) == false) { trTechSetStatus(1, cTechMythicAgeBaldr, 1); } if (trTechStatusActive(1, cTechMythicAgeTyr) == false) { trTechSetStatus(1, cTechMythicAgeTyr, 1); } }
-        if (majorGod == cAPMajorThor) { if (trTechStatusActive(1, cTechMythicAgeBaldr) == false) { trTechSetStatus(1, cTechMythicAgeBaldr, 1); } if (trTechStatusActive(1, cTechMythicAgeTyr) == false) { trTechSetStatus(1, cTechMythicAgeTyr, 1); } }
-        if (majorGod == cAPMajorLoki) { if (trTechStatusActive(1, cTechMythicAgeTyr) == false) { trTechSetStatus(1, cTechMythicAgeTyr, 1); } if (trTechStatusActive(1, cTechMythicAgeHel) == false) { trTechSetStatus(1, cTechMythicAgeHel, 1); } }
+        trTechSetStatus(1, cTechMythicAgeNorse, 2);
+        if (majorGod == cAPMajorOdin) { trTechSetStatus(1, cTechMythicAgeBaldr, 2); trTechSetStatus(1, cTechMythicAgeTyr, 2); }
+        if (majorGod == cAPMajorThor) { trTechSetStatus(1, cTechMythicAgeBaldr, 2); trTechSetStatus(1, cTechMythicAgeTyr, 2); }
+        if (majorGod == cAPMajorLoki) { trTechSetStatus(1, cTechMythicAgeTyr, 2);   trTechSetStatus(1, cTechMythicAgeHel, 2); }
+    }
+
+    if (ageCount >= 1 && startingFloor < 1)
+    {
+        trTechSetStatus(1, cTechClassicalAgeNorse, 1);
+        if (majorGod == cAPMajorOdin) { trTechSetStatus(1, cTechClassicalAgeFreyja, 1);   trTechSetStatus(1, cTechClassicalAgeHeimdall, 1); }
+        if (majorGod == cAPMajorThor) { trTechSetStatus(1, cTechClassicalAgeFreyja, 1);   trTechSetStatus(1, cTechClassicalAgeForseti, 1);  }
+        if (majorGod == cAPMajorLoki) { trTechSetStatus(1, cTechClassicalAgeForseti, 1);  trTechSetStatus(1, cTechClassicalAgeHeimdall, 1); }
+    }
+    if (ageCount >= 2 && startingFloor < 2)
+    {
+        trTechSetStatus(1, cTechHeroicAgeNorse, 1);
+        if (majorGod == cAPMajorOdin) { trTechSetStatus(1, cTechHeroicAgeNjord, 1);  trTechSetStatus(1, cTechHeroicAgeSkadi, 1); }
+        if (majorGod == cAPMajorThor) { trTechSetStatus(1, cTechHeroicAgeBragi, 1);  trTechSetStatus(1, cTechHeroicAgeSkadi, 1); }
+        if (majorGod == cAPMajorLoki) { trTechSetStatus(1, cTechHeroicAgeBragi, 1);  trTechSetStatus(1, cTechHeroicAgeNjord, 1); }
+    }
+    if (ageCount >= 3 && startingFloor < 3)
+    {
+        trTechSetStatus(1, cTechMythicAgeNorse, 1);
+        if (majorGod == cAPMajorOdin) { trTechSetStatus(1, cTechMythicAgeBaldr, 1); trTechSetStatus(1, cTechMythicAgeTyr, 1); }
+        if (majorGod == cAPMajorThor) { trTechSetStatus(1, cTechMythicAgeBaldr, 1); trTechSetStatus(1, cTechMythicAgeTyr, 1); }
+        if (majorGod == cAPMajorLoki) { trTechSetStatus(1, cTechMythicAgeTyr, 1);   trTechSetStatus(1, cTechMythicAgeHel, 1); }
     }
 }
 
@@ -1910,29 +2068,52 @@ void APDisableAllAtlanteanAgeTechs()
     if (trTechStatusActive(1, cTechMythicAgeHekate) == false) { trTechSetStatus(1, cTechMythicAgeHekate, 0); }
 }
 
-void APApplyAtlanteanMinorGods(int majorGod = 0, int ageCount = 0)
+void APApplyAtlanteanMinorGods(int majorGod = 0, int ageCount = 0, int startingFloor = 0)
 {
     APForceDisableAllAtlanteanAgeTechs();
-    if (ageCount >= 1)
+
+    if (startingFloor >= 1)
     {
-        if (trTechStatusActive(1, cTechClassicalAgeAtlantean) == false) { trTechSetStatus(1, cTechClassicalAgeAtlantean, 1); }
-        if (majorGod == cAPMajorKronos) { if (trTechStatusActive(1, cTechClassicalAgePrometheus) == false) { trTechSetStatus(1, cTechClassicalAgePrometheus, 1); } if (trTechStatusActive(1, cTechClassicalAgeLeto) == false) { trTechSetStatus(1, cTechClassicalAgeLeto, 1); } }
-        if (majorGod == cAPMajorOranos) { if (trTechStatusActive(1, cTechClassicalAgePrometheus) == false) { trTechSetStatus(1, cTechClassicalAgePrometheus, 1); } if (trTechStatusActive(1, cTechClassicalAgeOceanus) == false) { trTechSetStatus(1, cTechClassicalAgeOceanus, 1); } }
-        if (majorGod == cAPMajorGaia)   { if (trTechStatusActive(1, cTechClassicalAgeLeto) == false) { trTechSetStatus(1, cTechClassicalAgeLeto, 1); } if (trTechStatusActive(1, cTechClassicalAgeOceanus) == false) { trTechSetStatus(1, cTechClassicalAgeOceanus, 1); } }
+        trTechSetStatus(1, cTechClassicalAgeAtlantean, 2);
+        if (majorGod == cAPMajorKronos) { trTechSetStatus(1, cTechClassicalAgePrometheus, 2); trTechSetStatus(1, cTechClassicalAgeLeto, 2);    }
+        if (majorGod == cAPMajorOranos) { trTechSetStatus(1, cTechClassicalAgePrometheus, 2); trTechSetStatus(1, cTechClassicalAgeOceanus, 2);  }
+        if (majorGod == cAPMajorGaia)   { trTechSetStatus(1, cTechClassicalAgeLeto, 2);        trTechSetStatus(1, cTechClassicalAgeOceanus, 2);  }
     }
-    if (ageCount >= 2)
+    if (startingFloor >= 2)
     {
-        if (trTechStatusActive(1, cTechHeroicAgeAtlantean) == false) { trTechSetStatus(1, cTechHeroicAgeAtlantean, 1); }
-        if (majorGod == cAPMajorKronos) { if (trTechStatusActive(1, cTechHeroicAgeHyperion) == false) { trTechSetStatus(1, cTechHeroicAgeHyperion, 1); } if (trTechStatusActive(1, cTechHeroicAgeRheia) == false) { trTechSetStatus(1, cTechHeroicAgeRheia, 1); } }
-        if (majorGod == cAPMajorOranos) { if (trTechStatusActive(1, cTechHeroicAgeHyperion) == false) { trTechSetStatus(1, cTechHeroicAgeHyperion, 1); } if (trTechStatusActive(1, cTechHeroicAgeTheia) == false) { trTechSetStatus(1, cTechHeroicAgeTheia, 1); } }
-        if (majorGod == cAPMajorGaia)   { if (trTechStatusActive(1, cTechHeroicAgeRheia) == false) { trTechSetStatus(1, cTechHeroicAgeRheia, 1); } if (trTechStatusActive(1, cTechHeroicAgeTheia) == false) { trTechSetStatus(1, cTechHeroicAgeTheia, 1); } }
+        trTechSetStatus(1, cTechHeroicAgeAtlantean, 2);
+        if (majorGod == cAPMajorKronos) { trTechSetStatus(1, cTechHeroicAgeHyperion, 2); trTechSetStatus(1, cTechHeroicAgeRheia, 2);  }
+        if (majorGod == cAPMajorOranos) { trTechSetStatus(1, cTechHeroicAgeHyperion, 2); trTechSetStatus(1, cTechHeroicAgeTheia, 2);  }
+        if (majorGod == cAPMajorGaia)   { trTechSetStatus(1, cTechHeroicAgeRheia, 2);    trTechSetStatus(1, cTechHeroicAgeTheia, 2);  }
     }
-    if (ageCount >= 3)
+    if (startingFloor >= 3)
     {
-        if (trTechStatusActive(1, cTechMythicAgeAtlantean) == false) { trTechSetStatus(1, cTechMythicAgeAtlantean, 1); }
-        if (majorGod == cAPMajorKronos) { if (trTechStatusActive(1, cTechMythicAgeHelios) == false) { trTechSetStatus(1, cTechMythicAgeHelios, 1); } if (trTechStatusActive(1, cTechMythicAgeAtlas) == false) { trTechSetStatus(1, cTechMythicAgeAtlas, 1); } }
-        if (majorGod == cAPMajorOranos) { if (trTechStatusActive(1, cTechMythicAgeHelios) == false) { trTechSetStatus(1, cTechMythicAgeHelios, 1); } if (trTechStatusActive(1, cTechMythicAgeHekate) == false) { trTechSetStatus(1, cTechMythicAgeHekate, 1); } }
-        if (majorGod == cAPMajorGaia)   { if (trTechStatusActive(1, cTechMythicAgeAtlas) == false) { trTechSetStatus(1, cTechMythicAgeAtlas, 1); } if (trTechStatusActive(1, cTechMythicAgeHekate) == false) { trTechSetStatus(1, cTechMythicAgeHekate, 1); } }
+        trTechSetStatus(1, cTechMythicAgeAtlantean, 2);
+        if (majorGod == cAPMajorKronos) { trTechSetStatus(1, cTechMythicAgeHelios, 2); trTechSetStatus(1, cTechMythicAgeAtlas, 2);   }
+        if (majorGod == cAPMajorOranos) { trTechSetStatus(1, cTechMythicAgeHelios, 2); trTechSetStatus(1, cTechMythicAgeHekate, 2);  }
+        if (majorGod == cAPMajorGaia)   { trTechSetStatus(1, cTechMythicAgeAtlas, 2);  trTechSetStatus(1, cTechMythicAgeHekate, 2);  }
+    }
+
+    if (ageCount >= 1 && startingFloor < 1)
+    {
+        trTechSetStatus(1, cTechClassicalAgeAtlantean, 1);
+        if (majorGod == cAPMajorKronos) { trTechSetStatus(1, cTechClassicalAgePrometheus, 1); trTechSetStatus(1, cTechClassicalAgeLeto, 1);    }
+        if (majorGod == cAPMajorOranos) { trTechSetStatus(1, cTechClassicalAgePrometheus, 1); trTechSetStatus(1, cTechClassicalAgeOceanus, 1);  }
+        if (majorGod == cAPMajorGaia)   { trTechSetStatus(1, cTechClassicalAgeLeto, 1);        trTechSetStatus(1, cTechClassicalAgeOceanus, 1);  }
+    }
+    if (ageCount >= 2 && startingFloor < 2)
+    {
+        trTechSetStatus(1, cTechHeroicAgeAtlantean, 1);
+        if (majorGod == cAPMajorKronos) { trTechSetStatus(1, cTechHeroicAgeHyperion, 1); trTechSetStatus(1, cTechHeroicAgeRheia, 1);  }
+        if (majorGod == cAPMajorOranos) { trTechSetStatus(1, cTechHeroicAgeHyperion, 1); trTechSetStatus(1, cTechHeroicAgeTheia, 1);  }
+        if (majorGod == cAPMajorGaia)   { trTechSetStatus(1, cTechHeroicAgeRheia, 1);    trTechSetStatus(1, cTechHeroicAgeTheia, 1);  }
+    }
+    if (ageCount >= 3 && startingFloor < 3)
+    {
+        trTechSetStatus(1, cTechMythicAgeAtlantean, 1);
+        if (majorGod == cAPMajorKronos) { trTechSetStatus(1, cTechMythicAgeHelios, 1); trTechSetStatus(1, cTechMythicAgeAtlas, 1);   }
+        if (majorGod == cAPMajorOranos) { trTechSetStatus(1, cTechMythicAgeHelios, 1); trTechSetStatus(1, cTechMythicAgeHekate, 1);  }
+        if (majorGod == cAPMajorGaia)   { trTechSetStatus(1, cTechMythicAgeAtlas, 1);  trTechSetStatus(1, cTechMythicAgeHekate, 1);  }
     }
 }
 
@@ -1993,41 +2174,36 @@ void APApplyAgeUnlocks()
         if (id == cATLANTEAN_AGE_UNLOCK)  { atlanteanCount++; }
     }
 
-    // Effective age count = max(scenario floor, player's earned unlocks).
-    // Re-apply using the effective count so APApply*MinorGods always
-    // grants at least the scenario floor and at most what the player has earned.
-    // grants at least the floor and at most what the player has earned.
-    // Force-disabling the other three civs prevents scenario editor triggers
-    // from leaving stale age techs active for the unassigned civs.
+    // scenarioFloor = the age tiers already active at scenario start.
+    // APApply*MinorGods will:
+    //   - Re-activate floor tiers as status 2 (after the force-disable clears them)
+    //   - Set tiers above the floor as status 1 (researchable) only if playerCount allows
+    //   - Leave everything else at status 0
     int scenarioFloor = APGetStartingAgeCount(gAPScenarioId);
     if (gAPMajorGod == cAPMajorZeus || gAPMajorGod == cAPMajorPoseidon || gAPMajorGod == cAPMajorHades)
     {
-        int effGreek = greekCount; if (scenarioFloor > effGreek) { effGreek = scenarioFloor; }
-        APApplyGreekMinorGods(gAPMajorGod, effGreek);
+        APApplyGreekMinorGods(gAPMajorGod, greekCount, scenarioFloor);
         APForceDisableAllEgyptianAgeTechs();
         APForceDisableAllNorseAgeTechs();
         APForceDisableAllAtlanteanAgeTechs();
     }
     if (gAPMajorGod == cAPMajorIsis || gAPMajorGod == cAPMajorRa || gAPMajorGod == cAPMajorSet)
     {
-        int effEgyptian = egyptianCount; if (scenarioFloor > effEgyptian) { effEgyptian = scenarioFloor; }
-        APApplyEgyptianMinorGods(gAPMajorGod, effEgyptian);
+        APApplyEgyptianMinorGods(gAPMajorGod, egyptianCount, scenarioFloor);
         APForceDisableAllGreekAgeTechs();
         APForceDisableAllNorseAgeTechs();
         APForceDisableAllAtlanteanAgeTechs();
     }
     if (gAPMajorGod == cAPMajorOdin || gAPMajorGod == cAPMajorThor || gAPMajorGod == cAPMajorLoki)
     {
-        int effNorse = norseCount; if (scenarioFloor > effNorse) { effNorse = scenarioFloor; }
-        APApplyNorseMinorGods(gAPMajorGod, effNorse);
+        APApplyNorseMinorGods(gAPMajorGod, norseCount, scenarioFloor);
         APForceDisableAllGreekAgeTechs();
         APForceDisableAllEgyptianAgeTechs();
         APForceDisableAllAtlanteanAgeTechs();
     }
     if (gAPMajorGod == cAPMajorKronos || gAPMajorGod == cAPMajorOranos || gAPMajorGod == cAPMajorGaia)
     {
-        int effAtlantean = atlanteanCount; if (scenarioFloor > effAtlantean) { effAtlantean = scenarioFloor; }
-        APApplyAtlanteanMinorGods(gAPMajorGod, effAtlantean);
+        APApplyAtlanteanMinorGods(gAPMajorGod, atlanteanCount, scenarioFloor);
         APForceDisableAllGreekAgeTechs();
         APForceDisableAllEgyptianAgeTechs();
         APForceDisableAllNorseAgeTechs();

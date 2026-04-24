@@ -42,47 +42,6 @@ Starting with the Greek block is the easiest."""
     default = option_greek
 
 
-class StartingGreekAgeUnlocks(Range):
-    """You cannot advance ages until you have received enough Progressive Age Unlock items. For each civilization:
-  1st unlock = Classical Age available
-  2nd unlock = Heroic Age available
-  3rd unlock = Mythic Age available
-
-Scenarios will not be in logic until you can reach a reasonable age to beat them.
-Starting with unlocks makes more scenarios accessible earlier and an easier experience.
-
----
-
-Number of Progressive Greek Age Unlock items with which to start:"""
-    internal_name = "starting_greek_age_unlocks"
-    display_name = "Starting Greek Age Unlocks"
-    range_start = 0
-    range_end   = 3
-    default     = 0
-
-
-class StartingEgyptianAgeUnlocks(Range):
-    """Number of Progressive Egyptian Age Unlock items with which to start:"""
-    internal_name = "starting_egyptian_age_unlocks"
-    display_name = "Starting Egyptian Age Unlocks"
-    range_start = 0
-    range_end   = 3
-    default     = 0
-
-
-class StartingNorseAgeUnlocks(Range):
-    """Number of Progressive Norse Age Unlock items with which to start:"""
-    internal_name = "starting_norse_age_unlocks"
-    display_name = "Starting Norse Age Unlocks"
-    range_start = 0
-    range_end   = 3
-    default     = 0
-
-
-#################
-# Final Section #
-#################
-
 class FinalScenarios(Choice):
     """What unlocks the Final scenario block (scenarios 31-32)?
 
@@ -144,18 +103,6 @@ class GemShop(Toggle):
     internal_name = "gem_shop"
     display_name = "Gem Shop"
     default = 1
-
-
-class StartingGems(Range):
-    """
-    Number of Gems to start with (only used when Gem Shop is enabled).
-    Gems are earned by beating scenarios (1 per scenario, up to 31).
-    """
-    internal_name = "starting_gems"
-    display_name  = "Starting Gems"
-    range_start   = 0
-    range_end     = 10
-    default       = 0
 
 
 class WinsToOpenShop(Range):
@@ -282,14 +229,10 @@ class AomOptions(PerGameCommonOptions):
     start_inventory_from_pool:       StartInventoryPool
     goal:                            Goal
     starting_scenarios:              StartingScenarios
-    starting_greek_age_unlocks:      StartingGreekAgeUnlocks
-    starting_egyptian_age_unlocks:   StartingEgyptianAgeUnlocks
-    starting_norse_age_unlocks:      StartingNorseAgeUnlocks
     final_scenarios:                 FinalScenarios
     x_scenarios:                     XScenarios
     extra_final_mission_age_unlocks: ExtraFinalMissionAgeUnlocks
     gem_shop:                        GemShop
-    starting_gems:                   StartingGems
     wins_to_open_shop:               WinsToOpenShop
     random_major_gods:                       Random_Major_Gods
     force_different_god:                ForceDifferentGod

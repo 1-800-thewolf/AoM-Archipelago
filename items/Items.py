@@ -212,14 +212,27 @@ class VillagerFoodCost:
 
 
 @dataclass
-class ProgressiveEconomyTech:
-    """Progressive economy technology upgrade. Count determines which tiers are applied."""
+class StartingEconomyTech:
+    """Grants all economy technologies up to and including the scenario's starting age."""
     pass
 
 
 @dataclass
-class ProgressiveMilitaryTech:
-    """Progressive military technology upgrade. Count determines which tiers are applied."""
+class StartingMilitaryTech:
+    """Grants all military technologies up to and including the scenario's starting age."""
+    pass
+
+
+@dataclass
+class StartingDockTech:
+    """Grants all dock technologies up to and including the scenario's starting age."""
+    pass
+
+
+@dataclass
+class StartingBuildingsTech:
+    """Grants all building technologies up to and including the scenario's starting age,
+    filtered by the assigned civilization for civ-specific techs."""
     pass
 
 
@@ -285,8 +298,10 @@ item_type_to_classification: dict[type, ItemClassification] = {
     AtlanteanUnitUnlockProgression: ItemClassification.progression,
     AtlanteanUnitUnlockUseful:      ItemClassification.useful,
     AtlanteanMythUnitUnlock:        ItemClassification.progression,
-    ProgressiveEconomyTech:         ItemClassification.useful,
-    ProgressiveMilitaryTech:        ItemClassification.useful,
+    StartingEconomyTech:            ItemClassification.useful,
+    StartingMilitaryTech:           ItemClassification.useful,
+    StartingDockTech:               ItemClassification.filler,
+    StartingBuildingsTech:          ItemClassification.filler,
 }
 
 
@@ -514,13 +529,16 @@ class aomItemData(enum.IntEnum):
     ATLANTEAN_MYTHIC_MYTH_UNITS    = 5027, "Can train Atlantean Mythic Myth Units",    AtlanteanMythUnitUnlock(['Centimanus', 'Argus', 'Lampades', 'ManOWar'], "Atlantean", "Mythic")
 
     # -----------------------------------------------------------------------
-    # Progressive Tech Upgrades — IDs 5100-5101
-    # 3 copies of each are placed in the useful pool (added explicitly in
-    # create_items). Count of received copies gates which tech tiers apply,
-    # and tiers are only applied if the scenario starting age >= the tier.
+    # Starting Tech items — IDs 5100-5103
+    # 1 copy of each placed in the pool.
+    # StartingEconomyTech / StartingMilitaryTech: Useful — grants all techs
+    #   up to and including the scenario's starting age.
+    # StartingDockTech / StartingBuildingsTech: Filler — same behaviour.
     # -----------------------------------------------------------------------
-    PROGRESSIVE_ECONOMY_TECH  = 5100, "Progressive Economy Tech",  ProgressiveEconomyTech()
-    PROGRESSIVE_MILITARY_TECH = 5101, "Progressive Military Tech", ProgressiveMilitaryTech()
+    STARTING_ECONOMY_TECH   = 5100, "Starting Economy Tech",    StartingEconomyTech()
+    STARTING_MILITARY_TECH  = 5101, "Starting Military Tech",   StartingMilitaryTech()
+    STARTING_DOCK_TECH      = 5102, "Starting Dock Tech",       StartingDockTech()
+    STARTING_BUILDINGS_TECH = 5103, "Starting Buildings Tech",  StartingBuildingsTech()
 
     # -----------------------------------------------------------------------
     # Reinforcements — Additional Filler

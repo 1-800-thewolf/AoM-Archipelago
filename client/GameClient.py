@@ -92,7 +92,6 @@ class AoMGameContext:
     ap_seed:     str = ""   # seed_name from RoomInfo
     ap_slot:     str = ""   # slot name (auth) the player connected with
     # Shop state
-    starting_gems: int = 0
     wins_to_open_shop: int = 5
     world_id: int = 0
     gem_shop_enabled: bool = True

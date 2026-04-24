@@ -908,7 +908,7 @@ class AoMContext(CommonContext):
             {int(k): v for k, v in raw_forbids.items()} if raw_forbids else {}
         )
         self.game_ctx.gem_shop_enabled      = bool(slot_data.get("gem_shop", True))
-        self.game_ctx.starting_gems         = int(slot_data.get("starting_gems", 0))
+        self.game_
         self.game_ctx.wins_to_open_shop     = int(slot_data.get("wins_to_open_shop", 4))
         self.game_ctx.shop_obelisk_assignments = slot_data.get("shop_obelisk_assignments", {})
         self.game_ctx.shop_item_details     = {int(k): v for k, v in slot_data.get("shop_item_details", {}).items()}
