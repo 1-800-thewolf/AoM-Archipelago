@@ -376,66 +376,31 @@ class AoMCommandProcessor(ClientCommandProcessor):
         for name in untouched_list:
             self.output(f"  {name}")
 
-    def _cmd_gods(self) -> None:
-        """Show the randomized major god for each scenario (random_major_gods mode only)."""
-        ctx = self.ctx
-        if not ctx.game_ctx.random_major_gods:
-            self.output("Random_Major_Gods is not enabled for this seed.")
-            return
-        god_names = {
-            1: "Zeus",   2: "Poseidon", 3: "Hades",
-            4: "Isis",   5: "Ra",       6: "Set",
-            7: "Odin",   8: "Thor",     9: "Loki",
-            10: "Kronos", 11: "Oranos", 12: "Gaia",
-        }
-        scenario_names = {
-            1:"1. Omens", 2:"2. Consequences", 3:"3. Scratching the Surface",
-            4:"4. A Fine Plan", 5:"5. Just Enough Rope", 6:"6. I Hope This Works",
-            7:"7. More Bandits", 8:"8. Bad News", 9:"9. Revelation",
-            10:"10. Strangers", 11:"11. The Lost Relic", 12:"12. Light Sleeper",
-            13:"13. Tug of War", 14:"14. Isis, Hear My Plea", 15:"15. Let's Go",
-            16:"16. Good Advice", 17:"17. The Jackal's Stronghold",
-            18:"18. A Long Way From Home", 19:"19. Watch That First Step",
-            20:"20. Where They Belong", 21:"21. Old Friends", 22:"22. North",
-            23:"23. The Dwarven Forge", 24:"24. Not From Around Here",
-            25:"25. Welcoming Committee", 26:"26. Union",
-            27:"27. The Well of Urd", 28:"28. Beneath the Surface",
-            29:"29. Unlikely Heroes", 30:"30. All Is Not Lost",
-            31:"31. Welcome Back", 32:"32. A Place in My Dreams",
-        }
-        self.output("=== Random_Major_Gods God Assignments ===")
-        for n in range(1, 33):
-            god_id = ctx.game_ctx.god_assignments.get(n, 0)
-            god    = god_names.get(god_id, "Unknown")
-            name   = scenario_names.get(n, str(n))
-            self.output(f"  {name}: {god}")
-
-
     # ---------------------------------------------------------------------------
     # Civilization item commands — unit/myth unlocks and age unlocks only
     # ---------------------------------------------------------------------------
 
     @staticmethod
     def _is_civ_item(item) -> bool:
-        """True if item is a civ-specific unit unlock, myth unlock, or age unlock."""
+        """True only for items whose type carries a `culture` field (age unlocks,
+        unit unlocks, myth unit unlocks). Reinforcements, hero stat boosts, hero
+        special effects, hero action boosts, and villager items are generic and
+        always return False regardless of the unit or hero's in-game civ."""
         try:
             from ..items.Items import (
                 UnitUnlockProgression, UnitUnlockUseful, AgeUnlock,
                 MythUnitUnlockProgression, MythUnitUnlockUseful, MythUnitUnlockFiller,
-            )
-            civ_types = (UnitUnlockProgression, UnitUnlockUseful, AgeUnlock,
-                         MythUnitUnlockProgression, MythUnitUnlockUseful, MythUnitUnlockFiller)
-        except ImportError:
-            return False
-        try:
-            from ..items.Items import (
                 AtlanteanUnitUnlockProgression, AtlanteanUnitUnlockUseful,
                 AtlanteanMythUnitUnlock,
             )
-            civ_types = civ_types + (AtlanteanUnitUnlockProgression,
-                                     AtlanteanUnitUnlockUseful, AtlanteanMythUnitUnlock)
-        except (ImportError, AttributeError):
-            pass
+            civ_types = (
+                UnitUnlockProgression, UnitUnlockUseful, AgeUnlock,
+                MythUnitUnlockProgression, MythUnitUnlockUseful, MythUnitUnlockFiller,
+                AtlanteanUnitUnlockProgression, AtlanteanUnitUnlockUseful,
+                AtlanteanMythUnitUnlock,
+            )
+        except ImportError:
+            return False
         return isinstance(item.type, civ_types)
 
     def _cmd_civ_items(self, civ_label: str, civ_filter) -> None:
@@ -457,7 +422,10 @@ class AoMCommandProcessor(ClientCommandProcessor):
             self.output(f"  {name}")
 
     def _cmd_greek(self) -> None:
-        """Show Greek age progress and received items."""
+        """Show Greek age progress and received civ-specific items.
+        Includes: age unlocks, unit unlocks, myth unit unlocks,
+        and villager carry capacity items.
+        Does NOT include reinforcements or hero items (those are generic — use /generic)."""
         ctx = self.ctx
         try:
             from ..items.Items import aomItemData, AgeUnlock
@@ -487,7 +455,10 @@ class AoMCommandProcessor(ClientCommandProcessor):
                 self.output(f"  {name}")
 
     def _cmd_egypt(self) -> None:
-        """Show Egyptian age progress and received items."""
+        """Show Egyptian age progress and received civ-specific items.
+        Includes: age unlocks, unit unlocks, myth unit unlocks,
+        and villager carry capacity items.
+        Does NOT include reinforcements or hero items (those are generic — use /generic)."""
         ctx = self.ctx
         try:
             from ..items.Items import aomItemData, AgeUnlock
@@ -517,7 +488,10 @@ class AoMCommandProcessor(ClientCommandProcessor):
                 self.output(f"  {name}")
 
     def _cmd_norse(self) -> None:
-        """Show Norse age progress and received items."""
+        """Show Norse age progress and received civ-specific items.
+        Includes: age unlocks, unit unlocks, myth unit unlocks,
+        and villager carry capacity items.
+        Does NOT include reinforcements or hero items (those are generic — use /generic)."""
         ctx = self.ctx
         try:
             from ..items.Items import aomItemData, AgeUnlock
@@ -547,7 +521,10 @@ class AoMCommandProcessor(ClientCommandProcessor):
                 self.output(f"  {name}")
 
     def _cmd_atlantean(self) -> None:
-        """Show Atlantean age progress and received items."""
+        """Show Atlantean age progress and received civ-specific items.
+        Includes: age unlocks, unit unlocks, myth unit unlocks,
+        and villager carry capacity items.
+        Does NOT include reinforcements or hero items (those are generic — use /generic)."""
         ctx = self.ctx
         try:
             from ..items.Items import aomItemData, AgeUnlock
@@ -577,7 +554,10 @@ class AoMCommandProcessor(ClientCommandProcessor):
                 self.output(f"  {name}")
 
     def _cmd_generic(self) -> None:
-        """Show received non-civ items: heroes, resources, reinforcements, etc."""
+        """Show received generic items: resources, passive income, reinforcements,
+        hero stat boosts, hero abilities, villager discounts, starting tech items,
+        gems, and shop info. Reinforcements and hero items are generic regardless
+        of the unit or hero's in-game civilization."""
         self._cmd_civ_items("Generic", lambda item: not self._is_civ_item(item))
 
     # Aliases for /gods
@@ -625,16 +605,15 @@ class AoMCommandProcessor(ClientCommandProcessor):
 
 
     def _cmd_gods(self) -> None:
-        """Show the randomized major god for each scenario (random_major_gods mode only)."""
+        """Show the randomized major god for each active scenario.
+        Only available when Random_Major_Gods is enabled.
+
+        Output format: scenario_name (GodName)
+        Example: 1. Omens (Set)
+        """
         ctx = self.ctx
         if not ctx.game_ctx.random_major_gods:
             self.output("Random_Major_Gods is not enabled for this seed.")
-            return
-
-        try:
-            from ..rules.Rules import _SCENARIO_DATA
-        except Exception:
-            self.output("Could not load scenario logic data.")
             return
 
         god_names = {
@@ -643,40 +622,70 @@ class AoMCommandProcessor(ClientCommandProcessor):
             7: "Odin",   8: "Thor",     9: "Loki",
             10: "Kronos", 11: "Oranos", 12: "Gaia",
         }
-        # max_unlock_count in _SCENARIO_DATA is the number of age unlocks logic requires (0-3).
-        # Exempt scenarios have no age rule → No Age Expected.
-        # Non-exempt: if the scenario already starts at or above the required
-        # age (start_age_num - 1 >= max_unlock_count), no advancement needed.
-        age_names = ["Classical", "Heroic", "Mythic"]
+        # Scenario names keyed by APScenarioID.
+        # FotT uses IDs 1-32, New Atlantis 501-512, Golden Gift 601-604.
         scenario_names = {
-            1:"1. Omens", 2:"2. Consequences", 3:"3. Scratching the Surface",
-            4:"4. A Fine Plan", 5:"5. Just Enough Rope", 6:"6. I Hope This Works",
-            7:"7. More Bandits", 8:"8. Bad News", 9:"9. Revelation",
-            10:"10. Strangers", 11:"11. The Lost Relic", 12:"12. Light Sleeper",
-            13:"13. Tug of War", 14:"14. Isis, Hear My Plea", 15:"15. Let's Go",
-            16:"16. Good Advice", 17:"17. The Jackal's Stronghold",
-            18:"18. A Long Way From Home", 19:"19. Watch That First Step",
-            20:"20. Where They Belong", 21:"21. Old Friends", 22:"22. North",
-            23:"23. The Dwarven Forge", 24:"24. Not From Around Here",
-            25:"25. Welcoming Committee", 26:"26. Union",
-            27:"27. The Well of Urd", 28:"28. Beneath the Surface",
-            29:"29. Unlikely Heroes", 30:"30. All Is Not Lost",
-            31:"31. Welcome Back", 32:"32. A Place in My Dreams",
+            # Fall of the Trident
+            1:"1. Omens",                        2:"2. Consequences",
+            3:"3. Scratching the Surface",        4:"4. A Fine Plan",
+            5:"5. Just Enough Rope",              6:"6. I Hope This Works",
+            7:"7. More Bandits",                  8:"8. Bad News",
+            9:"9. Revelation",                    10:"10. Strangers",
+            11:"11. The Lost Relic",              12:"12. Light Sleeper",
+            13:"13. Tug of War",                  14:"14. Isis, Hear My Plea",
+            15:"15. Let's Go",                    16:"16. Good Advice",
+            17:"17. The Jackal's Stronghold",     18:"18. A Long Way From Home",
+            19:"19. Watch That First Step",       20:"20. Where They Belong",
+            21:"21. Old Friends",                 22:"22. North",
+            23:"23. The Dwarven Forge",           24:"24. Not From Around Here",
+            25:"25. Welcoming Committee",         26:"26. Union",
+            27:"27. The Well of Urd",             28:"28. Beneath the Surface",
+            29:"29. Unlikely Heroes",             30:"30. All Is Not Lost",
+            31:"31. Welcome Back",                32:"32. A Place in My Dreams",
+            # New Atlantis
+            501:"NA1. A Lost People",             502:"NA2. Atlantis Reborn",
+            503:"NA3. Greetings From Greece",     504:"NA4. Odin's Tower",
+            505:"NA5. The Ancient Relics",        506:"NA6. Mount Olympus",
+            507:"NA7. Betrayal at Sikyos",        508:"NA8. Cerberus",
+            509:"NA9. Rampage",                   510:"NA10. Making Amends",
+            511:"NA11. Atlantis Betrayed",        512:"NA12. War of the Titans",
+            # The Golden Gift
+            601:"GG1. Brokk's Journey",           602:"GG2. Eitri's Journey",
+            603:"GG3. Fight at the Forge",        604:"GG4. Loki's Temples",
         }
-        self.output("=== Random_Major_Gods God Assignments ===")
-        for n in range(1, 33):
-            god_id = ctx.game_ctx.god_assignments.get(n, 0)
-            god    = god_names.get(god_id, "Unknown")
-            name   = scenario_names.get(n, str(n))
-            data   = _SCENARIO_DATA.get(n, (1, 0, 0.0, True, False))
-            start_age_num, max_unlock_count, _, is_exempt, _ = data
-            if is_exempt or max_unlock_count == 0 or (start_age_num - 1) >= max_unlock_count:
-                age_label = "No Age Expected"
-            else:
-                # tier 1→Classical, 2→Heroic, 3→Mythic (capped at start+1 and 3)
-                age_tier  = min(max_unlock_count, start_age_num + 1, 3)
-                age_label = f"{age_names[age_tier - 1]} Age Expected"
-            self.output(f"  {name} ({god} - {age_label})")
+
+        assignments = ctx.game_ctx.god_assignments
+        if not assignments:
+            self.output("No god assignments found.")
+            return
+
+        # Group by campaign for readable output
+        fott_ids = [n for n in range(1, 33)    if n in assignments]
+        na_ids   = [n for n in range(501, 513) if n in assignments]
+        gg_ids   = [n for n in range(601, 605) if n in assignments]
+
+        def print_group(ids, header):
+            if not ids:
+                return
+            self.output(header)
+            for n in ids:
+                god_id = assignments[n]
+                god    = god_names.get(god_id, "Unknown")
+                name   = scenario_names.get(n, str(n))
+                self.output(f"  {name} ({god})")
+
+        print_group(fott_ids, "=== Fall of the Trident ===")
+        print_group(na_ids,   "=== The New Atlantis ===")
+        print_group(gg_ids,   "=== The Golden Gift ===")
+
+        # NOTE: Age expectation display was removed to reduce clutter.
+        # To re-enable it, import _SCENARIO_DATA from rules.Rules and add:
+        #   start_age_num, min_required_unlocks, _, is_exempt, _ = _SCENARIO_DATA.get(n, (1,0,0.0,True,False))
+        #   no_tc     = is_exempt or n == 7
+        #   floor_age = ["Archaic","Classical","Heroic","Mythic"][min(min_required_unlocks, 3)]
+        #   age_label = "Starting Age Only" if (no_tc or min_required_unlocks == 0) else
+        #               f"Must reach {floor_age} ({min_required_unlocks} unlocks, Mythic possible with 3)"
+        # Then append f" — {age_label}" to each output line.
 
 
     # ---------------------------------------------------------------------------
@@ -692,11 +701,11 @@ class AoMCommandProcessor(ClientCommandProcessor):
             from ..items.Items import (
                 AgeUnlock, UnitUnlockProgression, UnitUnlockUseful,
                 MythUnitUnlockProgression, MythUnitUnlockUseful, MythUnitUnlockFiller,
-                VillagerCarryCapacity, VillagerFoodCost,
+                VillagerCarryCapacity,
             )
             types = (AgeUnlock, UnitUnlockProgression, UnitUnlockUseful,
                      MythUnitUnlockProgression, MythUnitUnlockUseful, MythUnitUnlockFiller,
-                     VillagerCarryCapacity, VillagerFoodCost)
+                     VillagerCarryCapacity)
             try:
                 from ..items.Items import (
                     AtlanteanUnitUnlockProgression, AtlanteanUnitUnlockUseful,
@@ -908,7 +917,6 @@ class AoMContext(CommonContext):
             {int(k): v for k, v in raw_forbids.items()} if raw_forbids else {}
         )
         self.game_ctx.gem_shop_enabled      = bool(slot_data.get("gem_shop", True))
-        self.game_
         self.game_ctx.wins_to_open_shop     = int(slot_data.get("wins_to_open_shop", 4))
         self.game_ctx.shop_obelisk_assignments = slot_data.get("shop_obelisk_assignments", {})
         self.game_ctx.shop_item_details     = {int(k): v for k, v in slot_data.get("shop_item_details", {}).items()}

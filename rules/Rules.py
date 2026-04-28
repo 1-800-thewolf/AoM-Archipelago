@@ -151,39 +151,75 @@ def _unlock_names_for_god(god_id: int) -> list[str]:
 # Age nums: 1=Archaic 2=Classical 3=Heroic 4=Mythic
 # --------------------------------------------------
 
+# (start_age_num, min_required_unlocks, points_needed, is_exempt, is_myth_only)
+#
+# start_age_num: 1=Archaic, 2=Classical, 3=Heroic, 4=Mythic
+# min_required_unlocks: minimum age unlock ITEMS the player must have to enter
+#   this scenario in logic. Matches the vanilla game's maximum reachable age.
+#   This is a FLOOR — with more unlocks the player can advance further.
+#   1 = must reach Classical, 2 = must reach Heroic, 3 = must reach Mythic.
+#   0 = no age advancement needed (scenario is in logic with starting-age units).
 _SCENARIO_DATA: dict[int, tuple[int, int, float, bool, bool]] = {
-    1:  (1, 0,  0.0,  True,  False),
-    2:  (1, 1,  4.0,  False, False),
-    3:  (1, 2,  9.0,  False, False),
-    4:  (2, 3, 16.0,  False, False),
-    5:  (3, 3, 16.0,  False, False),
-    6:  (3, 2,  9.0,  False, False),
-    7:  (3, 0,  1.0,  False, False),   # special: 1pt required, human units excluded
-    8:  (2, 3, 16.0,  False, False),
-    9:  (4, 3,  0.0,  True,  False),
-    10: (1, 3,  0.0,  True,  False),
-    11: (1, 3,  0.0,  True,  False),
-    12: (1, 3, 16.0,  False, False),
-    13: (3, 3, 16.0,  False, False),
-    14: (3, 2,  9.0,  False, True),
-    15: (2, 3, 16.0,  False, False),
-    16: (4, 3,  0.0,  True,  False),
-    17: (3, 3, 16.0,  False, False),
-    18: (2, 3, 16.0,  False, False),
-    19: (3, 3, 16.0,  False, False),
-    20: (3, 3, 16.0,  False, False),
-    21: (2, 3, 16.0,  False, False),
-    22: (1, 2,  9.0,  False, False),
-    23: (2, 3, 16.0,  False, False),
-    24: (2, 2,  9.0,  False, False),
-    25: (1, 3,  0.0,  True,  False),
-    26: (2, 3, 16.0,  False, False),
-    27: (2, 3, 16.0,  False, False),
-    28: (3, 3, 16.0,  False, False),
-    29: (2, 3,  0.0,  True,  False),
-    30: (2, 3, 16.0,  False, False),
-    31: (3, 3, 16.0,  False, False),
-    32: (3, 3, 16.0,  False, False),
+    1:  (1, 0,  0.0,  True,  False),  # no TC; always accessible
+    2:  (1, 1,  4.0,  False, False),  # must reach Classical ("Advance to Classical" objective)
+    3:  (1, 2,  9.0,  False, False),  # must reach Heroic
+    4:  (2, 3, 16.0,  False, False),  # must reach Mythic
+    5:  (3, 3, 16.0,  False, False),  # must reach Mythic
+    6:  (3, 2,  9.0,  False, False),  # must reach Heroic
+    7:  (3, 0,  1.0,  False, False),  # special: no TC, no age req, 1pt required
+    8:  (2, 3, 16.0,  False, False),  # must reach Mythic
+    9:  (4, 0,  0.0,  True,  False),  # always accessible
+    10: (1, 0,  0.0,  True,  False),  # always accessible
+    11: (1, 0,  0.0,  True,  False),  # always accessible
+    12: (1, 3, 16.0,  False, False),  # must reach Mythic
+    13: (3, 3, 16.0,  False, False),  # must reach Mythic
+    14: (3, 2,  9.0,  False, True),   # myth-only, must reach Heroic
+    15: (2, 3, 16.0,  False, False),  # must reach Mythic
+    16: (4, 0,  0.0,  True,  False),  # always accessible
+    17: (3, 3, 16.0,  False, False),  # must reach Mythic
+    18: (2, 3, 16.0,  False, False),  # must reach Mythic
+    19: (3, 3, 16.0,  False, False),  # must reach Mythic
+    20: (3, 3, 16.0,  False, False),  # must reach Mythic
+    21: (2, 3, 16.0,  False, False),  # must reach Mythic
+    22: (1, 2,  9.0,  False, False),  # must reach Heroic
+    23: (2, 3, 16.0,  False, False),  # must reach Mythic
+    24: (2, 2,  9.0,  False, False),  # must reach Heroic ("Advance to Heroic" objective)
+    25: (1, 0,  0.0,  True,  False),  # no TC; always accessible
+    26: (2, 3, 16.0,  False, False),  # must reach Mythic
+    27: (2, 3, 16.0,  False, False),  # must reach Mythic
+    28: (3, 3, 16.0,  False, False),  # must reach Mythic
+    29: (2, 0,  0.0,  True,  False),  # always accessible
+    30: (2, 3, 16.0,  False, False),  # must reach Mythic
+    31: (3, 3, 16.0,  False, False),  # must reach Mythic
+    32: (3, 3, 16.0,  False, False),  # must reach Mythic
+    # ---------------------------------------------------------------------------
+    # New Atlantis (APScenarioIDs 501-512) — starting ages TBD
+    # is_exempt=True for no-TC scenarios (503, 506, 512).
+    # Update start_age_num and min_required_unlocks once starting ages are confirmed.
+    # ---------------------------------------------------------------------------
+    # start_age_num: 1=Archaic,2=Classical,3=Heroic,4=Mythic
+    # min_required_unlocks: 0=no advancement needed (exempt/no-TC), 3=must reach Mythic
+    501: (3, 3, 16.0, False, False),  # Heroic start; must reach Mythic
+    502: (1, 1,  4.0, False, False),  # Archaic start; must reach Classical (Advance objective)
+    503: (3, 0,  0.0, True,  False),  # Heroic start, no TC — always accessible
+    504: (3, 3, 16.0, False, False),  # Heroic start; must reach Mythic
+    505: (3, 0,  0.0, True,  False),  # Heroic start, no TC — always accessible (no age needed)
+    506: (4, 0,  0.0, True,  False),  # Mythic start, no TC — always accessible
+    507: (3, 3, 16.0, False, False),  # Heroic start; must reach Mythic
+    508: (3, 3, 16.0, False, False),  # Heroic start; must reach Mythic
+    509: (3, 3, 16.0, False, False),  # Heroic start; must reach Mythic
+    510: (3, 3, 16.0, False, False),  # Heroic start; must reach Mythic
+    511: (4, 0,  0.0, True,  False),  # Mythic start — always accessible
+    512: (4, 0,  0.0, True,  False),  # Mythic start, no TC — always accessible
+    # ---------------------------------------------------------------------------
+    # The Golden Gift (APScenarioIDs 601-604)
+    # All start Heroic (start_age_num=3). min_required_unlocks=0 for Heroic-max
+    # scenarios (601,602,604); =1 for GG3 which can reach Mythic.
+    # ---------------------------------------------------------------------------
+    601: (3, 0,  4.0,  False, False),  # Heroic start, Heroic max
+    602: (3, 0,  4.0,  False, False),  # Heroic start, Heroic max
+    603: (3, 1,  9.0,  False, False),  # Heroic start, Mythic max (1 unlock enables Mythic)
+    604: (4, 0,  0.0,  True,  False),  # Mythic start, no further advancement — always accessible
 }
 
 _VANILLA_CIV: dict[int, str] = {
@@ -196,6 +232,12 @@ _VANILLA_CIV: dict[int, str] = {
     22: "Norse", 23: "Norse", 24: "Norse", 25: "Norse",
     26: "Norse", 27: "Norse", 28: "Norse", 29: "Norse", 30: "Norse",
     31: "Greek", 32: "Greek",
+    # New Atlantis (APScenarioIDs 501-512)
+    501: "Atlantean", 502: "Atlantean", 503: "Atlantean", 504: "Atlantean",
+    505: "Atlantean", 506: "Atlantean", 507: "Egyptian",  508: "Egyptian",
+    509: "Norse",     510: "Atlantean", 511: "Atlantean", 512: "Atlantean",
+    # The Golden Gift (APScenarioIDs 601-604)
+    601: "Norse", 602: "Norse", 603: "Norse", 604: "Norse",
 }
 
 _VANILLA_GODS: dict[int, int] = {
@@ -210,6 +252,11 @@ _VANILLA_GODS: dict[int, int] = {
     26: 7, 27: 7, 28: 7,
     29: 8, 30: 8,
     31: 1, 32: 1,
+    # New Atlantis (APScenarioIDs 501-512)
+    501: 11, 502: 10, 503: 10, 504: 10, 505: 10, 506: 10,
+    507:  5, 508:  6, 509:  8, 510: 12, 511: 11, 512: 12,
+    # The Golden Gift (APScenarioIDs 601-604)
+    601: 8, 602: 9, 603: 9, 604: 8,
 }
 
 
@@ -340,17 +387,40 @@ def _make_scenario_rule(
     god_id: int,
     vanilla_civ: str,
     start_age_num: int,
-    max_unlock_count: int,
+    min_required_unlocks: int,
     is_myth_only: bool,
     point_table: dict[str, float],
     points_needed: float,
 ):
+    """Build the access rule for a scenario.
+
+    Two requirements must both be met:
+
+    1. AGE FLOOR: unlock_count >= min_required_unlocks.
+       The player must be able to reach at least the vanilla max age for this
+       scenario. This is a minimum — with more unlocks they can go higher.
+
+    2. MILITARY UNIT: the player can train at least one military unit whose age
+       tier is <= their current unlock_count. A unit at tier T is accessible
+       only if unlock_count >= T (the player has actually reached that age).
+
+    Tiers:
+      0 = Archaic   (available at start, no unlock needed)
+      1 = Classical (needs 1 age unlock item)
+      2 = Heroic    (needs 2 age unlock items)
+      3 = Mythic    (needs 3 age unlock items)
+
+    Starting-age myth units (vanilla_starting_myth) have their techs
+    pre-researched, so the player only needs the ITEM — but they still must
+    meet the age floor before those count as putting the scenario in logic.
+    """
+    MAX_AGE_TIERS = 3
     god_civ      = _GOD_TO_CIV.get(god_id, "Greek")
     unlock_names = _CIV_UNLOCK_NAMES[god_civ]
 
-    # Myth items accessible at starting age for the ASSIGNED GOD's civ.
-    # With godsanity, APInitStartingAgeTechs grants these techs at scenario
-    # start, so those myth units are available without item finds.
+    # Myth units whose techs are pre-researched at scenario start.
+    # These are accessible without spending unlock items on their age tier,
+    # but the player must still meet the min_required_unlocks floor.
     vanilla_starting_myth: list[str] = [
         _MYTH_ITEMS_BY_UNLOCK[god_civ][tier]
         for tier in range(1, start_age_num)
@@ -361,18 +431,31 @@ def _make_scenario_rule(
         if count_points(state, player, point_table) < points_needed:
             return False
 
-        raw_count    = sum(state.count(n, player) for n in unlock_names)
-        unlock_count = min(raw_count, max_unlock_count)
+        unlock_count = min(sum(state.count(n, player) for n in unlock_names), MAX_AGE_TIERS)
 
+        # ── Requirement 1: age floor ──────────────────────────────────────
+        # Player must be able to reach at least the vanilla max age.
+        # Applied before unit checks so a player with Classical myths and
+        # 0 unlocks cannot enter a Heroic-floor scenario like scenario 24.
+        if unlock_count < min_required_unlocks:
+            return False
+
+        # ── Requirement 2: military unit ──────────────────────────────────
+        # is_myth_only: only myth units count; must have a starting-age one.
         if is_myth_only:
             return bool(vanilla_starting_myth) and any(
                 state.has(m, player) for m in vanilla_starting_myth
             )
 
+        # Starting-age myth units: tech is pre-researched so the ITEM alone
+        # suffices — no unlock items needed for their tier.
+        # Age floor is already satisfied above.
         if vanilla_starting_myth and any(state.has(m, player) for m in vanilla_starting_myth):
             return True
 
-        for needed in range(0, max_unlock_count + 1):
+        # Higher tiers: player must have enough unlock items to reach that age.
+        # Loop 0..unlock_count — units at tiers > unlock_count are inaccessible.
+        for needed in range(0, MAX_AGE_TIERS + 1):
             if unlock_count < needed:
                 break
             for unit_name in _HUMAN_UNITS.get(god_civ, {}).get(needed, []):
@@ -382,8 +465,8 @@ def _make_scenario_rule(
                 myth_name = _MYTH_ITEMS_BY_UNLOCK.get(god_civ, {}).get(needed)
                 if myth_name and state.has(myth_name, player):
                     return True
-            if god_civ == "Norse" and needed >= 1:
-                return True
+            # Note: Norse Berserks (tier 0) are handled by the human unit loop above.
+            # No special shortcut — Norse tier 1+ units require their items like any civ.
             if god_id in _GREEK_FREE_MYTHIC_GODS and needed >= 3:
                 return True
 
@@ -468,21 +551,26 @@ def set_scenario_age_and_point_rules(world, point_table: dict[str, float]) -> No
     multiworld = world.multiworld
 
     section_names = {
-        "Greek":    "Fall of the Trident: Greek",
-        "Egyptian": "Fall of the Trident: Egyptian",
-        "Norse":    "Fall of the Trident: Norse",
-        "Final":    "Fall of the Trident: Final",
+        "Greek":       "Fall of the Trident: Greek",
+        "Egyptian":    "Fall of the Trident: Egyptian",
+        "Norse":       "Fall of the Trident: Norse",
+        "Final":       "Fall of the Trident: Final",
+        "NewAtlantis": "The New Atlantis",
+        "GoldenGift":  "The Golden Gift",
     }
 
     def section_for(n: int) -> str:
-        if n <= 10:   return section_names["Greek"]
-        if n <= 20:   return section_names["Egyptian"]
-        if n <= 30:   return section_names["Norse"]
+        if n <= 10:          return section_names["Greek"]
+        if n <= 20:          return section_names["Egyptian"]
+        if n <= 30:          return section_names["Norse"]
+        if n <= 32:          return section_names["Final"]
+        if 501 <= n <= 512:  return section_names["NewAtlantis"]
+        if 601 <= n <= 604:  return section_names["GoldenGift"]
         return section_names["Final"]
 
     for scenario in aomScenarioData:
         n = scenario.global_number
-        start_age_num, max_unlock_count, points_needed, is_exempt, is_myth_only = _SCENARIO_DATA[n]
+        start_age_num, min_required_unlocks, points_needed, is_exempt, is_myth_only = _SCENARIO_DATA[n]
 
         if is_exempt:
             continue
@@ -520,10 +608,11 @@ def set_scenario_age_and_point_rules(world, point_table: dict[str, float]) -> No
         else:
             effective_table = point_table
 
-        # Military + points rule
+        # Age floor + military rule. min_required_unlocks is the vanilla max age
+        # (a floor, not a cap — player can advance further with more unlocks).
         add_rule(entrance, _make_scenario_rule(
             player, god_id, vanilla_civ,
-            start_age_num, max_unlock_count, is_myth_only,
+            start_age_num, min_required_unlocks, is_myth_only,
             effective_table, points_needed,
         ))
 

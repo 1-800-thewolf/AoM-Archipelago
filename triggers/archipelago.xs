@@ -150,12 +150,7 @@ const int cEGYPTIAN_CARRY_GOLD           = 5005;
 const int cNORSE_CARRY_FOOD              = 5006;
 const int cNORSE_CARRY_WOOD              = 5007;
 const int cNORSE_CARRY_GOLD              = 5008;
-const int cGREEK_VILLAGER_CHEAPER        = 5009;
-const int cEGYPTIAN_VILLAGER_CHEAPER     = 5010;
-const int cNORSE_VILLAGER_CHEAPER        = 5011;
-const int cGREEK_VILLAGER_CHEAPER_2      = 5012;
-const int cEGYPTIAN_VILLAGER_CHEAPER_2   = 5013;
-const int cNORSE_VILLAGER_CHEAPER_2      = 5014;
+const int cVILLAGER_DISCOUNT             = 5009;  // generic: -5 food cost for all villager types
 // Atlantean unit unlock item IDs (only active when godsanity is enabled)
 const int cCAN_TRAIN_MURMILLO       = 3240;
 const int cCAN_TRAIN_KATAPELTES     = 3241;
@@ -182,9 +177,11 @@ const int cNORSE_CLASSICAL_MYTH_UNITS                      = 5022;
 const int cNORSE_HEROIC_MYTH_UNITS                         = 5023;
 const int cNORSE_MYTHIC_MYTH_UNITS                         = 5024;
 
-const int cGREEK_SCENARIOS               = 3500;
-const int cEGYPTIAN_SCENARIOS            = 3501;
-const int cNORSE_SCENARIOS               = 3502;
+const int cGREEK_SCENARIOS               = 3500;  // "Unlock FotT Greek Campaign"
+const int cEGYPTIAN_SCENARIOS            = 3501;  // "Unlock FotT Egyptian Campaign"
+const int cNORSE_SCENARIOS               = 3502;  // "Unlock FotT Norse Campaign"
+const int cNEW_ATLANTIS_SCENARIOS        = 3503;  // "Unlock New Atlantis Campaign"
+const int cGOLDEN_GIFT_SCENARIOS         = 3504;  // "Unlock The Golden Gift Campaign"
 // cFINAL_SCENARIOS removed (stale) -- Final section uses ATLANTIS_KEY (3510) as unlock signal
 const int cATLANTIS_KEY                  = 3510;
 
@@ -1045,7 +1042,7 @@ void APShowQueuedCheckMessage(int id = 0)
 
     if (objectiveText == "Scenario Victory")
     {
-        if (gAPGemShopEnabled)
+        if (gAPItemCount > 6 && gAPItems[6] == 9010)
         {
             trMessageSetText("<color0,1,0><icon=(25)(resources\egyptian\static_color\technologies\funeral_rites_icon.png)> Gem Received</color>", 5);
         }
@@ -1402,8 +1399,14 @@ int APGetScenarioStartingAge()
         s == 19 || s == 20 || s == 28 || s == 31 || s == 32) { return (2); }
     // Archaic start
     if (s == 2 || s == 3 || s == 10 || s == 11 || s == 12 ||
-        s == 22) { return (0); }
-    // Classical start (1, 4, 8, 15, 18, 23-27, 29-30)
+        s == 22 || s == 502) { return (0); }
+    // Mythic start
+    if (s == 506 || s == 511 || s == 512 || s == 604) { return (3); }
+    // Heroic start (New Atlantis: 501,503-505,507-510; Golden Gift: 601-603)
+    if (s == 501 || s == 503 || s == 504 || s == 505 ||
+        s == 507 || s == 508 || s == 509 || s == 510 ||
+        s == 601 || s == 602 || s == 603) { return (2); }
+    // Classical start (FotT default + NA502 handled above)
     return (1);
 }
 
@@ -1618,6 +1621,9 @@ runImmediately
     APReadRandomGod();
     APSetPlayerCiv();
     APForbidVanillaArchaicUnits();
+    // APInitStartingAgeTechs() sets the seed-determined minor god tech to status 2
+    // for each floor age tier. APApply*MinorGods only sets the BASE age tech to
+    // status 2 in its floor block — minor god selection is handled here.
     APInitStartingAgeTechs();
     APForbidItemGatedUnits();
 
@@ -1908,27 +1914,11 @@ void APApplyGreekMinorGods(int majorGod = 0, int ageCount = 0, int startingFloor
     APForceDisableAllGreekAgeTechs();
 
     // Re-activate floor tiers (force-disable cleared them)
-    if (startingFloor >= 1)
-    {
-        trTechSetStatus(1, cTechClassicalAgeGreek, 2);
-        if (majorGod == cAPMajorZeus)     { trTechSetStatus(1, cTechClassicalAgeAthena, 2); trTechSetStatus(1, cTechClassicalAgeHermes, 2); }
-        if (majorGod == cAPMajorPoseidon) { trTechSetStatus(1, cTechClassicalAgeHermes, 2); trTechSetStatus(1, cTechClassicalAgeAres, 2);   }
-        if (majorGod == cAPMajorHades)    { trTechSetStatus(1, cTechClassicalAgeAthena, 2); trTechSetStatus(1, cTechClassicalAgeAres, 2);    }
-    }
-    if (startingFloor >= 2)
-    {
-        trTechSetStatus(1, cTechHeroicAgeGreek, 2);
-        if (majorGod == cAPMajorZeus)     { trTechSetStatus(1, cTechHeroicAgeApollo, 2);     trTechSetStatus(1, cTechHeroicAgeDionysus, 2);   }
-        if (majorGod == cAPMajorPoseidon) { trTechSetStatus(1, cTechHeroicAgeDionysus, 2);   trTechSetStatus(1, cTechHeroicAgeAphrodite, 2);  }
-        if (majorGod == cAPMajorHades)    { trTechSetStatus(1, cTechHeroicAgeApollo, 2);     trTechSetStatus(1, cTechHeroicAgeAphrodite, 2);  }
-    }
-    if (startingFloor >= 3)
-    {
-        trTechSetStatus(1, cTechMythicAgeGreek, 2);
-        if (majorGod == cAPMajorZeus)     { trTechSetStatus(1, cTechMythicAgeHera, 2);        trTechSetStatus(1, cTechMythicAgeHephaestus, 2); }
-        if (majorGod == cAPMajorPoseidon) { trTechSetStatus(1, cTechMythicAgeHephaestus, 2); trTechSetStatus(1, cTechMythicAgeArtemis, 2);    }
-        if (majorGod == cAPMajorHades)    { trTechSetStatus(1, cTechMythicAgeHera, 2);        trTechSetStatus(1, cTechMythicAgeArtemis, 2);    }
-    }
+    // For floor tiers: only set the base age tech to status 2.
+    // The seed-determined minor god tech is activated by APInitStartingAgeTechs().
+    if (startingFloor >= 1) { trTechSetStatus(1, cTechClassicalAgeGreek, 2); }
+    if (startingFloor >= 2) { trTechSetStatus(1, cTechHeroicAgeGreek,    2); }
+    if (startingFloor >= 3) { trTechSetStatus(1, cTechMythicAgeGreek,    2); }
 
     // Set researchable (status 1) only for tiers above the starting floor
     if (ageCount >= 1 && startingFloor < 1)
@@ -1958,33 +1948,15 @@ void APApplyEgyptianMinorGods(int majorGod = 0, int ageCount = 0, int startingFl
 {
     APForceDisableAllEgyptianAgeTechs();
 
-    if (startingFloor >= 1)
-    {
-        trTechSetStatus(1, cTechClassicalAgeEgyptian, 2);
-        if (majorGod == cAPMajorRa)   { trTechSetStatus(1, cTechClassicalAgeBast, 2);   trTechSetStatus(1, cTechClassicalAgePtah, 2);   }
-        if (majorGod == cAPMajorIsis) { trTechSetStatus(1, cTechClassicalAgeAnubis, 2); trTechSetStatus(1, cTechClassicalAgePtah, 2);   }
-        if (majorGod == cAPMajorSet)  { trTechSetStatus(1, cTechClassicalAgeAnubis, 2); trTechSetStatus(1, cTechClassicalAgeBast, 2);   }
-    }
-    if (startingFloor >= 2)
-    {
-        trTechSetStatus(1, cTechHeroicAgeEgyptian, 2);
-        if (majorGod == cAPMajorRa)   { trTechSetStatus(1, cTechHeroicAgeSekhmet, 2);   trTechSetStatus(1, cTechHeroicAgeSobek, 2);     }
-        if (majorGod == cAPMajorIsis) { trTechSetStatus(1, cTechHeroicAgeSobek, 2);     trTechSetStatus(1, cTechHeroicAgeNephthys, 2);  }
-        if (majorGod == cAPMajorSet)  { trTechSetStatus(1, cTechHeroicAgeSekhmet, 2);   trTechSetStatus(1, cTechHeroicAgeNephthys, 2);  }
-    }
-    if (startingFloor >= 3)
-    {
-        trTechSetStatus(1, cTechMythicAgeEgyptian, 2);
-        if (majorGod == cAPMajorRa)   { trTechSetStatus(1, cTechMythicAgeOsiris, 2);    trTechSetStatus(1, cTechMythicAgeHorus, 2);     }
-        if (majorGod == cAPMajorIsis) { trTechSetStatus(1, cTechMythicAgeHorus, 2);     trTechSetStatus(1, cTechMythicAgeThoth, 2);     }
-        if (majorGod == cAPMajorSet)  { trTechSetStatus(1, cTechMythicAgeOsiris, 2);    trTechSetStatus(1, cTechMythicAgeThoth, 2);     }
-    }
+    if (startingFloor >= 1) { trTechSetStatus(1, cTechClassicalAgeEgyptian, 2); }
+    if (startingFloor >= 2) { trTechSetStatus(1, cTechHeroicAgeEgyptian,  2); }
+    if (startingFloor >= 3) { trTechSetStatus(1, cTechMythicAgeEgyptian,  2); }
 
     if (ageCount >= 1 && startingFloor < 1)
     {
         trTechSetStatus(1, cTechClassicalAgeEgyptian, 1);
         if (majorGod == cAPMajorRa)   { trTechSetStatus(1, cTechClassicalAgeBast, 1);   trTechSetStatus(1, cTechClassicalAgePtah, 1);   }
-        if (majorGod == cAPMajorIsis) { trTechSetStatus(1, cTechClassicalAgeAnubis, 1); trTechSetStatus(1, cTechClassicalAgePtah, 1);   }
+        if (majorGod == cAPMajorIsis) { trTechSetStatus(1, cTechClassicalAgeAnubis, 1); trTechSetStatus(1, cTechClassicalAgeBast, 1);   }
         if (majorGod == cAPMajorSet)  { trTechSetStatus(1, cTechClassicalAgeAnubis, 1); trTechSetStatus(1, cTechClassicalAgeBast, 1);   }
     }
     if (ageCount >= 2 && startingFloor < 2)
@@ -2007,27 +1979,9 @@ void APApplyNorseMinorGods(int majorGod = 0, int ageCount = 0, int startingFloor
 {
     APForceDisableAllNorseAgeTechs();
 
-    if (startingFloor >= 1)
-    {
-        trTechSetStatus(1, cTechClassicalAgeNorse, 2);
-        if (majorGod == cAPMajorOdin) { trTechSetStatus(1, cTechClassicalAgeFreyja, 2);   trTechSetStatus(1, cTechClassicalAgeHeimdall, 2); }
-        if (majorGod == cAPMajorThor) { trTechSetStatus(1, cTechClassicalAgeFreyja, 2);   trTechSetStatus(1, cTechClassicalAgeForseti, 2);  }
-        if (majorGod == cAPMajorLoki) { trTechSetStatus(1, cTechClassicalAgeForseti, 2);  trTechSetStatus(1, cTechClassicalAgeHeimdall, 2); }
-    }
-    if (startingFloor >= 2)
-    {
-        trTechSetStatus(1, cTechHeroicAgeNorse, 2);
-        if (majorGod == cAPMajorOdin) { trTechSetStatus(1, cTechHeroicAgeNjord, 2);  trTechSetStatus(1, cTechHeroicAgeSkadi, 2); }
-        if (majorGod == cAPMajorThor) { trTechSetStatus(1, cTechHeroicAgeBragi, 2);  trTechSetStatus(1, cTechHeroicAgeSkadi, 2); }
-        if (majorGod == cAPMajorLoki) { trTechSetStatus(1, cTechHeroicAgeBragi, 2);  trTechSetStatus(1, cTechHeroicAgeNjord, 2); }
-    }
-    if (startingFloor >= 3)
-    {
-        trTechSetStatus(1, cTechMythicAgeNorse, 2);
-        if (majorGod == cAPMajorOdin) { trTechSetStatus(1, cTechMythicAgeBaldr, 2); trTechSetStatus(1, cTechMythicAgeTyr, 2); }
-        if (majorGod == cAPMajorThor) { trTechSetStatus(1, cTechMythicAgeBaldr, 2); trTechSetStatus(1, cTechMythicAgeTyr, 2); }
-        if (majorGod == cAPMajorLoki) { trTechSetStatus(1, cTechMythicAgeTyr, 2);   trTechSetStatus(1, cTechMythicAgeHel, 2); }
-    }
+    if (startingFloor >= 1) { trTechSetStatus(1, cTechClassicalAgeNorse, 2); }
+    if (startingFloor >= 2) { trTechSetStatus(1, cTechHeroicAgeNorse,    2); }
+    if (startingFloor >= 3) { trTechSetStatus(1, cTechMythicAgeNorse,    2); }
 
     if (ageCount >= 1 && startingFloor < 1)
     {
@@ -2072,27 +2026,9 @@ void APApplyAtlanteanMinorGods(int majorGod = 0, int ageCount = 0, int startingF
 {
     APForceDisableAllAtlanteanAgeTechs();
 
-    if (startingFloor >= 1)
-    {
-        trTechSetStatus(1, cTechClassicalAgeAtlantean, 2);
-        if (majorGod == cAPMajorKronos) { trTechSetStatus(1, cTechClassicalAgePrometheus, 2); trTechSetStatus(1, cTechClassicalAgeLeto, 2);    }
-        if (majorGod == cAPMajorOranos) { trTechSetStatus(1, cTechClassicalAgePrometheus, 2); trTechSetStatus(1, cTechClassicalAgeOceanus, 2);  }
-        if (majorGod == cAPMajorGaia)   { trTechSetStatus(1, cTechClassicalAgeLeto, 2);        trTechSetStatus(1, cTechClassicalAgeOceanus, 2);  }
-    }
-    if (startingFloor >= 2)
-    {
-        trTechSetStatus(1, cTechHeroicAgeAtlantean, 2);
-        if (majorGod == cAPMajorKronos) { trTechSetStatus(1, cTechHeroicAgeHyperion, 2); trTechSetStatus(1, cTechHeroicAgeRheia, 2);  }
-        if (majorGod == cAPMajorOranos) { trTechSetStatus(1, cTechHeroicAgeHyperion, 2); trTechSetStatus(1, cTechHeroicAgeTheia, 2);  }
-        if (majorGod == cAPMajorGaia)   { trTechSetStatus(1, cTechHeroicAgeRheia, 2);    trTechSetStatus(1, cTechHeroicAgeTheia, 2);  }
-    }
-    if (startingFloor >= 3)
-    {
-        trTechSetStatus(1, cTechMythicAgeAtlantean, 2);
-        if (majorGod == cAPMajorKronos) { trTechSetStatus(1, cTechMythicAgeHelios, 2); trTechSetStatus(1, cTechMythicAgeAtlas, 2);   }
-        if (majorGod == cAPMajorOranos) { trTechSetStatus(1, cTechMythicAgeHelios, 2); trTechSetStatus(1, cTechMythicAgeHekate, 2);  }
-        if (majorGod == cAPMajorGaia)   { trTechSetStatus(1, cTechMythicAgeAtlas, 2);  trTechSetStatus(1, cTechMythicAgeHekate, 2);  }
-    }
+    if (startingFloor >= 1) { trTechSetStatus(1, cTechClassicalAgeAtlantean, 2); }
+    if (startingFloor >= 2) { trTechSetStatus(1, cTechHeroicAgeAtlantean,  2); }
+    if (startingFloor >= 3) { trTechSetStatus(1, cTechMythicAgeAtlantean,  2); }
 
     if (ageCount >= 1 && startingFloor < 1)
     {
@@ -2151,6 +2087,24 @@ int APGetStartingAgeCount(int scenarioId = 0)
     if (scenarioId == 30) { return 1; }
     if (scenarioId == 31) { return 2; }
     if (scenarioId == 32) { return 2; }
+    // New Atlantis (APScenarioIDs 501-512)
+    if (scenarioId == 501) { return 2; }  // Heroic start
+    if (scenarioId == 502) { return 0; }  // Archaic start
+    if (scenarioId == 503) { return 2; }  // Heroic (no TC)
+    if (scenarioId == 504) { return 2; }  // Heroic
+    if (scenarioId == 505) { return 2; }  // Heroic
+    if (scenarioId == 506) { return 3; }  // Mythic (no TC)
+    if (scenarioId == 507) { return 2; }  // Heroic
+    if (scenarioId == 508) { return 2; }  // Heroic
+    if (scenarioId == 509) { return 2; }  // Heroic
+    if (scenarioId == 510) { return 2; }  // Heroic
+    if (scenarioId == 511) { return 3; }  // Mythic
+    if (scenarioId == 512) { return 3; }  // Mythic (no TC)
+    // The Golden Gift (APScenarioIDs 601-604)
+    if (scenarioId == 601) { return 2; }  // Heroic
+    if (scenarioId == 602) { return 2; }  // Heroic
+    if (scenarioId == 603) { return 2; }  // Heroic
+    if (scenarioId == 604) { return 3; }  // Mythic
     return 0;
 }
 
@@ -2245,6 +2199,14 @@ void APApplyHeroBoosts()
     bool odyPerfectAccuracy  = false;
     bool regFrostStrike       = false;
     bool regProjectile        = false;
+    // Kastor
+    int  kasHp            = 0;
+    int  kasAtk           = 0;
+    int  kasRecharge      = 0;
+    int  kasRegen         = 0;
+    bool kasUndermineAttacks = false;
+    bool kasSummonSoldiers   = false;
+    bool kasIsAManor         = false;
 
     // Start at 6 — indices 0-5 are flags (campaign unlocks, campaign ID, godsanity)
     for (i = 7; i < gAPItemCount; i++)
@@ -2338,6 +2300,18 @@ void APApplyHeroBoosts()
         if (id == cREGINLEIF_REGEN_5)   { regRegen += 5;  }
         if (id == cREGINLEIF_FROST_STRIKE) { regFrostStrike = true; }
         if (id == cREGINLEIF_PROJECTILE)   { regProjectile  = true; }
+        // Kastor
+        if (id == cKASTOR_HP_25)            { kasHp      += 25;  }
+        if (id == cKASTOR_HP_200)           { kasHp      += 200; }
+        if (id == cKASTOR_ATK_1)            { kasAtk     += 1;   }
+        if (id == cKASTOR_ATK_10)           { kasAtk     += 10;  }
+        if (id == cKASTOR_RECHARGE_2)       { kasRecharge += 2;  }
+        if (id == cKASTOR_RECHARGE_5)       { kasRecharge += 5;  }
+        if (id == cKASTOR_REGEN_1)          { kasRegen   += 1;   }
+        if (id == cKASTOR_REGEN_5)          { kasRegen   += 5;   }
+        if (id == cKASTOR_UNDERMINE_ATTACKS){ kasUndermineAttacks = true; }
+        if (id == cKASTOR_SUMMON_SOLDIERS)  { kasSummonSoldiers  = true; }
+        if (id == cKASTOR_IS_A_MANOR)       { kasIsAManor        = true; }
     }
 
     // --- Apply stat boosts ---
@@ -2347,11 +2321,11 @@ void APApplyHeroBoosts()
     if (arkRecharge > 0) { trModifyProtounitData("Arkantos",   1, 9, -arkRecharge, 0); }
     if (arkRegen > 0){ trModifyProtounitData("Arkantos",   1, 17, arkRegen, 0); }
 
-    // Ajax (hack)
-    if (ajxHp   > 0) { trModifyProtounitData("AjaxSPC",    1, 0,  ajxHp,   0); }
-    if (ajxAtk  > 0) { trModifyProtounitAction("AjaxSPC",    "HandAttack", 1, 13, ajxAtk,  0); }
-    if (ajxRecharge > 0) { trModifyProtounitData("AjaxSPC",    1, 9, -ajxRecharge, 0); }
-    if (ajxRegen > 0){ trModifyProtounitData("AjaxSPC",    1, 17, ajxRegen, 0); }
+    // Ajax (SPC and Older variants)
+    if (ajxHp   > 0) { trModifyProtounitData("AjaxSPC",   1, 0,  ajxHp,       0); trModifyProtounitData("AjaxOlder",   1, 0,  ajxHp,       0); }
+    if (ajxAtk  > 0) { trModifyProtounitAction("AjaxSPC",  "HandAttack", 1, 13, ajxAtk, 0); trModifyProtounitAction("AjaxOlder", "HandAttack", 1, 13, ajxAtk, 0); }
+    if (ajxRecharge > 0) { trModifyProtounitData("AjaxSPC", 1, 9, -ajxRecharge, 0); trModifyProtounitData("AjaxOlder", 1, 9, -ajxRecharge, 0); }
+    if (ajxRegen > 0){ trModifyProtounitData("AjaxSPC",   1, 17, ajxRegen,    0); trModifyProtounitData("AjaxOlder",   1, 17, ajxRegen,    0); }
 
     // Chiron (pierce)
     if (chiHp   > 0) { trModifyProtounitData("ChironSPC",  1, 0,  chiHp,   0); }
@@ -2359,11 +2333,11 @@ void APApplyHeroBoosts()
     if (chiRecharge > 0) { trModifyProtounitData("ChironSPC",  1, 9, -chiRecharge, 0); }
     if (chiRegen > 0){ trModifyProtounitData("ChironSPC",  1, 17, chiRegen, 0); }
 
-    // Amanra (hack)
-    if (amHp    > 0) { trModifyProtounitData("Amanra",     1, 0,  amHp,    0); }
-    if (amAtk   > 0) { trModifyProtounitAction("Amanra",     "HandAttack", 1, 13, amAtk,   0); }
-    if (amRecharge  > 0) { trModifyProtounitData("Amanra",     1, 9, -amRecharge,  0); }
-    if (amRegen  > 0){ trModifyProtounitData("Amanra",     1, 17, amRegen,  0); }
+    // Amanra (both Amanra and AmanraOlder)
+    if (amHp    > 0) { trModifyProtounitData("Amanra",     1, 0,  amHp,       0); trModifyProtounitData("AmanraOlder",     1, 0,  amHp,       0); }
+    if (amAtk   > 0) { trModifyProtounitAction("Amanra",    "HandAttack", 1, 13, amAtk, 0); trModifyProtounitAction("AmanraOlder", "HandAttack", 1, 13, amAtk, 0); }
+    if (amRecharge > 0) { trModifyProtounitData("Amanra",   1, 9, -amRecharge, 0); trModifyProtounitData("AmanraOlder",   1, 9, -amRecharge, 0); }
+    if (amRegen  > 0){ trModifyProtounitData("Amanra",     1, 17, amRegen,    0); trModifyProtounitData("AmanraOlder",     1, 17, amRegen,    0); }
 
     // Odysseus (pierce)
     if (odyHp   > 0) { trModifyProtounitData("OdysseusSPC", 1, 0,  odyHp,   0); }
@@ -2403,19 +2377,23 @@ void APApplyHeroBoosts()
     if (ajxStunningBlow == true)
     {
         trProtounitActionSpecialEffect("AjaxSPC", "Gore", 1, 0, "All", -1, 10.0, 10.0);
+        trProtounitActionSpecialEffect("AjaxOlder", "Gore", 1, 0, "All", -1, 10.0, 10.0);
     }
     // Ajax: Smiting Strikes (HandAttack, MaxHP modifier + VisualScale)
     if (ajxSmitingStrikes == true)
     {
         //HAX HP
-        trProtounitActionSpecialEffectModifier("AjaxSPC", "HandAttack", 1, 1, "Unit", 0.5, 1, -1);
-        //VISUAL SCALE
-        trProtounitActionSpecialEffectModifier("AjaxSPC", "HandAttack", 1, 1, "Unit", -0.3, 49, 0);
+        trProtounitActionSpecialEffectModifier("AjaxSPC",   "HandAttack", 1, 1, "Unit", 0.5, 1, -1);
+        trProtounitActionSpecialEffectModifier("AjaxSPC",   "HandAttack", 1, 1, "Unit", -0.3, 49, 0);
+        //VISUAL SCALE (AjaxOlder)
+        trProtounitActionSpecialEffectModifier("AjaxOlder", "HandAttack", 1, 1, "Unit", 0.5, 1, -1);
+        trProtounitActionSpecialEffectModifier("AjaxOlder", "HandAttack", 1, 1, "Unit", -0.3, 49, 0);
     }
     // Ajax: Shield Bash AOE (Gore, DamageArea +10)
     if (ajxShieldBashAOE == true)
     {
-        trModifyProtounitAction("AjaxSPC", "Gore", 1, 3, 10.0, 0);
+        trModifyProtounitAction("AjaxSPC",   "Gore", 1, 3, 10.0, 0);
+        trModifyProtounitAction("AjaxOlder", "Gore", 1, 3, 10.0, 0);
     }
 
     // Chiron: Poison Arrow (RangedAttack, DamageOverTime duration 20s, value 20)
@@ -2437,17 +2415,20 @@ void APApplyHeroBoosts()
     // Amanra: Shockwave Jump (JumpAttack, Throw duration 10s)
     if (amShockwaveJump == true)
     {
-        trProtounitActionSpecialEffect("Amanra", "JumpAttack", 1, 6, "All", -1, 10.0, 10.0);
+        trProtounitActionSpecialEffect("Amanra",      "JumpAttack", 1, 6, "All", -1, 10.0, 10.0);
+        trProtounitActionSpecialEffect("AmanraOlder", "JumpAttack", 1, 6, "All", -1, 10.0, 10.0);
     }
     // Amanra: Army of the Dead (HandAttack, Reincarnation into Minion)
     if (amArmyOfTheDead == true)
     {
-        trProtounitActionSpecialEffectProtoUnit("Amanra", "HandAttack", 1, 5, "All", "Minion", 1.0, 1.0);
+        trProtounitActionSpecialEffectProtoUnit("Amanra",      "HandAttack", 1, 5, "All", "Minion", 1.0, 1.0);
+        trProtounitActionSpecialEffectProtoUnit("AmanraOlder", "HandAttack", 1, 5, "All", "Minion", 1.0, 1.0);
     }
     // Amanra: Divine Smite (HandAttack, DamageDivine +5)
     if (amDivineSmite == true)
     {
-        trModifyProtounitAction("Amanra", "HandAttack", 1, 16, 5.0, 0);
+        trModifyProtounitAction("Amanra",      "HandAttack", 1, 16, 5.0, 0);
+        trModifyProtounitAction("AmanraOlder", "HandAttack", 1, 16, 5.0, 0);
     }
 
     // Odysseus: Entangling Shot (ChargedRangedAttack, Stun duration 5s, value 5)
@@ -2466,7 +2447,20 @@ void APApplyHeroBoosts()
         trModifyProtounitAction("OdysseusSPC", "RangedAttack", 1, 10, 5.0, 0);
     }
 
-    // Reginleif: Frost Strike (RangedAttack, Progressive ROF Freeze duration 3s, value 3)
+    // Kastor stat items
+const int cKASTOR_HP_25             = 3200;
+const int cKASTOR_HP_200            = 3202;
+const int cKASTOR_ATK_1             = 3203;
+const int cKASTOR_ATK_10            = 3205;
+const int cKASTOR_RECHARGE_2        = 3206;
+const int cKASTOR_RECHARGE_5        = 3207;
+const int cKASTOR_REGEN_1           = 3208;
+const int cKASTOR_REGEN_5           = 3209;
+const int cKASTOR_UNDERMINE_ATTACKS = 3300;
+const int cKASTOR_SUMMON_SOLDIERS   = 3301;
+const int cKASTOR_IS_A_MANOR        = 3302;
+
+// Reginleif: Frost Strike (RangedAttack, Progressive ROF Freeze duration 3s, value 3)
     if (regFrostStrike == true)
     {
         trProtounitActionSpecialEffect("Reginleif", "RangedAttack", 1, 18, "All", -1, 3.0, 3.0);
@@ -2475,6 +2469,35 @@ void APApplyHeroBoosts()
     if (regProjectile == true)
     {
         trModifyProtounitAction("Reginleif", "RangedAttack", 1, 8, 1.0, 0);
+    }
+
+    // --- Kastor ---
+    // Stat boosts
+    if (kasHp       > 0) { trModifyProtounitData("Kastor", 1, 0,  kasHp,       0); }
+    if (kasAtk      > 0) { trModifyProtounitAction("Kastor", "HandAttack", 1, 13, kasAtk, 0); }
+    if (kasRecharge > 0) { trModifyProtounitData("Kastor", 1, 9, -kasRecharge, 0); }
+    if (kasRegen    > 0) { trModifyProtounitData("Kastor", 1, 17, kasRegen,    0); }
+
+    // Kastor Undermines with Attacks: HandAttack applies DamageOverTime (Crush) to Buildings
+    if (kasUndermineAttacks == true)
+    {
+        trProtounitActionSpecialEffect("Kastor", "HandAttack", 1, 3, "Building", -1, 13.0, 25.0);
+        trProtounitActionSpecialEffectProtoUnit("Kastor", "HandAttack", 1, 4, "Building", "UndermineDamage", 0.0, 1.0);
+    }
+
+    // Kastor Can Summon Soldiers: adds Hoplite, Spearman, Berserk, Murmillo to Kastor's train list
+    if (kasSummonSoldiers == true)
+    {
+        trAddProtoUnitToTrain("Kastor", 1, "Hoplite",   2, 0);
+        trAddProtoUnitToTrain("Kastor", 1, "Spearman",  2, 1);
+        trAddProtoUnitToTrain("Kastor", 1, "Berserk",   2, 2);
+        trAddProtoUnitToTrain("Kastor", 1, "Murmillo",  2, 3);
+    }
+
+    // Kastor is a Manor: gives Kastor +20 population cap (double Arkantos is a House)
+    if (kasIsAManor == true)
+    {
+        trModifyProtounitData("Kastor", 1, 7, 20, 0);
     }
 
 }
@@ -2529,9 +2552,8 @@ runImmediately
     int grkCarryFood = 0; int grkCarryWood = 0; int grkCarryGold = 0;
     int egyCarryFood = 0; int egyCarryWood = 0; int egyCarryGold = 0;
     int norCarryFood = 0; int norCarryWood = 0; int norCarryGold = 0;
-    // Villager food cost reduction counters
-    int grkCheaper = 0; int egyCheaper = 0; int norCheaper = 0;
-    int grkCheaper2 = 0; int egyCheaper2 = 0; int norCheaper2 = 0;
+    // Generic villager food cost reduction counter
+    int villagerDiscount = 0;
 
     int itemId = 0;
     int i = 0;
@@ -2822,13 +2844,8 @@ runImmediately
         if (itemId == cNORSE_CARRY_FOOD)    { norCarryFood++; }
         if (itemId == cNORSE_CARRY_WOOD)    { norCarryWood++; }
         if (itemId == cNORSE_CARRY_GOLD)    { norCarryGold++; }
-        // Villager food cost reduction
-        if (itemId == cGREEK_VILLAGER_CHEAPER)      { grkCheaper++;  }
-        if (itemId == cEGYPTIAN_VILLAGER_CHEAPER)   { egyCheaper++;  }
-        if (itemId == cNORSE_VILLAGER_CHEAPER)      { norCheaper++;  }
-        if (itemId == cGREEK_VILLAGER_CHEAPER_2)    { grkCheaper2++; }
-        if (itemId == cEGYPTIAN_VILLAGER_CHEAPER_2) { egyCheaper2++; }
-        if (itemId == cNORSE_VILLAGER_CHEAPER_2)    { norCheaper2++; }
+        // Generic villager food cost discount (all villager types)
+        if (itemId == cVILLAGER_DISCOUNT) { villagerDiscount++; }
     }
 
 
@@ -2848,13 +2865,16 @@ runImmediately
     if (norCarryWood > 0) { trModifyProtounitResource("VillagerNorse",    "wood", 1, 1, 10.0 * norCarryWood, 0); }
     if (norCarryGold > 0) { trModifyProtounitResource("VillagerNorse",    "gold", 1, 1, 10.0 * norCarryGold, 0); }
 
-    // Villager food cost reduction — cXSPUResourceEffectCost=0
-    if (grkCheaper  > 0) { trModifyProtounitResource("VillagerGreek",    "food", 1, 0, -3.0 * grkCheaper,  0); }
-    if (egyCheaper  > 0) { trModifyProtounitResource("VillagerEgyptian", "food", 1, 0, -3.0 * egyCheaper,  0); }
-    if (norCheaper  > 0) { trModifyProtounitResource("VillagerNorse",    "food", 1, 0, -3.0 * norCheaper,  0); }
-    if (grkCheaper2 > 0) { trModifyProtounitResource("VillagerGreek",    "food", 1, 0, -2.0 * grkCheaper2, 0); }
-    if (egyCheaper2 > 0) { trModifyProtounitResource("VillagerEgyptian", "food", 1, 0, -2.0 * egyCheaper2, 0); }
-    if (norCheaper2 > 0) { trModifyProtounitResource("VillagerNorse",    "food", 1, 0, -2.0 * norCheaper2, 0); }
+    // Generic villager food cost reduction — applies -5 per copy to all 4 villager types
+    // cXSPUResourceEffectCost=0
+    if (villagerDiscount > 0)
+    {
+        float _disc = -5.0 * villagerDiscount;
+        trModifyProtounitResource("VillagerGreek",      "food", 1, 0, _disc, 0);
+        trModifyProtounitResource("VillagerEgyptian",   "food", 1, 0, _disc, 0);
+        trModifyProtounitResource("VillagerNorse",      "food", 1, 0, _disc, 0);
+        trModifyProtounitResource("VillagerAtlantean",  "food", 1, 0, _disc, 0);
+    }
 
     if (gPassiveWood > 0 || gPassiveFood > 0 || gPassiveGold > 0 || gPassiveFavor > 0)
     {

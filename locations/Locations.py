@@ -1130,6 +1130,478 @@ class aomLocationData(enum.IntEnum):
     )
 
 
+    # ===========================================================================
+    # THE NEW ATLANTIS (APScenarioIDs 501-512)
+    # ===========================================================================
+
+    # NA_1: A Lost People
+    NA_1_VICTORY = (
+        global_location_id(aomScenarioData.NA_1.id, 0),
+        "Victory",
+        aomScenarioData.NA_1,
+        aomLocationType.VICTORY,
+    )
+    NA_1_COMPLETION = (
+        global_location_id(aomScenarioData.NA_1.id, 1),
+        "Completion",
+        aomScenarioData.NA_1,
+        aomLocationType.COMPLETION,
+    )
+    NA_1_OBJ_1 = (
+        global_location_id(aomScenarioData.NA_1.id, 2),
+        "Build an army of at least ten soldiers",
+        aomScenarioData.NA_1,
+        aomLocationType.OBJECTIVE,
+    )
+    NA_1_OBJ_2 = (
+        global_location_id(aomScenarioData.NA_1.id, 3),
+        "Find the Sky Passage",
+        aomScenarioData.NA_1,
+        aomLocationType.OBJECTIVE,
+    )
+    NA_1_OBJ_3 = (
+        global_location_id(aomScenarioData.NA_1.id, 4),
+        "Defeat the barbarians guarding the Sky Passage",
+        aomScenarioData.NA_1,
+        aomLocationType.OBJECTIVE,
+    )
+    NA_1_OBJ_4 = (
+        global_location_id(aomScenarioData.NA_1.id, 5),
+        "Garrison five Citizens into the Sky Passage",
+        aomScenarioData.NA_1,
+        aomLocationType.OBJECTIVE,
+    )
+    NA_1_OBJ_5 = (
+        global_location_id(aomScenarioData.NA_1.id, 6),
+        "Build a Town Center beyond the Sky Passage",
+        aomScenarioData.NA_1,
+        aomLocationType.OBJECTIVE,
+    )
+
+    # NA_2: Atlantis Reborn
+    NA_2_VICTORY = (
+        global_location_id(aomScenarioData.NA_2.id, 0),
+        "Victory",
+        aomScenarioData.NA_2,
+        aomLocationType.VICTORY,
+    )
+    NA_2_COMPLETION = (
+        global_location_id(aomScenarioData.NA_2.id, 1),
+        "Completion",
+        aomScenarioData.NA_2,
+        aomLocationType.COMPLETION,
+    )
+    NA_2_OBJ_1 = (
+        global_location_id(aomScenarioData.NA_2.id, 2),
+        "Repair the ancient Temples to Kronos and Oranos",
+        aomScenarioData.NA_2,
+        aomLocationType.OBJECTIVE,
+    )
+    NA_2_OBJ_2 = (
+        global_location_id(aomScenarioData.NA_2.id, 3),
+        "Advance to the Classical Age",
+        aomScenarioData.NA_2,
+        aomLocationType.OBJECTIVE,
+    )
+    NA_2_OBJ_3 = (
+        global_location_id(aomScenarioData.NA_2.id, 4),
+        "Destroy the Greek Town Center",
+        aomScenarioData.NA_2,
+        aomLocationType.OBJECTIVE,
+    )
+
+    # NA_3: Greetings From Greece
+    NA_3_VICTORY = (
+        global_location_id(aomScenarioData.NA_3.id, 0),
+        "Victory",
+        aomScenarioData.NA_3,
+        aomLocationType.VICTORY,
+    )
+    NA_3_COMPLETION = (
+        global_location_id(aomScenarioData.NA_3.id, 1),
+        "Completion",
+        aomScenarioData.NA_3,
+        aomLocationType.COMPLETION,
+    )
+    NA_3_OBJ_1 = (
+        global_location_id(aomScenarioData.NA_3.id, 2),
+        "Kill General Melagius",
+        aomScenarioData.NA_3,
+        aomLocationType.OBJECTIVE,
+    )
+
+    # NA_4: Odin's Tower
+    NA_4_VICTORY = (
+        global_location_id(aomScenarioData.NA_4.id, 0),
+        "Victory",
+        aomScenarioData.NA_4,
+        aomLocationType.VICTORY,
+    )
+    NA_4_COMPLETION = (
+        global_location_id(aomScenarioData.NA_4.id, 1),
+        "Completion",
+        aomScenarioData.NA_4,
+        aomLocationType.COMPLETION,
+    )
+    NA_4_OBJ_1 = (
+        global_location_id(aomScenarioData.NA_4.id, 2),
+        "Replace all Norse Temples with Atlantean Temples",
+        aomScenarioData.NA_4,
+        aomLocationType.OBJECTIVE,
+    )
+    NA_4_OBJ_2 = (
+        global_location_id(aomScenarioData.NA_4.id, 3),
+        "Move Kastor close to Odin's Tower",
+        aomScenarioData.NA_4,
+        aomLocationType.OBJECTIVE,
+    )
+    NA_4_OBJ_3 = (
+        global_location_id(aomScenarioData.NA_4.id, 4),
+        "Deconstruct Odin's Wonder",
+        aomScenarioData.NA_4,
+        aomLocationType.OBJECTIVE,
+    )
+
+    # NA_5: The Ancient Relics
+    NA_5_VICTORY = (
+        global_location_id(aomScenarioData.NA_5.id, 0),
+        "Victory",
+        aomScenarioData.NA_5,
+        aomLocationType.VICTORY,
+    )
+    NA_5_COMPLETION = (
+        global_location_id(aomScenarioData.NA_5.id, 1),
+        "Completion",
+        aomScenarioData.NA_5,
+        aomLocationType.COMPLETION,
+    )
+    NA_5_OBJ_1 = (
+        global_location_id(aomScenarioData.NA_5.id, 2),
+        "Garrison all four sacred Relics into Kronos Temple",
+        aomScenarioData.NA_5,
+        aomLocationType.OBJECTIVE,
+    )
+    NA_5_OBJ_2 = (
+        global_location_id(aomScenarioData.NA_5.id, 3),
+        "Protect Kronos Temple",
+        aomScenarioData.NA_5,
+        aomLocationType.OBJECTIVE,
+    )
+
+    # NA_6: Mount Olympus
+    NA_6_VICTORY = (
+        global_location_id(aomScenarioData.NA_6.id, 0),
+        "Victory",
+        aomScenarioData.NA_6,
+        aomLocationType.VICTORY,
+    )
+    NA_6_COMPLETION = (
+        global_location_id(aomScenarioData.NA_6.id, 1),
+        "Completion",
+        aomScenarioData.NA_6,
+        aomLocationType.COMPLETION,
+    )
+    NA_6_OBJ_1 = (
+        global_location_id(aomScenarioData.NA_6.id, 2),
+        "Bring soldiers to the Temple to the north",
+        aomScenarioData.NA_6,
+        aomLocationType.OBJECTIVE,
+    )
+    NA_6_OBJ_2 = (
+        global_location_id(aomScenarioData.NA_6.id, 3),
+        "Reach the flagged area to the east",
+        aomScenarioData.NA_6,
+        aomLocationType.OBJECTIVE,
+    )
+    NA_6_OBJ_3 = (
+        global_location_id(aomScenarioData.NA_6.id, 4),
+        "Bring Kastor to the peak of Mount Olympus",
+        aomScenarioData.NA_6,
+        aomLocationType.OBJECTIVE,
+    )
+    NA_6_OBJ_4 = (
+        global_location_id(aomScenarioData.NA_6.id, 5),
+        "Protect the Underworld Passage",
+        aomScenarioData.NA_6,
+        aomLocationType.OBJECTIVE,
+    )
+
+    # NA_7: Betrayal at Sikyos
+    NA_7_VICTORY = (
+        global_location_id(aomScenarioData.NA_7.id, 0),
+        "Victory",
+        aomScenarioData.NA_7,
+        aomLocationType.VICTORY,
+    )
+    NA_7_COMPLETION = (
+        global_location_id(aomScenarioData.NA_7.id, 1),
+        "Completion",
+        aomScenarioData.NA_7,
+        aomLocationType.COMPLETION,
+    )
+    NA_7_OBJ_1 = (
+        global_location_id(aomScenarioData.NA_7.id, 2),
+        "Build up a base and survive the Titan's onslaught",
+        aomScenarioData.NA_7,
+        aomLocationType.OBJECTIVE,
+    )
+    NA_7_OBJ_2 = (
+        global_location_id(aomScenarioData.NA_7.id, 3),
+        "Send three Rocs to Kastor's Town Center",
+        aomScenarioData.NA_7,
+        aomLocationType.OBJECTIVE,
+    )
+
+    # NA_8: Cerberus
+    NA_8_VICTORY = (
+        global_location_id(aomScenarioData.NA_8.id, 0),
+        "Victory",
+        aomScenarioData.NA_8,
+        aomLocationType.VICTORY,
+    )
+    NA_8_COMPLETION = (
+        global_location_id(aomScenarioData.NA_8.id, 1),
+        "Completion",
+        aomScenarioData.NA_8,
+        aomLocationType.COMPLETION,
+    )
+    NA_8_OBJ_1 = (
+        global_location_id(aomScenarioData.NA_8.id, 2),
+        "Protect the Son of Osiris while he recharges the Guardian",
+        aomScenarioData.NA_8,
+        aomLocationType.OBJECTIVE,
+    )
+    NA_8_OBJ_2 = (
+        global_location_id(aomScenarioData.NA_8.id, 3),
+        "Destroy the Titan Cerberus",
+        aomScenarioData.NA_8,
+        aomLocationType.OBJECTIVE,
+    )
+
+    # NA_9: Rampage
+    NA_9_VICTORY = (
+        global_location_id(aomScenarioData.NA_9.id, 0),
+        "Victory",
+        aomScenarioData.NA_9,
+        aomLocationType.VICTORY,
+    )
+    NA_9_COMPLETION = (
+        global_location_id(aomScenarioData.NA_9.id, 1),
+        "Completion",
+        aomScenarioData.NA_9,
+        aomLocationType.COMPLETION,
+    )
+    NA_9_OBJ_1 = (
+        global_location_id(aomScenarioData.NA_9.id, 2),
+        "Construct a Town Center",
+        aomScenarioData.NA_9,
+        aomLocationType.OBJECTIVE,
+    )
+    NA_9_OBJ_2 = (
+        global_location_id(aomScenarioData.NA_9.id, 3),
+        "Kill the Titan Ymir",
+        aomScenarioData.NA_9,
+        aomLocationType.OBJECTIVE,
+    )
+
+    # NA_10: Making Amends
+    NA_10_VICTORY = (
+        global_location_id(aomScenarioData.NA_10.id, 0),
+        "Victory",
+        aomScenarioData.NA_10,
+        aomLocationType.VICTORY,
+    )
+    NA_10_COMPLETION = (
+        global_location_id(aomScenarioData.NA_10.id, 1),
+        "Completion",
+        aomScenarioData.NA_10,
+        aomLocationType.COMPLETION,
+    )
+    NA_10_OBJ_1 = (
+        global_location_id(aomScenarioData.NA_10.id, 2),
+        "Build four Town Centers and spread Gaia's Lush",
+        aomScenarioData.NA_10,
+        aomLocationType.OBJECTIVE,
+    )
+    NA_10_OBJ_2 = (
+        global_location_id(aomScenarioData.NA_10.id, 3),
+        "Destroy the Titan Prometheus",
+        aomScenarioData.NA_10,
+        aomLocationType.OBJECTIVE,
+    )
+
+    # NA_11: Atlantis Betrayed
+    NA_11_VICTORY = (
+        global_location_id(aomScenarioData.NA_11.id, 0),
+        "Victory",
+        aomScenarioData.NA_11,
+        aomLocationType.VICTORY,
+    )
+    NA_11_COMPLETION = (
+        global_location_id(aomScenarioData.NA_11.id, 1),
+        "Completion",
+        aomScenarioData.NA_11,
+        aomLocationType.COMPLETION,
+    )
+    NA_11_OBJ_1 = (
+        global_location_id(aomScenarioData.NA_11.id, 2),
+        "Destroy the Automatons attacking the South Atlanteans",
+        aomScenarioData.NA_11,
+        aomLocationType.OBJECTIVE,
+    )
+    NA_11_OBJ_2 = (
+        global_location_id(aomScenarioData.NA_11.id, 3),
+        "Destroy the Automatons attacking the West Atlanteans",
+        aomScenarioData.NA_11,
+        aomLocationType.OBJECTIVE,
+    )
+    NA_11_OBJ_3 = (
+        global_location_id(aomScenarioData.NA_11.id, 4),
+        "Destroy the Automatons attacking the North Atlanteans",
+        aomScenarioData.NA_11,
+        aomLocationType.OBJECTIVE,
+    )
+    NA_11_OBJ_4 = (
+        global_location_id(aomScenarioData.NA_11.id, 5),
+        "Kastor Amanra and Ajax must enter Krios's Sky Passage",
+        aomScenarioData.NA_11,
+        aomLocationType.OBJECTIVE,
+    )
+
+    # NA_12: War of the Titans
+    NA_12_VICTORY = (
+        global_location_id(aomScenarioData.NA_12.id, 0),
+        "Victory",
+        aomScenarioData.NA_12,
+        aomLocationType.VICTORY,
+    )
+    NA_12_COMPLETION = (
+        global_location_id(aomScenarioData.NA_12.id, 1),
+        "Completion",
+        aomScenarioData.NA_12,
+        aomLocationType.COMPLETION,
+    )
+    NA_12_OBJ_1 = (
+        global_location_id(aomScenarioData.NA_12.id, 2),
+        "Invoke the Seed of Gaia on all four sacred Gaia Pools",
+        aomScenarioData.NA_12,
+        aomLocationType.OBJECTIVE,
+    )
+    NA_12_OBJ_2 = (
+        global_location_id(aomScenarioData.NA_12.id, 3),
+        "Protect at least one Summoning Tree until Gaia appears",
+        aomScenarioData.NA_12,
+        aomLocationType.OBJECTIVE,
+    )
+    NA_12_OBJ_3 = (
+        global_location_id(aomScenarioData.NA_12.id, 4),
+        "Use Gaia to defeat Kronos",
+        aomScenarioData.NA_12,
+        aomLocationType.OBJECTIVE,
+    )
+
+    # ===========================================================================
+    # THE GOLDEN GIFT (APScenarioIDs 601-604)
+    # ===========================================================================
+
+    # GG_1: Brokk's Journey
+    GG_1_VICTORY = (
+        global_location_id(aomScenarioData.GG_1.id, 0),
+        "Victory",
+        aomScenarioData.GG_1,
+        aomLocationType.VICTORY,
+    )
+    GG_1_COMPLETION = (
+        global_location_id(aomScenarioData.GG_1.id, 1),
+        "Completion",
+        aomScenarioData.GG_1,
+        aomLocationType.COMPLETION,
+    )
+    GG_1_OBJ_1 = (
+        global_location_id(aomScenarioData.GG_1.id, 2),
+        "Bring Brokk and four Ox Carts to the flagged tunnel entrance",
+        aomScenarioData.GG_1,
+        aomLocationType.OBJECTIVE,
+    )
+
+    # GG_2: Eitri's Journey
+    GG_2_VICTORY = (
+        global_location_id(aomScenarioData.GG_2.id, 0),
+        "Victory",
+        aomScenarioData.GG_2,
+        aomLocationType.VICTORY,
+    )
+    GG_2_COMPLETION = (
+        global_location_id(aomScenarioData.GG_2.id, 1),
+        "Completion",
+        aomScenarioData.GG_2,
+        aomLocationType.COMPLETION,
+    )
+    GG_2_OBJ_1 = (
+        global_location_id(aomScenarioData.GG_2.id, 2),
+        "Build a Dock",
+        aomScenarioData.GG_2,
+        aomLocationType.OBJECTIVE,
+    )
+    GG_2_OBJ_2 = (
+        global_location_id(aomScenarioData.GG_2.id, 3),
+        "Bring Eitri and six Dwarves to the entrance to the mines",
+        aomScenarioData.GG_2,
+        aomLocationType.OBJECTIVE,
+    )
+
+    # GG_3: Fight at the Forge
+    GG_3_VICTORY = (
+        global_location_id(aomScenarioData.GG_3.id, 0),
+        "Victory",
+        aomScenarioData.GG_3,
+        aomLocationType.VICTORY,
+    )
+    GG_3_COMPLETION = (
+        global_location_id(aomScenarioData.GG_3.id, 1),
+        "Completion",
+        aomScenarioData.GG_3,
+        aomLocationType.COMPLETION,
+    )
+    GG_3_OBJ_1 = (
+        global_location_id(aomScenarioData.GG_3.id, 2),
+        "Capture the Plenty Vault",
+        aomScenarioData.GG_3,
+        aomLocationType.OBJECTIVE,
+    )
+    GG_3_OBJ_2 = (
+        global_location_id(aomScenarioData.GG_3.id, 3),
+        "Hold the Dwarven Forge until the timer expires",
+        aomScenarioData.GG_3,
+        aomLocationType.OBJECTIVE,
+    )
+
+    # GG_4: Loki's Temples
+    GG_4_VICTORY = (
+        global_location_id(aomScenarioData.GG_4.id, 0),
+        "Victory",
+        aomScenarioData.GG_4,
+        aomLocationType.VICTORY,
+    )
+    GG_4_COMPLETION = (
+        global_location_id(aomScenarioData.GG_4.id, 1),
+        "Completion",
+        aomScenarioData.GG_4,
+        aomLocationType.COMPLETION,
+    )
+    GG_4_OBJ_1 = (
+        global_location_id(aomScenarioData.GG_4.id, 2),
+        "Destroy Loki's Temple near your Town Center",
+        aomScenarioData.GG_4,
+        aomLocationType.OBJECTIVE,
+    )
+    GG_4_OBJ_2 = (
+        global_location_id(aomScenarioData.GG_4.id, 3),
+        "Bring Brokk and Eitri to the Battle Boar",
+        aomScenarioData.GG_4,
+        aomLocationType.OBJECTIVE,
+    )
+
 
 
 # -----------------------------------------------------------------------

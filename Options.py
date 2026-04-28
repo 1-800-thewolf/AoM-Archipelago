@@ -223,6 +223,61 @@ class UpdateBuildingsForRandomGod(Toggle):
     display_name  = "Update Buildings for Random God"
     default = 1
 
+
+
+
+class GreekMajorGods(Toggle):
+    """Include Greek major gods (Zeus, Poseidon, Hades) in the random major god pool.
+Only applies when Random Major Gods is enabled."""
+    internal_name = "greek_major_gods"
+    display_name  = "Greek Major Gods"
+    default = 1
+
+
+class EgyptianMajorGods(Toggle):
+    """Include Egyptian major gods (Ra, Isis, Set) in the random major god pool.
+Only applies when Random Major Gods is enabled."""
+    internal_name = "egyptian_major_gods"
+    display_name  = "Egyptian Major Gods"
+    default = 1
+
+
+class NorseMajorGods(Toggle):
+    """Include Norse major gods (Odin, Thor, Loki) in the random major god pool.
+Only applies when Random Major Gods is enabled."""
+    internal_name = "norse_major_gods"
+    display_name  = "Norse Major Gods"
+    default = 1
+
+
+class AtlanteanMajorGods(Toggle):
+    """Include Atlantean major gods (Kronos, Oranos, Gaia) in the random major god pool.
+Only applies when Random Major Gods is enabled."""
+    internal_name = "atlantean_major_gods"
+    display_name  = "Atlantean Major Gods"
+    default = 1
+
+
+class NewAtlantis(Toggle):
+    """Include The New Atlantis campaign (12 scenarios, APScenarioIDs 501-512).
+Kastor, Amanra, Ajax, and Reginleif face Titan threats across all four civilizations.
+When disabled, all New Atlantis items and locations are removed from the pool."""
+    internal_name = "new_atlantis"
+    display_name  = "New Atlantis Campaign"
+    default = 0
+
+
+class GoldenGift(Toggle):
+    """Include The Golden Gift campaign (4 scenarios, APScenarioIDs 601-604).
+A Norse-focused campaign following Brokk and Eitri.
+When disabled, all Golden Gift items and locations are removed from the pool.
+Note: Golden Gift items (if any) are also removed when both Norse Scenarios
+and Golden Gift are disabled."""
+    internal_name = "golden_gift"
+    display_name  = "The Golden Gift Campaign"
+    default = 0
+
+
 @dataclass
 class AomOptions(PerGameCommonOptions):
     """All options for the Age of Mythology Retold Archipelago world."""
@@ -240,3 +295,9 @@ class AomOptions(PerGameCommonOptions):
     hero_abilities:                  HeroAbilities
     trap_percentage:                 TrapPercentage
     update_buildings_for_random_god: UpdateBuildingsForRandomGod
+    greek_major_gods:                GreekMajorGods
+    egyptian_major_gods:             EgyptianMajorGods
+    norse_major_gods:                NorseMajorGods
+    atlantean_major_gods:            AtlanteanMajorGods
+    new_atlantis:                    NewAtlantis
+    golden_gift:                     GoldenGift

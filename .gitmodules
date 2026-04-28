@@ -1,0 +1,6 @@
+[submodule "youthful-ramanujan"]
+	path = youthful-ramanujan
+	url = https://github.com/1-800-thewolf/AoM-Archipelago
+[submodule "distracted-feynman-67aeac"]
+	path = distracted-feynman-67aeac
+	url = https://github.com/1-800-thewolf/AoM-Archipelago

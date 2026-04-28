@@ -400,7 +400,9 @@ def write_aom_state(ctx: AoMGameContext) -> None:
     lines.append("")
     lines.append("void APInitGods()")
     lines.append("{")
-    for scenario_id in range(1, 33):
+    # Iterate all scenario IDs that have vanilla god assignments (FotT + NA + GG)
+    all_scenario_ids = sorted(ctx.god_assignments.keys()) if (ctx.random_major_gods and ctx.god_assignments) else list(range(1, 33))
+    for scenario_id in all_scenario_ids:
         if ctx.random_major_gods and ctx.god_assignments and scenario_id in ctx.god_assignments:
             god_val = ctx.god_assignments[scenario_id]
         else:
@@ -414,7 +416,7 @@ def write_aom_state(ctx: AoMGameContext) -> None:
     lines.append("{")
     lines.append("    int scenId = trQuestVarGet(\"APScenarioID\");")
     if ctx.random_major_gods and ctx.minor_god_assignments:
-        for scenario_id in range(1, 33):
+        for scenario_id in sorted(ctx.minor_god_assignments.keys()):
             techs = ctx.minor_god_assignments.get(scenario_id) or []
             if not techs:
                 continue

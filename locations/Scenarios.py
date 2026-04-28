@@ -23,10 +23,9 @@ class aomScenarioData(enum.IntEnum):
 
     @property
     def display_name(self) -> str:
-        # Use global_number (1-32) so location names are unambiguous across all campaigns.
-        # Previously chapter reset to 1 for each campaign, producing duplicate prefixes
-        # like "1. The Lost Relic" and "1. Old Friends".
-        return f"{self.global_number}. {self.scenario_name}"
+        if self.campaign.value <= 4:
+            return f"{self.global_number}. {self.scenario_name}"
+        return f"{self.campaign.mnemonic} {self.chapter}. {self.scenario_name}"
 
     # Greek (chapters 1-10, global 1-10)
     FOTT_1  = ("Omens",                    aomCampaignData.FOTT_GREEK,     1,  1)
@@ -67,6 +66,25 @@ class aomScenarioData(enum.IntEnum):
     # Final (chapters 1-2, global 31-32)
     FOTT_31 = ("Welcome Back",             aomCampaignData.FOTT_FINAL,     1, 31)
     FOTT_32 = ("A Place in My Dreams",     aomCampaignData.FOTT_FINAL,     2, 32)
+    # New Atlantis (campaign value 5, APScenarioIDs 501-512)
+    NA_1  = ("A Lost People",         aomCampaignData.NEW_ATLANTIS,  1, 501)
+    NA_2  = ("Atlantis Reborn",       aomCampaignData.NEW_ATLANTIS,  2, 502)
+    NA_3  = ("Greetings From Greece", aomCampaignData.NEW_ATLANTIS,  3, 503)
+    NA_4  = ("Odin's Tower",          aomCampaignData.NEW_ATLANTIS,  4, 504)
+    NA_5  = ("The Ancient Relics",    aomCampaignData.NEW_ATLANTIS,  5, 505)
+    NA_6  = ("Mount Olympus",         aomCampaignData.NEW_ATLANTIS,  6, 506)
+    NA_7  = ("Betrayal at Sikyos",    aomCampaignData.NEW_ATLANTIS,  7, 507)
+    NA_8  = ("Cerberus",              aomCampaignData.NEW_ATLANTIS,  8, 508)
+    NA_9  = ("Rampage",               aomCampaignData.NEW_ATLANTIS,  9, 509)
+    NA_10 = ("Making Amends",         aomCampaignData.NEW_ATLANTIS, 10, 510)
+    NA_11 = ("Atlantis Betrayed",     aomCampaignData.NEW_ATLANTIS, 11, 511)
+    NA_12 = ("War of the Titans",     aomCampaignData.NEW_ATLANTIS, 12, 512)
+
+    # The Golden Gift (campaign value 6, APScenarioIDs 601-604)
+    GG_1  = ("Brokk's Journey",       aomCampaignData.GOLDEN_GIFT,  1, 601)
+    GG_2  = ("Eitri's Journey",       aomCampaignData.GOLDEN_GIFT,  2, 602)
+    GG_3  = ("Fight at the Forge",    aomCampaignData.GOLDEN_GIFT,  3, 603)
+    GG_4  = ("Loki's Temples",        aomCampaignData.GOLDEN_GIFT,  4, 604)
 
 
 scenario_from_id: dict[int, aomScenarioData] = {
