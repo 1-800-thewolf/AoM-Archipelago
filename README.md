@@ -64,6 +64,13 @@ Archipelago is a free, open-source multiworld randomizer platform that connects 
 - [Age of Mythology: Retold (Steam)](https://store.steampowered.com/app/1934680/Age_of_Mythology_Retold/)
 - [Archipelago](https://github.com/ArchipelagoMW/Archipelago/releases) 0.6.5 or later
 
+# Video Tutorial
+I made a 6 minute video tutorial showing how to set this up start to finish
+
+[![randomizer thumbnail](https://github.com/user-attachments/assets/db65528f-16f9-4459-aa71-b75256ac5a51)](https://youtu.be/Tjp0x-ZtOP0)
+
+https://www.youtube.com/watch?v=Tjp0x-ZtOP0
+
 ### Steps
 
 **1. Install the AoM mod**
@@ -140,6 +147,13 @@ Key options to consider:
 - The mod must be **enabled** in the AoM Retold mod manager before launching a scenario. Game updates may disable mods — re-enable after any update.
 - The client must remain running and connected throughout your play session for checks to register.
 
+---
+# How to play again
+I made a 1 minute video tutorial showing how play again
+
+[![randomizer thumbnail](https://github.com/user-attachments/assets/db65528f-16f9-4459-aa71-b75256ac5a51)](https://youtu.be/3vlax2LfKq8)
+
+https://youtu.be/3vlax2LfKq8
 ---
 
 For support, questions, and discussion, please join us on the [AoM:R Archipelago discord](https://discord.com/channels/731205301247803413/1302047515482390588).
