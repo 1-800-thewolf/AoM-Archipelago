@@ -116,10 +116,15 @@ def create_regions(multiworld: MultiWorld, player: int) -> None:
     _way = _Location(player, WAY_TO_ATLANTIS_LOCATION_NAME, WAY_TO_ATLANTIS_LOCATION_ID, menu_region)
     menu_region.locations.append(_way)
 
+    # Skip alternate campaigns when their YAML toggle is disabled.
+    disabled_campaigns = getattr(multiworld.worlds[player], "disabled_campaigns", set())
+
     # Campaign section regions — connected to Menu unconditionally here.
     # Rules.py owns all section gate logic.
     campaign_regions: dict[aomCampaignData, Region] = {}
     for campaign in aomCampaignData:
+        if campaign in disabled_campaigns:
+            continue
         campaign_region = create_region(
             multiworld,
             player,
@@ -132,6 +137,8 @@ def create_regions(multiworld: MultiWorld, player: int) -> None:
     # All scenarios in a section are accessible as soon as the section is unlocked,
     # gated only by their individual age-unlock and point requirements (set in Rules.py).
     for scenario in aomScenarioData:
+        if scenario.campaign in disabled_campaigns:
+            continue
         scenario_region = create_region(
             multiworld,
             player,

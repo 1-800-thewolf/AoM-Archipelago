@@ -489,7 +489,10 @@ def _get_scenario_god(world, scenario_n: int) -> int:
 def place_completion_events(world) -> None:
     player    = world.player
     multiworld = world.multiworld
+    disabled_campaigns = getattr(world, "disabled_campaigns", set())
     for scenario in aomScenarioData:
+        if scenario.campaign in disabled_campaigns:
+            continue
         location   = multiworld.get_location(completion_location_name(scenario), player)
         event_item = Item(
             completion_event_name(scenario),
@@ -549,6 +552,7 @@ def set_section_rules(world) -> None:
 def set_scenario_age_and_point_rules(world, point_table: dict[str, float]) -> None:
     player    = world.player
     multiworld = world.multiworld
+    disabled_campaigns = getattr(world, "disabled_campaigns", set())
 
     section_names = {
         "Greek":       "Fall of the Trident: Greek",
@@ -569,6 +573,8 @@ def set_scenario_age_and_point_rules(world, point_table: dict[str, float]) -> No
         return section_names["Final"]
 
     for scenario in aomScenarioData:
+        if scenario.campaign in disabled_campaigns:
+            continue
         n = scenario.global_number
         start_age_num, min_required_unlocks, points_needed, is_exempt, is_myth_only = _SCENARIO_DATA[n]
 
@@ -639,7 +645,10 @@ def set_scenario_age_and_point_rules(world, point_table: dict[str, float]) -> No
 def exclude_scenario_32_locations(world) -> None:
     player    = world.player
     multiworld = world.multiworld
+    disabled_campaigns = getattr(world, "disabled_campaigns", set())
     for location_data in aomLocationData:
+        if location_data.scenario.campaign in disabled_campaigns:
+            continue
         if location_data.scenario != aomScenarioData.FOTT_32:
             continue
         if location_data.type in (aomLocationType.VICTORY, aomLocationType.COMPLETION):
@@ -661,7 +670,10 @@ def set_item_placement_restrictions(world) -> None:
         "FOTT_NORSE":    aomItemData.NORSE_SCENARIOS.item_name,
         "FOTT_FINAL":    aomItemData.ATLANTIS_KEY.item_name,
     }
+    disabled_campaigns = getattr(world, "disabled_campaigns", set())
     for location_data in aomLocationData:
+        if location_data.scenario.campaign in disabled_campaigns:
+            continue
         location  = multiworld.get_location(location_data.global_name(), player)
         forbidden = campaign_to_forbidden.get(location_data.scenario.campaign.name)
         if forbidden:
@@ -690,8 +702,11 @@ def place_gems(world) -> None:
         return  # victories hold random pool items when shop is disabled
     player     = world.player
     multiworld = world.multiworld
+    disabled_campaigns = getattr(world, "disabled_campaigns", set())
     for scenario in aomScenarioData:
         if scenario == aomScenarioData.FOTT_32:
+            continue
+        if scenario.campaign in disabled_campaigns:
             continue
         loc = multiworld.get_location(VICTORY_LOCATIONS[scenario].global_name(), player)
         gem = world.create_item(aomItemData.GEM.item_name)

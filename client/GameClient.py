@@ -157,7 +157,7 @@ class AoMGameContext:
 # -----------------------------------------------------------------------
 
 def _load_ap_ai_runtime_template_text() -> str:
-    """
+    r"""
     Load ap_ai_runtime.xs from the triggers folder inside the apworld zip.
 
     __file__ for a zip-imported module is a virtual path like:
@@ -228,7 +228,7 @@ def _strip_generated_ap_functions(template_text: str) -> str:
 
 
 def generate_ap_ai_xs(ctx: AoMGameContext, mods_local_dir: Path) -> None:
-    """
+    r"""
     Generate Game\AI\ap_ai_runtime.xs from the packaged triggers/ap_ai_runtime.xs
     template, then append generated AP bridge functions for Player 12.
     Called on every client connect so the live runtime AI file is always current.

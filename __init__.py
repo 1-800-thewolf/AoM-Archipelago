@@ -398,6 +398,15 @@ class aomWorld(World):
             self.shop_progression_slots   = {}
             self.shop_filler_only         = set()
 
+        # Disabled-campaign set: alternate campaigns can be opted out via YAML.
+        # FOTT campaigns (Greek/Egyptian/Norse/Final) are always enabled.
+        from .locations.Campaigns import aomCampaignData
+        self.disabled_campaigns: set[aomCampaignData] = set()
+        if not bool(self.options.new_atlantis.value):
+            self.disabled_campaigns.add(aomCampaignData.NEW_ATLANTIS)
+        if not bool(self.options.golden_gift.value):
+            self.disabled_campaigns.add(aomCampaignData.GOLDEN_GIFT)
+
 
 
     def _generate_shop_assignments(self) -> tuple:
@@ -697,9 +706,11 @@ class aomWorld(World):
         #   Progressive Shop Info item (place_progressive_shop_info).
         # The 60 shop item slots remain free fill targets.
         gem_shop_on = self.gem_shop_enabled
+        disabled_campaigns = self.disabled_campaigns
         visible_location_count = (
             sum(1 for loc in Locations.aomLocationData
-                if loc.type != Locations.aomLocationType.COMPLETION)
+                if loc.type != Locations.aomLocationType.COMPLETION
+                and loc.scenario.campaign not in disabled_campaigns)
             - 1  # scenario 32 Victory is always locked to the Victory item
         )
         if gem_shop_on:
@@ -708,6 +719,7 @@ class aomWorld(World):
             locked_gem_count = sum(
                 1 for loc in Locations.aomLocationData
                 if loc.type == Locations.aomLocationType.VICTORY
+                and loc.scenario.campaign not in disabled_campaigns
             ) - 1
             visible_location_count -= locked_gem_count
             # 60 shop item slots are free fill targets.

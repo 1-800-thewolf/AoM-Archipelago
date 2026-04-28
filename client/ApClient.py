@@ -560,9 +560,6 @@ class AoMCommandProcessor(ClientCommandProcessor):
         of the unit or hero's in-game civilization."""
         self._cmd_civ_items("Generic", lambda item: not self._is_civ_item(item))
 
-    # Aliases for /gods
-    _cmd_god = _cmd_gods
-
     # Aliases for civ commands
     _cmd_egyptian = _cmd_egypt
     _cmd_atlant   = _cmd_atlantean
@@ -686,6 +683,9 @@ class AoMCommandProcessor(ClientCommandProcessor):
         #   age_label = "Starting Age Only" if (no_tc or min_required_unlocks == 0) else
         #               f"Must reach {floor_age} ({min_required_unlocks} unlocks, Mythic possible with 3)"
         # Then append f" — {age_label}" to each output line.
+
+    # Alias for /gods
+    _cmd_god = _cmd_gods
 
 
     # ---------------------------------------------------------------------------
