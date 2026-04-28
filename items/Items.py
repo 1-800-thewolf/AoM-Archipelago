@@ -188,15 +188,27 @@ class ArkantosHousing:
 
 
 @dataclass
-class GenericVillagerDiscount:
-    """Reduces food cost for all villager types (Greek, Egyptian, Norse, Atlantean)."""
-    reduction: int  # food cost reduction applied to each villager type
+class VillagerCarryCapacity:
+    unit_name: str     # proto unit name e.g. "VillagerGreek"
+    resource: str      # resource name e.g. "food", "wood", "gold"
+
+
+@dataclass
+class VillagerFoodCost:
+    unit_name: str     # proto unit name e.g. "VillagerGreek"
+
 
 @dataclass
 class VillagerCarryCapacity:
     unit_name: str    # proto unit name e.g. "VillagerGreek"
     resource: str     # "food", "wood", or "gold"
     amount: int       # carry capacity increase
+
+
+@dataclass
+class VillagerFoodCost:
+    unit_name: str    # proto unit name e.g. "VillagerGreek"
+    reduction: int    # food cost reduction (positive = cheaper)
 
 
 @dataclass
@@ -250,6 +262,7 @@ ItemType = Union[
     HeroActionBoost,
     ArkantosHousing,
     VillagerCarryCapacity,
+    VillagerFoodCost,
 ]
 
 item_type_to_classification: dict[type, ItemClassification] = {
@@ -260,6 +273,7 @@ item_type_to_classification: dict[type, ItemClassification] = {
     Gem:                    ItemClassification.filler,
     ProgressiveShopInfo:    ItemClassification.useful,
     Trap:                   ItemClassification.trap,
+        Trap:                   ItemClassification.trap,
     UnitUnlockProgression:  ItemClassification.progression,
     StartingResources:      ItemClassification.filler,
     PassiveIncome:          ItemClassification.filler,
@@ -274,8 +288,10 @@ item_type_to_classification: dict[type, ItemClassification] = {
     HeroSpecialEffect:      ItemClassification.useful,
     HeroActionBoost:        ItemClassification.useful,
     ArkantosHousing:        ItemClassification.useful,
-    VillagerCarryCapacity:   ItemClassification.filler,
-    GenericVillagerDiscount: ItemClassification.filler,
+    VillagerCarryCapacity:  ItemClassification.filler,
+    VillagerFoodCost:       ItemClassification.filler,
+    VillagerCarryCapacity:       ItemClassification.filler,
+    VillagerFoodCost:            ItemClassification.filler,
     MythUnitUnlockProgression:   ItemClassification.progression,
     MythUnitUnlockUseful:        ItemClassification.progression,
     MythUnitUnlockFiller:        ItemClassification.progression,
@@ -364,11 +380,9 @@ class aomItemData(enum.IntEnum):
     # One item per campaign section; receiving it allows the player to enter
     # that section's scenarios. ATLANTIS_KEY unlocks the final two scenarios.
     # -----------------------------------------------------------------------
-    GREEK_SCENARIOS    = 3500, "Unlock FotT Greek Campaign",    Campaign(aomCampaignData.FOTT_GREEK)
-    EGYPTIAN_SCENARIOS = 3501, "Unlock FotT Egyptian Campaign", Campaign(aomCampaignData.FOTT_EGYPTIAN)
-    NORSE_SCENARIOS    = 3502, "Unlock FotT Norse Campaign",    Campaign(aomCampaignData.FOTT_NORSE)
-    UNLOCK_NEW_ATLANTIS = 3503, "Unlock New Atlantis Campaign",    Campaign(aomCampaignData.NEW_ATLANTIS)
-    UNLOCK_GOLDEN_GIFT  = 3504, "Unlock The Golden Gift Campaign", Campaign(aomCampaignData.GOLDEN_GIFT)
+    GREEK_SCENARIOS    = 3500, "Greek Scenarios",    Campaign(aomCampaignData.FOTT_GREEK)
+    EGYPTIAN_SCENARIOS = 3501, "Egyptian Scenarios", Campaign(aomCampaignData.FOTT_EGYPTIAN)
+    NORSE_SCENARIOS    = 3502, "Norse Scenarios",    Campaign(aomCampaignData.FOTT_NORSE)
     ATLANTIS_KEY       = 3510, "Atlantis Key",       FinalUnlock()
 
     # -----------------------------------------------------------------------
@@ -698,30 +712,6 @@ class aomItemData(enum.IntEnum):
     # placed here for readability alongside Reginleif's other abilities.
     REGINLEIF_PROJECTILE      = 2510, "Reginleif +1 Projectile",      HeroActionBoost("Reginleif", "RangedAttack", 8, 1.0)
 
-    # ---------------------------------------------------------------------------
-    # Kastor Hero Items — IDs 3400-3409 (stats), 3300-3302 (specials)
-    # Kastor appears in New Atlantis. Stat boosts follow the same rarity pattern
-    # as other heroes. Special abilities require hero_abilities=True.
-    # NOTE: stat boost IDs use 3400-3409 — the 3200-3209 range collides with
-    # the CAN_TRAIN_* unit unlocks (3200 Hoplite, 3201 Spearman, 3202 Berserk),
-    # which would silently alias the colliding Kastor entries inside the IntEnum
-    # and remove them from the world entirely.
-    # ---------------------------------------------------------------------------
-    # Stat Boosts (Filler)
-    KASTOR_HP_25        = 3400, "Kastor +25 HP",           HeroStatBoostFiller("Kastor", "Hitpoints", 25)
-    KASTOR_HP_200       = 3402, "Kastor +200 HP",          HeroStatBoostFiller("Kastor", "Hitpoints", 200)
-    KASTOR_ATK_1        = 3403, "Kastor +1 Attack",        HeroStatBoostFiller("Kastor", "HandAttack", 1, "HandAttack")
-    KASTOR_RECHARGE_2   = 3406, "Kastor -2 Recharge Time", HeroStatBoostFiller("Kastor", "RechargeTime", -2)
-    KASTOR_REGEN_1      = 3408, "Kastor +1 Regen",         HeroStatBoostFiller("Kastor", "UnitRegenRate", 1)
-    # Stat Boosts (Useful)
-    KASTOR_ATK_10       = 3405, "Kastor +10 Attack",       HeroStatBoost("Kastor", "HandAttack", 10, "HandAttack")
-    KASTOR_RECHARGE_5   = 3407, "Kastor -5 Recharge Time", HeroStatBoost("Kastor", "RechargeTime", -5)
-    KASTOR_REGEN_5      = 3409, "Kastor +5 Regen",         HeroStatBoost("Kastor", "UnitRegenRate", 5)
-    # Special Abilities (Useful, removed if hero_abilities=False)
-    KASTOR_UNDERMINE_ATTACKS = 3300, "Kastor Undermines with Attacks", HeroSpecialEffect("Kastor", "HandAttack DamageOverTime Building Crush 13 25")
-    KASTOR_SUMMON_SOLDIERS   = 3301, "Kastor Can Summon Soldiers",     HeroSpecialEffect("Kastor", "AddTrain Hoplite Spearman Berserk Murmillo")
-    KASTOR_IS_A_MANOR        = 3302, "Kastor is a Manor",              ArkantosHousing()  # 20 pop cap
-
     # -----------------------------------------------------------------------
     # Villager Carry Capacity — IDs 5000-5008
     # Increases how much of a resource each villager type can carry per trip.
@@ -738,12 +728,13 @@ class aomItemData(enum.IntEnum):
     NORSE_CARRY_GOLD    = 5008, "Norse Villagers Carry +10 Gold",    VillagerCarryCapacity("VillagerNorse",    "gold",  10)
 
     # -----------------------------------------------------------------------
-    # Generic Villager Food Cost Reduction — ID 5009
-    # Reduces the food cost to train ALL villager types by 5.
+    # Villager Food Cost Reduction — IDs 5009-5011
+    # Reduces the food cost to train each civilization's villager by 3.
     # Applied via trModifyProtounitResource (cXSPUResourceEffectCost=0).
-    # Generic — not civ-specific; always in pool regardless of enabled civs.
     # -----------------------------------------------------------------------
-    VILLAGER_DISCOUNT = 5009, "Villagers Cost -5 Food", GenericVillagerDiscount(5)
+    GREEK_VILLAGER_CHEAPER    = 5009, "Greek Villagers Cost -3 Food",    VillagerFoodCost("VillagerGreek",    3)
+    EGYPTIAN_VILLAGER_CHEAPER = 5010, "Egyptian Villagers Cost -3 Food", VillagerFoodCost("VillagerEgyptian", 3)
+    NORSE_VILLAGER_CHEAPER    = 5011, "Norse Villagers Cost -3 Food",    VillagerFoodCost("VillagerNorse",    3)
 
 
 # -----------------------------------------------------------------------

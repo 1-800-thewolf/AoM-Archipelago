@@ -22,12 +22,6 @@ from .Options import (Random_Major_Gods, ForceDifferentGod, MythUnitSanity, Extr
     HeroAbilities,
     StartingScenarios,
     XScenarios,
-    GreekMajorGods,
-    EgyptianMajorGods,
-    NorseMajorGods,
-    AtlanteanMajorGods,
-    NewAtlantis,
-    GoldenGift,
 )
 from .items import Items
 from .locations import Campaigns, Locations
@@ -160,16 +154,10 @@ _AGE_BASE_TECHS: dict[str, dict] = {
 }
 
 _SCENARIO_STARTING_AGE: dict[int, int] = {
-    # Fall of the Trident
     1:1, 2:0, 3:0, 10:0, 11:0, 12:0, 21:1, 22:0, 25:1,
     4:1, 8:1, 15:1, 18:1, 23:1, 24:1, 26:1, 27:1, 29:1, 30:1,
     5:2, 6:2, 7:2, 13:2, 14:2, 17:2, 19:2, 20:2, 28:2, 31:2, 32:2,
     9:3, 16:3,
-    # New Atlantis (501-512)
-    501:2, 502:0, 503:2, 504:2, 505:2, 506:3,
-    507:2, 508:2, 509:2, 510:2, 511:3, 512:3,
-    # The Golden Gift (601-604)
-    601:2, 602:2, 603:2, 604:3,
 }
 
 
@@ -216,49 +204,6 @@ _VANILLA_MINOR_GOD_TECHS: dict[int, list] = {
          "cTechHeroicAgeGreek",       "cTechHeroicAgeApollo"],
     32: ["cTechClassicalAgeGreek",    "cTechClassicalAgeAthena",
          "cTechHeroicAgeGreek",       "cTechHeroicAgeDionysus"],
-    # ---------------------------------------------------------------------------
-    # New Atlantis (APScenarioIDs 501-512)
-    # ---------------------------------------------------------------------------
-    501: ["cTechClassicalAgeAtlantean", "cTechClassicalAgePrometheus",
-          "cTechHeroicAgeAtlantean",    "cTechHeroicAgeHyperion"],
-    503: ["cTechClassicalAgeAtlantean", "cTechClassicalAgePrometheus",
-          "cTechHeroicAgeAtlantean",    "cTechHeroicAgeHyperion"],
-    504: ["cTechClassicalAgeAtlantean", "cTechClassicalAgePrometheus",
-          "cTechHeroicAgeAtlantean",    "cTechHeroicAgeHyperion"],
-    505: ["cTechClassicalAgeAtlantean", "cTechClassicalAgeLeto",
-          "cTechHeroicAgeAtlantean",    "cTechHeroicAgeRheia"],
-    506: ["cTechClassicalAgeAtlantean", "cTechClassicalAgePrometheus",
-          "cTechHeroicAgeAtlantean",    "cTechHeroicAgeRheia",
-          "cTechMythicAgeAtlantean",    "cTechMythicAgeAtlas"],
-    507: ["cTechClassicalAgeEgyptian",  "cTechClassicalAgeBast",
-          "cTechHeroicAgeEgyptian",     "cTechHeroicAgeSobek"],
-    508: ["cTechClassicalAgeEgyptian",  "cTechClassicalAgeAnubis",
-          "cTechHeroicAgeEgyptian",     "cTechHeroicAgeNephthys"],
-    509: ["cTechClassicalAgeNorse",     "cTechClassicalAgeForseti",
-          "cTechHeroicAgeNorse",        "cTechHeroicAgeSkadi"],
-    510: ["cTechClassicalAgeAtlantean", "cTechClassicalAgeLeto",
-          "cTechHeroicAgeAtlantean",    "cTechHeroicAgeRheia"],
-    511: ["cTechClassicalAgeAtlantean", "cTechClassicalAgeOceanus",
-          "cTechHeroicAgeAtlantean",    "cTechHeroicAgeHyperion",
-          "cTechMythicAgeAtlantean",    "cTechMythicAgeHelios"],
-    512: ["cTechClassicalAgeAtlantean", "cTechClassicalAgeOceanus",
-          "cTechHeroicAgeAtlantean",    "cTechHeroicAgeRheia",
-          "cTechMythicAgeAtlantean",    "cTechMythicAgeAtlas"],
-    # ---------------------------------------------------------------------------
-    # The Golden Gift (APScenarioIDs 601-604) — all start Heroic or Mythic
-    # GG1 Thor:  Heroic start — Classical=Freyja, Heroic=Skadi
-    601: ["cTechClassicalAgeNorse",    "cTechClassicalAgeFreyja",
-          "cTechHeroicAgeNorse",       "cTechHeroicAgeSkadi"],
-    # GG2 Loki:  Heroic start — Classical=Forseti, Heroic=Njord
-    602: ["cTechClassicalAgeNorse",    "cTechClassicalAgeForseti",
-          "cTechHeroicAgeNorse",       "cTechHeroicAgeNjord"],
-    # GG3 Loki:  Heroic start — Classical=Heimdall, Heroic=Njord
-    603: ["cTechClassicalAgeNorse",    "cTechClassicalAgeHeimdall",
-          "cTechHeroicAgeNorse",       "cTechHeroicAgeNjord"],
-    # GG4 Thor:  Mythic start — Classical=Freyja, Heroic=Skadi, Mythic=Tyr
-    604: ["cTechClassicalAgeNorse",    "cTechClassicalAgeFreyja",
-          "cTechHeroicAgeNorse",       "cTechHeroicAgeSkadi",
-          "cTechMythicAgeNorse",       "cTechMythicAgeTyr"],
 }
 
 
@@ -354,34 +299,7 @@ class aomWorld(World):
         return self.random.choice([item.item_name for item in Items.filler_items])
 
     def generate_early(self) -> None:
-        _rmg_on = bool(self.options.random_major_gods.value)
-
-        # Compute excluded civilizations from per-pantheon boolean options.
-        # Only applies when random_major_gods is enabled.
-        _CIV_GODS = {"Greek": {1,2,3}, "Egyptian": {4,5,6}, "Norse": {7,8,9}, "Atlantean": {10,11,12}}
-        if _rmg_on:
-            self.excluded_civs: frozenset[str] = frozenset(
-                civ for civ, opt in [
-                    ("Greek",    self.options.greek_major_gods),
-                    ("Egyptian", self.options.egyptian_major_gods),
-                    ("Norse",    self.options.norse_major_gods),
-                    ("Atlantean",self.options.atlantean_major_gods),
-                ] if not bool(opt.value)
-            )
-            # Validation: at least one pantheon must be active
-            if len(self.excluded_civs) == 4:
-                raise Exception(
-                    "AoMR Archipelago: All pantheons are disabled. "
-                    "Set at least one pantheon to true in your options YAML "
-                    "(greek_major_gods, egyptian_major_gods, norse_major_gods, or atlantean_major_gods)."
-                )
-        else:
-            self.excluded_civs = frozenset()
-        self._allowed_god_ids: set[int] = set(range(1, 13)) - {
-            g for civ in self.excluded_civs for g in _CIV_GODS.get(civ, set())
-        }
-
-        if _rmg_on:
+        if self.options.random_major_gods:
             self.god_assignments: dict[int, int] = self._generate_god_assignments()
         else:
             self.god_assignments = {}
@@ -443,27 +361,18 @@ class aomWorld(World):
         return counts
 
     def _generate_god_assignments(self) -> dict[int, int]:
-        """Randomly assign a major god to each scenario using the world seed.
-        Respects self._allowed_god_ids to exclude disabled civilizations."""
+        """Randomly assign a major god to each scenario using the world seed."""
         force = bool(self.options.force_different_god.value)
-        allowed = frozenset(self._allowed_god_ids)
         assignments: dict[int, int] = {}
-        # Iterate all scenario IDs that have vanilla god assignments:
-        # FotT (1-32), New Atlantis (501-512), Golden Gift (601-604)
-        for scenario_id in sorted(sid for sid in _VANILLA_GODS):
+        for scenario_id in range(1, 33):
             vanilla = _VANILLA_GODS[scenario_id]
             if force:
                 if self.random.random() < 0.5:
-                    candidates = list(allowed - _civ_of_god(vanilla))
+                    candidates = list(_ALL_GODS_WITH_ATLANTIS - _civ_of_god(vanilla))
                 else:
-                    candidates = list(allowed - {vanilla})
+                    candidates = list(_ALL_GODS_WITH_ATLANTIS - {vanilla})
             else:
-                candidates = list(allowed)
-            if not candidates:
-                # Fallback: if exclusions eliminated all candidates, use full allowed set
-                candidates = list(allowed)
-            if not candidates:
-                candidates = [vanilla]  # absolute fallback
+                candidates = list(_ALL_GODS_WITH_ATLANTIS)
             assignments[scenario_id] = self.random.choice(candidates)
         return assignments
 
@@ -607,21 +516,6 @@ class aomWorld(World):
             if isinstance(item.type, atlantean_types) and not random_major_gods_on:
                 continue
 
-            # Civ-specific items — skip if that civ is excluded (only when random_major_gods is on)
-            # Generic items (reinforcements, heroes, resources) are never skipped.
-            if random_major_gods_on and self.excluded_civs:
-                # Primary: items with a culture field (unit unlocks, myth unlocks, age unlocks)
-                _item_civ = getattr(item.type, "culture", None)
-                # Secondary: VillagerCarryCapacity encodes civ in unit_name ("VillagerGreek" etc.)
-                if not _item_civ:
-                    _unit_name = getattr(item.type, "unit_name", "")
-                    if   "Greek"    in _unit_name: _item_civ = "Greek"
-                    elif "Egyptian" in _unit_name: _item_civ = "Egyptian"
-                    elif "Norse"    in _unit_name: _item_civ = "Norse"
-                    elif "Atlantean"in _unit_name: _item_civ = "Atlantean"
-                if _item_civ and _item_civ in self.excluded_civs:
-                    continue
-
             # Starting tech items are added explicitly below (1 copy each)
             if isinstance(item.type, (Items.StartingEconomyTech, Items.StartingMilitaryTech,
                                        Items.StartingDockTech, Items.StartingBuildingsTech)):
@@ -662,9 +556,6 @@ class aomWorld(World):
                 (Items.aomItemData.ATLANTEAN_AGE_UNLOCK, "Atlantean", 3 + atlantean_extra)
             )
         for item_data, culture, count in age_unlock_config:
-            # Skip age unlocks for civs excluded from the random major god pool
-            if culture in self.excluded_civs:
-                continue
             precollect_n = starting_age_unlocks[culture]
             for i in range(count):
                 ap_item = self.create_item(item_data.item_name)
@@ -688,32 +579,19 @@ class aomWorld(World):
             filler_groups.setdefault(type(tech_item.type), []).append(tech_item.item_name)
 
         # Visible location count:
-        #   Campaign non-COMPLETION locations minus the locations Rules.py locks
-        #   to fixed items (which therefore can't hold pool items).
-        #
-        # Always-locked: scenario 32 Victory is locked to the Victory item.
-        # Gem-shop-locked (when enabled): every other Victory location holds a
-        #   Gem (place_gems) and every Progressive Info hint slot holds a
-        #   Progressive Shop Info item (place_progressive_shop_info).
-        # The 60 shop item slots remain free fill targets.
+        #   Campaign non-COMPLETION locations minus only the final Victory location
+        #   (scenarios 1-31 Victory locations are normal fill slots when not locked to Gems)
+        #   Plus shop locations if gem_shop is enabled (60 item + 4 progressive info)
+        #   Plus "The Way to Atlantis" when key is in pool (added below)
         gem_shop_on = self.gem_shop_enabled
         visible_location_count = (
             sum(1 for loc in Locations.aomLocationData
                 if loc.type != Locations.aomLocationType.COMPLETION)
-            - 1  # scenario 32 Victory is always locked to the Victory item
+            - 1  # only scenario 32 Victory is always locked to the Victory item
         )
         if gem_shop_on:
-            # Subtract the remaining Victory locations — Rules.place_gems locks
-            # every Victory except scenario 32 (which is already subtracted above).
-            locked_gem_count = sum(
-                1 for loc in Locations.aomLocationData
-                if loc.type == Locations.aomLocationType.VICTORY
-            ) - 1
-            visible_location_count -= locked_gem_count
-            # 60 shop item slots are free fill targets.
-            visible_location_count += len(Locations.ALL_SHOP_ITEM_IDS)
-            # Progressive Shop Info hint slots are locked by
-            # Rules.place_progressive_shop_info — do NOT add them.
+            visible_location_count += len(Locations.ALL_SHOP_ITEM_IDS)           # 60
+            visible_location_count += len(Locations.ALL_PROGRESSIVE_INFO_IDS)    # 4
 
         if final_mode != FinalScenarios.option_beat_x_scenarios:
             visible_location_count += 1  # Way to Atlantis is a free fill slot
@@ -730,7 +608,7 @@ class aomWorld(World):
         # Types 5 (Spawn Units) and 6 (Transform Drops) excluded until implemented.
         _trap_deck_base = [
             Items.aomItemData.TRAP_METEOR.item_name,
-            Items.aomItemData.TRAP_LIGHTNING_STORM.item_name,
+            # Items.aomItemData.TRAP_LIGHTNING_STORM.item_name,  # disabled: fails to cast
             # Items.aomItemData.TRAP_LOCUST_SWARM.item_name,  # disabled: buggy
             Items.aomItemData.TRAP_BOLT.item_name,
             Items.aomItemData.TRAP_RESTORATION.item_name,

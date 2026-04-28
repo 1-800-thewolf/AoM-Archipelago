@@ -157,7 +157,7 @@ class AoMGameContext:
 # -----------------------------------------------------------------------
 
 def _load_ap_ai_runtime_template_text() -> str:
-    """
+    r"""
     Load ap_ai_runtime.xs from the triggers folder inside the apworld zip.
 
     __file__ for a zip-imported module is a virtual path like:
@@ -228,7 +228,7 @@ def _strip_generated_ap_functions(template_text: str) -> str:
 
 
 def generate_ap_ai_xs(ctx: AoMGameContext, mods_local_dir: Path) -> None:
-    """
+    r"""
     Generate Game\AI\ap_ai_runtime.xs from the packaged triggers/ap_ai_runtime.xs
     template, then append generated AP bridge functions for Player 12.
     Called on every client connect so the live runtime AI file is always current.
@@ -400,9 +400,7 @@ def write_aom_state(ctx: AoMGameContext) -> None:
     lines.append("")
     lines.append("void APInitGods()")
     lines.append("{")
-    # Iterate all scenario IDs that have vanilla god assignments (FotT + NA + GG)
-    all_scenario_ids = sorted(ctx.god_assignments.keys()) if (ctx.random_major_gods and ctx.god_assignments) else list(range(1, 33))
-    for scenario_id in all_scenario_ids:
+    for scenario_id in range(1, 33):
         if ctx.random_major_gods and ctx.god_assignments and scenario_id in ctx.god_assignments:
             god_val = ctx.god_assignments[scenario_id]
         else:
@@ -416,7 +414,7 @@ def write_aom_state(ctx: AoMGameContext) -> None:
     lines.append("{")
     lines.append("    int scenId = trQuestVarGet(\"APScenarioID\");")
     if ctx.random_major_gods and ctx.minor_god_assignments:
-        for scenario_id in sorted(ctx.minor_god_assignments.keys()):
+        for scenario_id in range(1, 33):
             techs = ctx.minor_god_assignments.get(scenario_id) or []
             if not techs:
                 continue
