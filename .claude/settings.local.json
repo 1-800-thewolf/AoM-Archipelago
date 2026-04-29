@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout *)",
+      "Bash(git rm *)",
+      "Bash(git commit -m 'Remove stray submodule pointers from feature branch *)",
+      "Bash(unzip -l /c/ProgramData/Archipelago/custom_worlds/aom.apworld)",
+      "Read(//c/ProgramData/Archipelago/**)",
+      "Bash(timeout 18 ./ArchipelagoLauncherDebug.exe --component \"Age Of Mythology Retold Client\")",
+      "Bash(timeout 12 ./ArchipelagoLauncherDebug.exe --component \"Age Of Mythology Retold Client\")",
+      "Bash(timeout 30 ./ArchipelagoLauncherDebug.exe --component \"Age Of Mythology Retold Client\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "PowerShell(Add-Type -Assembly System.IO.Compression.FileSystem; $z=[System.IO.Compression.ZipFile]::OpenRead\\('C:\\\\ProgramData\\\\Archipelago\\\\custom_worlds\\\\aom.apworld'\\); $z.Entries | Select-Object -First 10 | ForEach-Object { $_.FullName }; Write-Output '---total entries:'; \\($z.Entries | Measure-Object\\).Count; $z.Dispose\\(\\))",
+      "PowerShell($proc = Start-Process -FilePath 'C:\\\\ProgramData\\\\Archipelago\\\\ArchipelagoLauncherDebug.exe' -ArgumentList '\"Age Of Mythology Retold Client\"' -PassThru -WindowStyle Hidden; Start-Sleep -Seconds 8; if \\(-not $proc.HasExited\\) { Write-Output \\('PID ' + $proc.Id + ' still running — appears to have launched OK'\\); Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue } else { Write-Output \\('Process exited with code ' + $proc.ExitCode\\) })",
+      "PowerShell($out = & 'C:\\\\ProgramData\\\\Archipelago\\\\ArchipelagoLauncherDebug.exe' '--help' 2>&1 | Out-String; Write-Output $out.Substring\\(0, [Math]::Min\\(800, $out.Length\\)\\))",
+      "Bash(cat)",
+      "Bash(mkdir -p /tmp/aom_gen3)",
+      "Bash(cp /tmp/aom_na.yaml /tmp/aom_gen3/p1.yaml)",
+      "Read(//tmp/**)"
+    ]
+  }
+}

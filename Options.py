@@ -12,7 +12,7 @@ class Goal(Choice):
 
 fott_32_victory:
 Beat scenario 32, A Place in My Dreams, to win.
-Note: Beating scenario 32 requires all 3 Progressive Greek Age Unlock items
+Note: Beating scenario 32 requires all 3 Progressive Age Unlock items for whatever the civilization is for that scenario (vanilla Greek)
 (the Mythic Age is needed to build the Wonder)."""
     internal_name = "goal"
     display_name = "Goal"
@@ -27,18 +27,21 @@ Note: Beating scenario 32 requires all 3 Progressive Greek Age Unlock items
 class StartingScenarios(Choice):
     """Which civilization block is unlocked at the start?
 
-greek:    Scenarios 1-10
-egyptian: Scenarios 11-20
-norse:    Scenarios 21-30
+greek:        Scenarios 1-10 (Fall of the Trident: Greek)
+egyptian:     Scenarios 11-20 (Fall of the Trident: Egyptian)
+norse:        Scenarios 21-30 (Fall of the Trident: Norse)
+new_atlantis: Start with the New Atlantis Campaign. All of Fall of the Trident is locked until you find unlock items.
+              Requires new_atlantis_campaign to be enabled.
 
-The other two sections must be found as items in the pool. Within a section, all scenarios are immediately accessible.
+The other FotT sections must be found as items in the pool. Within a section, all scenarios are immediately accessible.
 
 Starting with the Greek block is the easiest."""
     internal_name = "starting_scenarios"
     display_name = "Starting Scenarios"
-    option_greek    = 0
-    option_egyptian = 1
-    option_norse    = 2
+    option_greek        = 0
+    option_egyptian     = 1
+    option_norse        = 2
+    option_new_atlantis = 3
     default = option_greek
 
 
@@ -64,17 +67,18 @@ The Atlantis Key is shuffled randomly into the item pool. Finding it anywhere op
 class XScenarios(Range):
     """If Final Scenarios (above) is set to beat_x_scenarios, this is how many scenarios must be completed before you receive the Atlantis Key.
 
-You may beat any combination of the 30 non-final scenarios."""
+You may beat any combination of scenarios from any activated campaigns. 
+(46 requires beats all 30 Fall of the Trident, all 12 New Atlantis, and all 4 Golden Gift scenarios)"""
     internal_name = "x_scenarios"
     display_name = "X Scenarios"
     range_start = 0
-    range_end   = 30
+    range_end   = 46
     default     = 12
 
 
 class ExtraFinalMissionAgeUnlocks(Range):
     """Scenario 32 requires 3 Age Unlock items to reach the Mythic Age and build the Wonder. 
-This adds extra copies of whichever civilization's Age Unlock corresponds to the god assigned to scenario 32 (Greek by default, or randomized if godsanity is enabled). These replace filler items.
+This adds extra copies of whichever civilization's Age Unlock corresponds to the god assigned to scenario 32 (Greek by default, or randomized if Random Major Gods is enabled).
 
 At the default of 1, there are 4 total copies of that unlock in the pool."""
     internal_name = "extra_final_mission_age_unlocks"
@@ -92,9 +96,7 @@ class GemShop(Toggle):
     """
     Enable the Gem Shop.
 
-    When enabled: beating scenarios earns Gems (currency), which are spent
-    in the shop to receive items and hints. The shop scenario is accessible
-    from the campaign map.
+    When enabled: beating scenarios earns Gems (currency), which are spent in the shop to receive items and hints. The shop scenario is accessible from the campaign menu.
 
     When disabled: victories award random multiworld items instead of Gems,
     the shop scenario returns the player to the menu immediately, and no
@@ -132,7 +134,7 @@ Be ready to think on your feat with this turned on."""
 
 class ForceDifferentGod(Toggle):
     """When random_major_gods is enabled, forces the random god to never be the vanilla major god for that scenario and makes it more likely to play a civilization different from the vanilla.
-(e.g. If 1. Omens is normally Poseidon, you'll never play Poseidon on that mission with this on, and Zeus and Hades are much less likely)"""
+(e.g. 1. Omens is normally Poseidon, so you'll never play Poseidon on that mission with this on, and Zeus and Hades are much less likely)"""
     internal_name = "force_different_god"
     display_name = "Force Different Major God"
     default = 1
@@ -141,7 +143,7 @@ class ForceDifferentGod(Toggle):
 class MythUnitSanity(Toggle):
     """Include myth unit tier unlock items in the pool.
 When enabled, all myth units are forbidden at the start and must be unlocked by finding the corresponding tier item.
-Turn this off for an easier time."""
+Turn this off for an easier time, but there will be very little variety in playstyle."""
     internal_name = "myth_unit_sanity"
     display_name = "Shuffle Myth Unit Unlocks"
     default = 1
@@ -184,6 +186,11 @@ Reginleif:
   - Reginleif Frost Strike     (arrows progressively freeze the target)
   - Reginleif +1 Projectile    (fire an additional javelin)
 
+Kastor (only in pool when New Atlantis campaign is enabled):
+  - Kastor Undermines with Attacks  (melee attacks deal large damage over time to buildings)
+  - Kastor Can Summon Soldiers      (Kastor can train Hoplites, Spearmen, Berserks, and Murmillos)
+  - Kastor is a Manor               (Kastor provides +20 population capacity)
+
 disabled (false):
 All above hero ability items are removed from the pool and replaced with
 filler. Removing these makes the game much harder and less hero-focused."""
@@ -211,13 +218,8 @@ class TrapPercentage(Range):
 
 class UpdateBuildingsForRandomGod(Toggle):
     """
-    When Random_Major_Gods is enabled, transform Player 1's military buildings
-    at scenario start to match the randomly assigned civilization.
-    For example, if a normally Greek scenario is assigned an Egyptian god,
-    Greek military buildings (Military Academy, Archery Range, etc.) are
-    transformed into their Egyptian equivalents (Barracks, Migdol Stronghold, etc.).
-    Scenario 7 is a special case: Player 3's buildings are transformed instead
-    of Player 1's, since Player 3's army is captured in that scenario.
+    When Random_Major_Gods is enabled, transform your starting military buildings to match the randomly assigned civilization.
+    For example, 1. Omens is normally Greek. If you're randomly assigned Set, the Military Academies and Archery Ranges are transformed into Egyptian Barracks.
     """
     internal_name = "update_buildings_for_random_god"
     display_name  = "Update Buildings for Random God"
@@ -227,54 +229,74 @@ class UpdateBuildingsForRandomGod(Toggle):
 
 
 class GreekMajorGods(Toggle):
-    """Include Greek major gods (Zeus, Poseidon, Hades) in the random major god pool.
+    """Include Greek major gods in the random major god pool. Turn this off to never play as the Greeks.
 Only applies when Random Major Gods is enabled."""
-    internal_name = "greek_major_gods"
-    display_name  = "Greek Major Gods"
+    internal_name = "shuffle_greek_major_gods"
+    display_name  = "Shuffle Greek Major Gods"
     default = 1
 
 
 class EgyptianMajorGods(Toggle):
-    """Include Egyptian major gods (Ra, Isis, Set) in the random major god pool.
+    """Include Egyptian major gods in the random major god pool. Turn this off to never play as the Egyptians.
 Only applies when Random Major Gods is enabled."""
-    internal_name = "egyptian_major_gods"
-    display_name  = "Egyptian Major Gods"
+    internal_name = "shuffle_egyptian_major_gods"
+    display_name  = "Shuffle Egyptian Major Gods"
     default = 1
 
 
 class NorseMajorGods(Toggle):
-    """Include Norse major gods (Odin, Thor, Loki) in the random major god pool.
+    """Include Norse major gods in the random major god pool. Turn this off to never play as the Norse.
 Only applies when Random Major Gods is enabled."""
-    internal_name = "norse_major_gods"
-    display_name  = "Norse Major Gods"
+    internal_name = "shuffle_norse_major_gods"
+    display_name  = "Shuffle Norse Major Gods"
     default = 1
 
 
 class AtlanteanMajorGods(Toggle):
-    """Include Atlantean major gods (Kronos, Oranos, Gaia) in the random major god pool.
+    """Include Atlantean major gods in the random major god pool. Turn this off to never play as the Atlanteans
 Only applies when Random Major Gods is enabled."""
-    internal_name = "atlantean_major_gods"
-    display_name  = "Atlantean Major Gods"
+    internal_name = "shuffle_atlantean_major_gods"
+    display_name  = "Shuffle Atlantean Major Gods"
+    default = 1
+
+
+class FottGreekCampaign(Toggle):
+    """Include the Fall of the Trident: Greek campaign (scenarios 1-10).
+When disabled, FotT scenarios 1-10 are removed from the pool."""
+    internal_name = "fott_greek_campaign"
+    display_name  = "FotT Greek Campaign"
+    default = 1
+
+
+class FottEgyptianCampaign(Toggle):
+    """Include the Fall of the Trident: Egyptian campaign (scenarios 11-20).
+When disabled, FotT scenarios 11-20 are removed from the pool."""
+    internal_name = "fott_egyptian_campaign"
+    display_name  = "FotT Egyptian Campaign"
+    default = 1
+
+
+class FottNorseCampaign(Toggle):
+    """Include the Fall of the Trident: Norse campaign (scenarios 21-30).
+When disabled, FotT scenarios 21-30 are removed from the pool."""
+    internal_name = "fott_norse_campaign"
+    display_name  = "FotT Norse Campaign"
     default = 1
 
 
 class NewAtlantis(Toggle):
-    """Include The New Atlantis campaign (12 scenarios, APScenarioIDs 501-512).
-Kastor, Amanra, Ajax, and Reginleif face Titan threats across all four civilizations.
-When disabled, all New Atlantis items and locations are removed from the pool."""
-    internal_name = "new_atlantis"
+    """Include The New Atlantis campaign.
+     When disabled, all 12 New Atlantis scenarios are removed from the pool."""
+    internal_name = "new_atlantis_campaign"
     display_name  = "New Atlantis Campaign"
     default = 0
 
 
 class GoldenGift(Toggle):
-    """Include The Golden Gift campaign (4 scenarios, APScenarioIDs 601-604).
-A Norse-focused campaign following Brokk and Eitri.
-When disabled, all Golden Gift items and locations are removed from the pool.
-Note: Golden Gift items (if any) are also removed when both Norse Scenarios
-and Golden Gift are disabled."""
-    internal_name = "golden_gift"
-    display_name  = "The Golden Gift Campaign"
+    """Include The Golden Gift campaign.
+When disabled, all 4 Golden Gift scenarios are removed from the pool."""
+    internal_name = "golden_gift_campaign"
+    display_name  = "Golden Gift Campaign"
     default = 0
 
 
@@ -295,9 +317,12 @@ class AomOptions(PerGameCommonOptions):
     hero_abilities:                  HeroAbilities
     trap_percentage:                 TrapPercentage
     update_buildings_for_random_god: UpdateBuildingsForRandomGod
-    greek_major_gods:                GreekMajorGods
-    egyptian_major_gods:             EgyptianMajorGods
-    norse_major_gods:                NorseMajorGods
-    atlantean_major_gods:            AtlanteanMajorGods
-    new_atlantis:                    NewAtlantis
-    golden_gift:                     GoldenGift
+    shuffle_greek_major_gods:        GreekMajorGods
+    shuffle_egyptian_major_gods:     EgyptianMajorGods
+    shuffle_norse_major_gods:        NorseMajorGods
+    shuffle_atlantean_major_gods:    AtlanteanMajorGods
+    fott_greek_campaign:             FottGreekCampaign
+    fott_egyptian_campaign:          FottEgyptianCampaign
+    fott_norse_campaign:             FottNorseCampaign
+    new_atlantis_campaign:           NewAtlantis
+    golden_gift_campaign:            GoldenGift

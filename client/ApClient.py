@@ -320,10 +320,15 @@ class AoMCommandProcessor(ClientCommandProcessor):
         has_egyptian = aomItemData.EGYPTIAN_SCENARIOS.id in received
         has_norse    = aomItemData.NORSE_SCENARIOS.id    in received
         has_atlantis = aomItemData.ATLANTIS_KEY.id       in received
+        has_na       = aomItemData.UNLOCK_NEW_ATLANTIS.id in received
+        has_gg       = aomItemData.UNLOCK_GOLDEN_GIFT.id  in received
         threshold    = getattr(ctx, "_x_scenarios_threshold", None)
         beaten_count = _count_beaten_scenarios(ctx)
         if not has_atlantis and threshold is not None and beaten_count >= threshold:
             has_atlantis = True
+
+        # Campaign IDs: 1=FOTT Greek, 2=FOTT Egyptian, 3=FOTT Norse, 5=New Atlantis, 6=Golden Gift
+        disabled_ids: set[int] = getattr(ctx, "_disabled_campaign_ids", set())
 
         # Campaign block summary
         def block_line(name: str, unlocked: bool, extra: str = "") -> str:
@@ -340,10 +345,17 @@ class AoMCommandProcessor(ClientCommandProcessor):
             final_extra = ""
 
         self.output("Campaign Blocks:")
-        self.output(block_line("Greek Scenarios",    has_greek))
-        self.output(block_line("Egyptian Scenarios", has_egyptian))
-        self.output(block_line("Norse Scenarios",    has_norse))
-        self.output(block_line("Final Scenarios",    has_atlantis, final_extra))
+        if 1 not in disabled_ids:
+            self.output(block_line("Greek Scenarios",        has_greek))
+        if 2 not in disabled_ids:
+            self.output(block_line("Egyptian Scenarios",     has_egyptian))
+        if 3 not in disabled_ids:
+            self.output(block_line("Norse Scenarios",        has_norse))
+        self.output(block_line("Final Scenarios",            has_atlantis, final_extra))
+        if 5 not in disabled_ids:
+            self.output(block_line("New Atlantis Scenarios", has_na))
+        if 6 not in disabled_ids:
+            self.output(block_line("Golden Gift Scenarios",  has_gg))
 
         # Sort scenarios into categories.
         # Beaten = victory sent. In Progress = any checked AND any missing (including beaten with missing).
@@ -352,6 +364,8 @@ class AoMCommandProcessor(ClientCommandProcessor):
         untouched_list = []
 
         for scenario in aomScenarioData:
+            if scenario.campaign.id in disabled_ids:
+                continue
             stats    = scenario_stats[scenario]
             name     = scenario.display_name
             missing  = stats["total"] - stats["checked"]
@@ -656,10 +670,21 @@ class AoMCommandProcessor(ClientCommandProcessor):
             self.output("No god assignments found.")
             return
 
-        # Group by campaign for readable output
-        fott_ids = [n for n in range(1, 33)    if n in assignments]
-        na_ids   = [n for n in range(501, 513) if n in assignments]
-        gg_ids   = [n for n in range(601, 605) if n in assignments]
+        disabled_ids: set[int] = getattr(ctx, "_disabled_campaign_ids", set())
+
+        # Group by campaign for readable output; skip disabled campaigns
+        # Campaign IDs: 1-4 = FotT (Greek/Egyptian/Norse/Final), 5 = New Atlantis, 6 = Golden Gift
+        # FotT scenario IDs 1-32 map to campaigns by range:
+        #   1-10 → Greek (1), 11-20 → Egyptian (2), 21-30 → Norse (3), 31-32 → Final (4)
+        def _fott_camp(n: int) -> int:
+            if n <= 10: return 1
+            if n <= 20: return 2
+            if n <= 30: return 3
+            return 4
+
+        fott_ids = [n for n in range(1, 33)    if n in assignments and _fott_camp(n) not in disabled_ids]
+        na_ids   = [n for n in range(501, 513) if n in assignments and 5 not in disabled_ids]
+        gg_ids   = [n for n in range(601, 605) if n in assignments and 6 not in disabled_ids]
 
         def print_group(ids, header):
             if not ids:
@@ -918,6 +943,7 @@ class AoMContext(CommonContext):
         )
         self.game_ctx.gem_shop_enabled      = bool(slot_data.get("gem_shop", True))
         self.game_ctx.wins_to_open_shop     = int(slot_data.get("wins_to_open_shop", 4))
+        self._disabled_campaign_ids: set[int] = set(slot_data.get("disabled_campaigns", []))
         self.game_ctx.shop_obelisk_assignments = slot_data.get("shop_obelisk_assignments", {})
         self.game_ctx.shop_item_details     = {int(k): v for k, v in slot_data.get("shop_item_details", {}).items()}
         self.game_ctx.shop_hint_config      = slot_data.get("shop_hint_config", {})

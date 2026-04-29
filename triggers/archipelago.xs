@@ -133,6 +133,20 @@ const int cREINFORCEMENT_PHOENIX         = 4026;
 const int cREINFORCEMENT_COLOSSUS        = 4027;
 const int cREGINLEIF_JOINS               = 4028;
 const int cODYSSEUS_JOINS                = 5015;
+const int cKASTOR_JOINS                  = 4035;
+
+// Kastor stat items
+const int cKASTOR_HP_25             = 3400;
+const int cKASTOR_HP_200            = 3402;
+const int cKASTOR_ATK_1             = 3403;
+const int cKASTOR_ATK_10            = 3405;
+const int cKASTOR_RECHARGE_1        = 3406;
+const int cKASTOR_RECHARGE_3_5      = 3407;
+const int cKASTOR_REGEN_1           = 3408;
+const int cKASTOR_REGEN_5           = 3409;
+const int cKASTOR_UNDERMINE_ATTACKS = 3300;
+const int cKASTOR_SUMMON_SOLDIERS   = 3301;
+const int cKASTOR_IS_A_MANOR        = 3302;
 const int cREINFORCEMENT_RELIC_MONKEY    = 4029;
 const int cREINFORCEMENT_PEGASUS         = 4030;
 const int cREINFORCEMENT_HYENA           = 4031;
@@ -361,6 +375,8 @@ bool gHasGreek     = false;
 bool gHasEgyptian  = false;
 bool gHasNorse     = false;
 bool gHasAtlantis  = false;
+bool gHasNewAtlantis = false;
+bool gHasGoldenGift  = false;
 int gPassiveWood       = 0;
 int gPassiveFood       = 0;
 int gPassiveGold       = 0;
@@ -392,6 +408,8 @@ int APGetCampaignForScenario(int scenarioId = 0)
     if (scenarioId >= 11 && scenarioId <= 20) { return 2; }
     if (scenarioId >= 21 && scenarioId <= 30) { return 3; }
     if (scenarioId >= 31 && scenarioId <= 32) { return 4; }
+    if (scenarioId >= 501 && scenarioId <= 512) { return 5; }  // New Atlantis
+    if (scenarioId >= 601 && scenarioId <= 604) { return 6; }  // The Golden Gift
     return 0;
 }
 
@@ -432,6 +450,26 @@ int APGetMajorGodForScenario(int scenarioId = 0)
 
     if (scenarioId == 31) { return cAPMajorZeus; }
     if (scenarioId == 32) { return cAPMajorZeus; }
+
+    // New Atlantis (501-512)
+    if (scenarioId == 501) { return cAPMajorOranos; }
+    if (scenarioId == 502) { return cAPMajorKronos; }
+    if (scenarioId == 503) { return cAPMajorKronos; }
+    if (scenarioId == 504) { return cAPMajorKronos; }
+    if (scenarioId == 505) { return cAPMajorKronos; }
+    if (scenarioId == 506) { return cAPMajorKronos; }
+    if (scenarioId == 507) { return cAPMajorRa;     }
+    if (scenarioId == 508) { return cAPMajorSet;    }
+    if (scenarioId == 509) { return cAPMajorThor;   }
+    if (scenarioId == 510) { return cAPMajorGaia;   }
+    if (scenarioId == 511) { return cAPMajorOranos; }
+    if (scenarioId == 512) { return cAPMajorGaia;   }
+
+    // The Golden Gift (601-604)
+    if (scenarioId == 601) { return cAPMajorThor; }
+    if (scenarioId == 602) { return cAPMajorLoki; }
+    if (scenarioId == 603) { return cAPMajorLoki; }
+    if (scenarioId == 604) { return cAPMajorThor; }
 
     return cAPMajorNone;
 }
@@ -563,6 +601,24 @@ void APReadRandomGod()
     if (gAPScenarioId == 30) { int g = trQuestVarGet("APGod30"); if (g > 0) { gAPMajorGod = g; } }
     if (gAPScenarioId == 31) { int g = trQuestVarGet("APGod31"); if (g > 0) { gAPMajorGod = g; } }
     if (gAPScenarioId == 32) { int g = trQuestVarGet("APGod32"); if (g > 0) { gAPMajorGod = g; } }
+    // New Atlantis (501-512)
+    if (gAPScenarioId == 501) { int g = trQuestVarGet("APGod501"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 502) { int g = trQuestVarGet("APGod502"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 503) { int g = trQuestVarGet("APGod503"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 504) { int g = trQuestVarGet("APGod504"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 505) { int g = trQuestVarGet("APGod505"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 506) { int g = trQuestVarGet("APGod506"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 507) { int g = trQuestVarGet("APGod507"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 508) { int g = trQuestVarGet("APGod508"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 509) { int g = trQuestVarGet("APGod509"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 510) { int g = trQuestVarGet("APGod510"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 511) { int g = trQuestVarGet("APGod511"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 512) { int g = trQuestVarGet("APGod512"); if (g > 0) { gAPMajorGod = g; } }
+    // The Golden Gift (601-604)
+    if (gAPScenarioId == 601) { int g = trQuestVarGet("APGod601"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 602) { int g = trQuestVarGet("APGod602"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 603) { int g = trQuestVarGet("APGod603"); if (g > 0) { gAPMajorGod = g; } }
+    if (gAPScenarioId == 604) { int g = trQuestVarGet("APGod604"); if (g > 0) { gAPMajorGod = g; } }
 }
 
 // -----------------------------------------------------------------------
@@ -576,18 +632,18 @@ void APAnnounceGod()
     string godName   = "";
     string colorOpen = "";
 
-    if (gAPMajorGod == cAPMajorZeus)     { godName = "Zeus";     colorOpen = "<color77,77,255>"; }
-    if (gAPMajorGod == cAPMajorPoseidon) { godName = "Poseidon"; colorOpen = "<color77,77,255>"; }
-    if (gAPMajorGod == cAPMajorHades)    { godName = "Hades";    colorOpen = "<color77,77,255>"; }
-    if (gAPMajorGod == cAPMajorIsis)     { godName = "Isis";     colorOpen = "<color255,255,0>"; }
-    if (gAPMajorGod == cAPMajorRa)       { godName = "Ra";       colorOpen = "<color255,255,0>"; }
-    if (gAPMajorGod == cAPMajorSet)      { godName = "Set";      colorOpen = "<color255,255,0>"; }
-    if (gAPMajorGod == cAPMajorOdin)     { godName = "Odin";     colorOpen = "<color136,8,8>"; }
-    if (gAPMajorGod == cAPMajorThor)     { godName = "Thor";     colorOpen = "<color136,8,8>"; }
-    if (gAPMajorGod == cAPMajorLoki)     { godName = "Loki";     colorOpen = "<color136,8,8>"; }
-    if (gAPMajorGod == cAPMajorKronos)   { godName = "Kronos";   colorOpen = "<color0,255,255>"; }
-    if (gAPMajorGod == cAPMajorOranos)   { godName = "Oranos";   colorOpen = "<color0,255,255>"; }
-    if (gAPMajorGod == cAPMajorGaia)     { godName = "Gaia";     colorOpen = "<color0,255,255>"; }
+    if (gAPMajorGod == cAPMajorZeus)     { godName = "Zeus";     colorOpen = "<color0.3,0.3,1>"; }
+    if (gAPMajorGod == cAPMajorPoseidon) { godName = "Poseidon"; colorOpen = "<color0.3,0.3,1>"; }
+    if (gAPMajorGod == cAPMajorHades)    { godName = "Hades";    colorOpen = "<color0.3,0.3,1>"; }
+    if (gAPMajorGod == cAPMajorIsis)     { godName = "Isis";     colorOpen = "<color1,1,0>"; }
+    if (gAPMajorGod == cAPMajorRa)       { godName = "Ra";       colorOpen = "<color1,1,0>"; }
+    if (gAPMajorGod == cAPMajorSet)      { godName = "Set";      colorOpen = "<color1,1,0>"; }
+    if (gAPMajorGod == cAPMajorOdin)     { godName = "Odin";     colorOpen = "<color0.53,0.31,0.31>"; }
+    if (gAPMajorGod == cAPMajorThor)     { godName = "Thor";     colorOpen = "<color0.53,0.31,0.31>"; }
+    if (gAPMajorGod == cAPMajorLoki)     { godName = "Loki";     colorOpen = "<color0.53,0.31,0.31>"; }
+    if (gAPMajorGod == cAPMajorKronos)   { godName = "Kronos";   colorOpen = "<color0,1,1>"; }
+    if (gAPMajorGod == cAPMajorOranos)   { godName = "Oranos";   colorOpen = "<color0,1,1>"; }
+    if (gAPMajorGod == cAPMajorGaia)     { godName = "Gaia";     colorOpen = "<color0,1,1>"; }
 
     if (godName != "")
     {
@@ -1807,6 +1863,8 @@ void APCheckCampaignLock()
     if (gAPCampaignId == 2 && gHasEgyptian == true) { hasUnlock = true; }
     if (gAPCampaignId == 3 && gHasNorse == true) { hasUnlock = true; }
     if (gAPCampaignId == 4 && gHasAtlantis == true) { hasUnlock = true; }
+    if (gAPCampaignId == 5 && gHasNewAtlantis == true) { hasUnlock = true; }
+    if (gAPCampaignId == 6 && gHasGoldenGift  == true) { hasUnlock = true; }
 
     if (hasUnlock == false)
     {
@@ -1815,6 +1873,8 @@ void APCheckCampaignLock()
         if (gAPCampaignId == 2) { neededItem = "Egyptian Scenarios"; }
         if (gAPCampaignId == 3) { neededItem = "Norse Scenarios"; }
         if (gAPCampaignId == 4) { neededItem = "Atlantis Key"; }
+        if (gAPCampaignId == 5) { neededItem = "Unlock New Atlantis Campaign"; }
+        if (gAPCampaignId == 6) { neededItem = "Unlock The Golden Gift Campaign"; }
 
         string msg = "You need " + neededItem + " to play this";
         trShowWinPopup(msg, "taunts\037 not a wise decision but a decision nonetheless.mp3", true);
@@ -1823,6 +1883,8 @@ void APCheckCampaignLock()
         if (gAPCampaignId == 2) { trExecuteOnAI(12, "APLocked_Egyptian"); }
         if (gAPCampaignId == 3) { trExecuteOnAI(12, "APLocked_Norse"); }
         if (gAPCampaignId == 4) { trExecuteOnAI(12, "APLocked_Final"); }
+        if (gAPCampaignId == 5) { trExecuteOnAI(12, "APLocked_NewAtlantis"); }
+        if (gAPCampaignId == 6) { trExecuteOnAI(12, "APLocked_GoldenGift"); }
 
         xsEnableRule("APLockedDelay");
     }
@@ -2119,7 +2181,7 @@ void APApplyAgeUnlocks()
     int i = 0;
     int id = 0;
 
-    for (i = 7; i < gAPItemCount; i++)
+    for (i = 9; i < gAPItemCount; i++)
     {
         id = gAPItems[i];
         if (id == cGREEK_AGE_UNLOCK)      { greekCount++;     }
@@ -2202,14 +2264,14 @@ void APApplyHeroBoosts()
     // Kastor
     int  kasHp            = 0;
     int  kasAtk           = 0;
-    int  kasRecharge      = 0;
+    float kasRecharge     = 0.0;
     int  kasRegen         = 0;
     bool kasUndermineAttacks = false;
     bool kasSummonSoldiers   = false;
     bool kasIsAManor         = false;
 
     // Start at 6 — indices 0-5 are flags (campaign unlocks, campaign ID, godsanity)
-    for (i = 7; i < gAPItemCount; i++)
+    for (i = 9; i < gAPItemCount; i++)
     {
         id = gAPItems[i];
 
@@ -2305,8 +2367,8 @@ void APApplyHeroBoosts()
         if (id == cKASTOR_HP_200)           { kasHp      += 200; }
         if (id == cKASTOR_ATK_1)            { kasAtk     += 1;   }
         if (id == cKASTOR_ATK_10)           { kasAtk     += 10;  }
-        if (id == cKASTOR_RECHARGE_2)       { kasRecharge += 2;  }
-        if (id == cKASTOR_RECHARGE_5)       { kasRecharge += 5;  }
+        if (id == cKASTOR_RECHARGE_1)       { kasRecharge += 1.0; }
+        if (id == cKASTOR_RECHARGE_3_5)     { kasRecharge += 3.5; }
         if (id == cKASTOR_REGEN_1)          { kasRegen   += 1;   }
         if (id == cKASTOR_REGEN_5)          { kasRegen   += 5;   }
         if (id == cKASTOR_UNDERMINE_ATTACKS){ kasUndermineAttacks = true; }
@@ -2447,19 +2509,6 @@ void APApplyHeroBoosts()
         trModifyProtounitAction("OdysseusSPC", "RangedAttack", 1, 10, 5.0, 0);
     }
 
-    // Kastor stat items
-const int cKASTOR_HP_25             = 3200;
-const int cKASTOR_HP_200            = 3202;
-const int cKASTOR_ATK_1             = 3203;
-const int cKASTOR_ATK_10            = 3205;
-const int cKASTOR_RECHARGE_2        = 3206;
-const int cKASTOR_RECHARGE_5        = 3207;
-const int cKASTOR_REGEN_1           = 3208;
-const int cKASTOR_REGEN_5           = 3209;
-const int cKASTOR_UNDERMINE_ATTACKS = 3300;
-const int cKASTOR_SUMMON_SOLDIERS   = 3301;
-const int cKASTOR_IS_A_MANOR        = 3302;
-
 // Reginleif: Frost Strike (RangedAttack, Progressive ROF Freeze duration 3s, value 3)
     if (regFrostStrike == true)
     {
@@ -2475,7 +2524,7 @@ const int cKASTOR_IS_A_MANOR        = 3302;
     // Stat boosts
     if (kasHp       > 0) { trModifyProtounitData("Kastor", 1, 0,  kasHp,       0); }
     if (kasAtk      > 0) { trModifyProtounitAction("Kastor", "HandAttack", 1, 13, kasAtk, 0); }
-    if (kasRecharge > 0) { trModifyProtounitData("Kastor", 1, 9, -kasRecharge, 0); }
+    if (kasRecharge > 0.0) { trModifyProtounitData("Kastor", 1, 9, -kasRecharge, 0); }
     if (kasRegen    > 0) { trModifyProtounitData("Kastor", 1, 17, kasRegen,    0); }
 
     // Kastor Undermines with Attacks: HandAttack applies DamageOverTime (Crush) to Buildings
@@ -2488,10 +2537,10 @@ const int cKASTOR_IS_A_MANOR        = 3302;
     // Kastor Can Summon Soldiers: adds Hoplite, Spearman, Berserk, Murmillo to Kastor's train list
     if (kasSummonSoldiers == true)
     {
-        trAddProtoUnitToTrain("Kastor", 1, "Hoplite",   2, 0);
-        trAddProtoUnitToTrain("Kastor", 1, "Spearman",  2, 1);
-        trAddProtoUnitToTrain("Kastor", 1, "Berserk",   2, 2);
-        trAddProtoUnitToTrain("Kastor", 1, "Murmillo",  2, 3);
+        trProtounitAddTrain("Kastor", 1, "Hoplite",   2, 0);
+        trProtounitAddTrain("Kastor", 1, "Spearman",  2, 1);
+        trProtounitAddTrain("Kastor", 1, "Berserk",   2, 2);
+        trProtounitAddTrain("Kastor", 1, "Murmillo",  2, 3);
     }
 
     // Kastor is a Manor: gives Kastor +20 population cap (double Arkantos is a House)
@@ -2525,6 +2574,8 @@ runImmediately
     gHasEgyptian = false;
     gHasNorse    = false;
     gHasAtlantis = false;
+    gHasNewAtlantis = false;
+    gHasGoldenGift  = false;
     gAPRandomMajorGods = false;
     if (gAPItemCount > 6)
     {
@@ -2535,6 +2586,11 @@ runImmediately
         if (gAPItems[5] == 9010) { gAPRandomMajorGods = true; }
         // Scenario identity is driven by APScenarioID + APActivateScenario.
         // Keep slot 4 for compatibility, but do not overwrite gAPCampaignId here.
+    }
+    if (gAPItemCount > 8)
+    {
+        if (gAPItems[7] == 9005) { gHasNewAtlantis = true; }
+        if (gAPItems[8] == 9006) { gHasGoldenGift  = true; }
     }
 
     APCheckCampaignLock();
@@ -2559,7 +2615,7 @@ runImmediately
     int i = 0;
     int j = 0;
     // Start at 6 — indices 0-5 are flags (campaign unlocks, campaign ID, godsanity)
-    for (i = 7; i < gAPItemCount; i++)
+    for (i = 9; i < gAPItemCount; i++)
     {
         itemId = gAPItems[i];
 
@@ -2788,6 +2844,18 @@ runImmediately
             if (gAPScenarioId != 4 && gAPScenarioId != 5 && gAPScenarioId != 6 && gAPScenarioId != 30)
             {
                 trUnitCreateFromSource("OdysseusSPC", gReinforcementSpawnID, gReinforcementSpawnID, 1);
+            }
+        }
+        if (itemId == cKASTOR_JOINS)
+        {
+            // Kastor is already present in The New Atlantis scenarios 1-4 and 6-12;
+            // only NA5 (505) lacks him. Spawn him in every scenario except those.
+            if (gAPScenarioId != 501 && gAPScenarioId != 502 && gAPScenarioId != 503 &&
+                gAPScenarioId != 504 && gAPScenarioId != 506 && gAPScenarioId != 507 &&
+                gAPScenarioId != 508 && gAPScenarioId != 509 && gAPScenarioId != 510 &&
+                gAPScenarioId != 511 && gAPScenarioId != 512)
+            {
+                trUnitCreateFromSource("Kastor", gReinforcementSpawnID, gReinforcementSpawnID, 1);
             }
         }
         if (itemId == cREINFORCEMENT_RELIC_MONKEY)

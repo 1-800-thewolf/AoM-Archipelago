@@ -159,19 +159,70 @@ Age Of Mythology Retold:
   ##################
   # Starting Setup #
   ##################
+  fott_greek_campaign:
+    # Include the Fall of the Trident: Greek campaign (scenarios 1-10).
+    # When disabled, all Greek FotT scenarios are removed from the pool.
+    'false': 0
+    'true': 50
+
+  fott_egyptian_campaign:
+    # Include the Fall of the Trident: Egyptian campaign (scenarios 11-20).
+    # When disabled, all Egyptian FotT scenarios are removed from the pool.
+    'false': 0
+    'true': 50
+
+  fott_norse_campaign:
+    # Include the Fall of the Trident: Norse campaign (scenarios 21-30).
+    # When disabled, all Norse FotT scenarios are removed from the pool.
+    'false': 0
+    'true': 50
+
+  new_atlantis_campaign:
+    # Include The New Atlantis campaign (12 scenarios).
+    'false': 50
+    'true': 0
+
+  golden_gift_campaign:
+    # Include The Golden Gift campaign (4 scenarios).
+    'false': 50
+    'true': 0
+
+  shuffle_greek_major_gods:
+    # Include Greek major gods (Zeus, Poseidon, Hades) in the random major god pool.
+    'false': 0
+    'true': 50
+
+  shuffle_egyptian_major_gods:
+    # Include Egyptian major gods (Ra, Isis, Set) in the random major god pool.
+    'false': 0
+    'true': 50
+
+  shuffle_norse_major_gods:
+    # Include Norse major gods (Odin, Thor, Loki) in the random major god pool.
+    'false': 0
+    'true': 50
+
+  shuffle_atlantean_major_gods:
+    # Include Atlantean major gods (Kronos, Oranos, Gaia) in the random major god pool.
+    'false': 0
+    'true': 50
+
   starting_scenarios:
     # Which civilization block is unlocked at the start?
-    # 
-    # greek:    Scenarios 1-10
-    # egyptian: Scenarios 11-20
-    # norse:    Scenarios 21-30
-    # 
-    # The other two sections must be found as items in the pool. Within a section, all scenarios are immediately accessible.
-    # 
+    #
+    # greek:        Scenarios 1-10 (Fall of the Trident: Greek)
+    # egyptian:     Scenarios 11-20 (Fall of the Trident: Egyptian)
+    # norse:        Scenarios 21-30 (Fall of the Trident: Norse)
+    # new_atlantis: Start with "Unlock New Atlantis Campaign" precollected instead of a FotT block unlock.
+    #               Requires new_atlantis_campaign to be enabled. FotT unlocks are still shuffled into the pool.
+    #
+    # The other FotT sections must be found as items in the pool. Within a section, all scenarios are immediately accessible.
+    #
     # Starting with the Greek block is the easiest.
     greek: 50
     egyptian: 0
     norse: 0
+    new_atlantis: 0
 
   starting_greek_age_unlocks:
     # You cannot advance ages until you have received enough Progressive Age Unlock items. For each civilization:

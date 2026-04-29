@@ -258,7 +258,7 @@ def generate_ap_ai_xs(ctx: AoMGameContext, mods_local_dir: Path) -> None:
 
     lines.append("")
 
-    for campaign in ["Greek", "Egyptian", "Norse", "Final"]:
+    for campaign in ["Greek", "Egyptian", "Norse", "Final", "NewAtlantis", "GoldenGift"]:
         lines.append(f'void APLocked_{campaign}() {{ aiEcho("{AP_LOCKED_PREFIX}{campaign}"); }}')
         generated_count += 1
 
@@ -369,11 +369,15 @@ def write_aom_state(ctx: AoMGameContext) -> None:
     #   [4] = 9100 + campaign_id
     #   [5] = 9010 if random_major_gods is on,             else 9000
     #   [6] = 9010 if gem_shop is enabled,          else 9000
-    # Real items start at index 7.
-    GREEK_SCENARIOS    = 3500
-    EGYPTIAN_SCENARIOS = 3501
-    NORSE_SCENARIOS    = 3502
-    ATLANTIS_KEY       = 3510
+    #   [7] = 9005 if Unlock New Atlantis in items,         else 9000
+    #   [8] = 9006 if Unlock The Golden Gift in items,      else 9000
+    # Real items start at index 9.
+    GREEK_SCENARIOS      = 3500
+    EGYPTIAN_SCENARIOS   = 3501
+    NORSE_SCENARIOS      = 3502
+    UNLOCK_NEW_ATLANTIS  = 3503
+    UNLOCK_GOLDEN_GIFT   = 3504
+    ATLANTIS_KEY         = 3510
     received_set = set(ctx.received_items)
     flags = [
         9001 if GREEK_SCENARIOS    in received_set else 9000,
@@ -383,6 +387,8 @@ def write_aom_state(ctx: AoMGameContext) -> None:
         9100 + campaign_id,                      # index 4: campaign ID
         9010 if ctx.random_major_gods else 9000,         # index 5: random_major_gods flag
         9010 if ctx.gem_shop_enabled else 9000,  # index 6: gem_shop flag
+        9005 if UNLOCK_NEW_ATLANTIS in received_set else 9000,  # index 7
+        9006 if UNLOCK_GOLDEN_GIFT  in received_set else 9000,  # index 8
     ]
     items_with_flags = flags + list(ctx.received_items)
     total = len(items_with_flags)

@@ -201,16 +201,16 @@ _SCENARIO_DATA: dict[int, tuple[int, int, float, bool, bool]] = {
     # min_required_unlocks: 0=no advancement needed (exempt/no-TC), 3=must reach Mythic
     501: (3, 3, 16.0, False, False),  # Heroic start; must reach Mythic
     502: (1, 1,  4.0, False, False),  # Archaic start; must reach Classical (Advance objective)
-    503: (3, 0,  0.0, True,  False),  # Heroic start, no TC — always accessible
+    503: (3, 0,  0.0, True,  False),  # Heroic start, NO TC — always accessible
     504: (3, 3, 16.0, False, False),  # Heroic start; must reach Mythic
-    505: (3, 0,  0.0, True,  False),  # Heroic start, no TC — always accessible (no age needed)
-    506: (4, 0,  0.0, True,  False),  # Mythic start, no TC — always accessible
+    505: (3, 0, 16.0, False, False),  # Heroic start, Heroic max — point gate + military
+    506: (4, 0,  0.0, True,  False),  # Mythic start, NO TC — always accessible
     507: (3, 3, 16.0, False, False),  # Heroic start; must reach Mythic
     508: (3, 3, 16.0, False, False),  # Heroic start; must reach Mythic
     509: (3, 3, 16.0, False, False),  # Heroic start; must reach Mythic
     510: (3, 3, 16.0, False, False),  # Heroic start; must reach Mythic
-    511: (4, 0,  0.0, True,  False),  # Mythic start — always accessible
-    512: (4, 0,  0.0, True,  False),  # Mythic start, no TC — always accessible
+    511: (4, 0, 16.0, False, False),  # Mythic start, Mythic max — point gate + military
+    512: (4, 0, 16.0, False, False),  # Mythic start, Mythic max — point gate + military
     # ---------------------------------------------------------------------------
     # The Golden Gift (APScenarioIDs 601-604)
     # All start Heroic (start_age_num=3). min_required_unlocks=0 for Heroic-max
@@ -531,18 +531,33 @@ def place_atlantis_key(world) -> None:
 def set_section_rules(world) -> None:
     player    = world.player
     multiworld = world.multiworld
-    greek    = multiworld.get_entrance(entrance_name("Menu", "Fall of the Trident: Greek"),    player)
-    egyptian = multiworld.get_entrance(entrance_name("Menu", "Fall of the Trident: Egyptian"), player)
-    norse    = multiworld.get_entrance(entrance_name("Menu", "Fall of the Trident: Norse"),    player)
-    final    = multiworld.get_entrance(entrance_name("Menu", "Fall of the Trident: Final"),    player)
-    set_rule(greek,    lambda state: state.has(aomItemData.GREEK_SCENARIOS.item_name,    player))
-    set_rule(egyptian, lambda state: state.has(aomItemData.EGYPTIAN_SCENARIOS.item_name, player))
-    set_rule(norse,    lambda state: state.has(aomItemData.NORSE_SCENARIOS.item_name,    player))
+    from ..locations.Campaigns import aomCampaignData
+    disabled = getattr(world, "disabled_campaigns", set())
+
+    def _maybe_set(campaign, region_name, rule):
+        if campaign in disabled:
+            return
+        ent = multiworld.get_entrance(entrance_name("Menu", region_name), player)
+        set_rule(ent, rule)
+
+    _maybe_set(aomCampaignData.FOTT_GREEK,    "Fall of the Trident: Greek",
+               lambda state: state.has(aomItemData.GREEK_SCENARIOS.item_name, player))
+    _maybe_set(aomCampaignData.FOTT_EGYPTIAN, "Fall of the Trident: Egyptian",
+               lambda state: state.has(aomItemData.EGYPTIAN_SCENARIOS.item_name, player))
+    _maybe_set(aomCampaignData.FOTT_NORSE,    "Fall of the Trident: Norse",
+               lambda state: state.has(aomItemData.NORSE_SCENARIOS.item_name, player))
+    _maybe_set(aomCampaignData.NEW_ATLANTIS,  "The New Atlantis",
+               lambda state: state.has(aomItemData.UNLOCK_NEW_ATLANTIS.item_name, player))
+    _maybe_set(aomCampaignData.GOLDEN_GIFT,   "The Golden Gift",
+               lambda state: state.has(aomItemData.UNLOCK_GOLDEN_GIFT.item_name, player))
+
     mode = get_final_mode_value(world)
     if mode == FinalScenarios.option_always_open:
-        set_rule(final, lambda state: True)
+        _maybe_set(aomCampaignData.FOTT_FINAL, "Fall of the Trident: Final",
+                   lambda state: True)
     else:
-        set_rule(final, lambda state: state.has(aomItemData.ATLANTIS_KEY.item_name, player))
+        _maybe_set(aomCampaignData.FOTT_FINAL, "Fall of the Trident: Final",
+                   lambda state: state.has(aomItemData.ATLANTIS_KEY.item_name, player))
 
 
 # --------------------------------------------------
@@ -669,6 +684,8 @@ def set_item_placement_restrictions(world) -> None:
         "FOTT_EGYPTIAN": aomItemData.EGYPTIAN_SCENARIOS.item_name,
         "FOTT_NORSE":    aomItemData.NORSE_SCENARIOS.item_name,
         "FOTT_FINAL":    aomItemData.ATLANTIS_KEY.item_name,
+        "NEW_ATLANTIS":  aomItemData.UNLOCK_NEW_ATLANTIS.item_name,
+        "GOLDEN_GIFT":   aomItemData.UNLOCK_GOLDEN_GIFT.item_name,
     }
     disabled_campaigns = getattr(world, "disabled_campaigns", set())
     for location_data in aomLocationData:

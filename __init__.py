@@ -81,6 +81,11 @@ _VANILLA_GODS: dict = {
     26: 7, 27: 7, 28: 7,                    # Odin
     29: 8, 30: 8,                           # Thor
     31: 1, 32: 1,                           # Zeus
+    # New Atlantis (APScenarioIDs 501-512)
+    501: 11, 502: 10, 503: 10, 504: 10, 505: 10, 506: 10,
+    507:  5, 508:  6, 509:  8, 510: 12, 511: 11, 512: 12,
+    # The Golden Gift (APScenarioIDs 601-604)
+    601: 8, 602: 9, 603: 9, 604: 8,
 }
 _GREEK_GODS      = frozenset({1, 2, 3})
 _EGYPTIAN_GODS   = frozenset({4, 5, 6})
@@ -330,11 +335,15 @@ class aomWorld(World):
         Regions.create_regions(self.multiworld, self.player)
 
     def _starting_campaign(self) -> Campaigns.aomCampaignData:
+        fallback = getattr(self, "_fallback_start_campaign", None)
+        if fallback is not None:
+            return fallback
         value = int(self.options.starting_scenarios.value)
         mapping = {
-            StartingScenarios.option_greek:    Campaigns.aomCampaignData.FOTT_GREEK,
-            StartingScenarios.option_egyptian: Campaigns.aomCampaignData.FOTT_EGYPTIAN,
-            StartingScenarios.option_norse:    Campaigns.aomCampaignData.FOTT_NORSE,
+            StartingScenarios.option_greek:        Campaigns.aomCampaignData.FOTT_GREEK,
+            StartingScenarios.option_egyptian:     Campaigns.aomCampaignData.FOTT_EGYPTIAN,
+            StartingScenarios.option_norse:        Campaigns.aomCampaignData.FOTT_NORSE,
+            StartingScenarios.option_new_atlantis: Campaigns.aomCampaignData.NEW_ATLANTIS,
         }
         return mapping.get(value, Campaigns.aomCampaignData.FOTT_GREEK)
 
@@ -362,10 +371,10 @@ class aomWorld(World):
         if _rmg_on:
             self.excluded_civs: frozenset[str] = frozenset(
                 civ for civ, opt in [
-                    ("Greek",    self.options.greek_major_gods),
-                    ("Egyptian", self.options.egyptian_major_gods),
-                    ("Norse",    self.options.norse_major_gods),
-                    ("Atlantean",self.options.atlantean_major_gods),
+                    ("Greek",    self.options.shuffle_greek_major_gods),
+                    ("Egyptian", self.options.shuffle_egyptian_major_gods),
+                    ("Norse",    self.options.shuffle_norse_major_gods),
+                    ("Atlantean",self.options.shuffle_atlantean_major_gods),
                 ] if not bool(opt.value)
             )
             # Validation: at least one pantheon must be active
@@ -373,7 +382,8 @@ class aomWorld(World):
                 raise Exception(
                     "AoMR Archipelago: All pantheons are disabled. "
                     "Set at least one pantheon to true in your options YAML "
-                    "(greek_major_gods, egyptian_major_gods, norse_major_gods, or atlantean_major_gods)."
+                    "(shuffle_greek_major_gods, shuffle_egyptian_major_gods, "
+                    "shuffle_norse_major_gods, or shuffle_atlantean_major_gods)."
                 )
         else:
             self.excluded_civs = frozenset()
@@ -398,14 +408,31 @@ class aomWorld(World):
             self.shop_progression_slots   = {}
             self.shop_filler_only         = set()
 
-        # Disabled-campaign set: alternate campaigns can be opted out via YAML.
-        # FOTT campaigns (Greek/Egyptian/Norse/Final) are always enabled.
+        # Disabled-campaign set: campaigns can be opted out via YAML.
+        # FOTT_FINAL is always enabled (its scenarios are the goal).
         from .locations.Campaigns import aomCampaignData
         self.disabled_campaigns: set[aomCampaignData] = set()
-        if not bool(self.options.new_atlantis.value):
+        if not bool(self.options.fott_greek_campaign.value):
+            self.disabled_campaigns.add(aomCampaignData.FOTT_GREEK)
+        if not bool(self.options.fott_egyptian_campaign.value):
+            self.disabled_campaigns.add(aomCampaignData.FOTT_EGYPTIAN)
+        if not bool(self.options.fott_norse_campaign.value):
+            self.disabled_campaigns.add(aomCampaignData.FOTT_NORSE)
+        if not bool(self.options.new_atlantis_campaign.value):
             self.disabled_campaigns.add(aomCampaignData.NEW_ATLANTIS)
-        if not bool(self.options.golden_gift.value):
+        if not bool(self.options.golden_gift_campaign.value):
             self.disabled_campaigns.add(aomCampaignData.GOLDEN_GIFT)
+
+        # If the chosen starting campaign is disabled, fall back to the first
+        # enabled FOTT campaign so the player has somewhere to start.
+        _start = self._starting_campaign()
+        if _start in self.disabled_campaigns:
+            for _fallback in (aomCampaignData.FOTT_GREEK,
+                               aomCampaignData.FOTT_EGYPTIAN,
+                               aomCampaignData.FOTT_NORSE):
+                if _fallback not in self.disabled_campaigns:
+                    self._fallback_start_campaign = _fallback
+                    break
 
 
 
@@ -490,7 +517,7 @@ class aomWorld(World):
         scenario start because they belong to the vanilla god/civ but the
         assigned god is different."""
         result: dict[int, list] = {}
-        for scenario_id in range(1, 33):
+        for scenario_id in _VANILLA_GODS:
             vanilla_god  = _VANILLA_GODS[scenario_id]
             assigned_god = self.god_assignments.get(scenario_id, vanilla_god)
             forbids      = _compute_archaic_forbids(vanilla_god, assigned_god)
@@ -511,9 +538,9 @@ class aomWorld(World):
             return dict(_VANILLA_MINOR_GOD_TECHS)
 
         result: dict[int, list] = {}
-        for scenario_id in range(1, 33):
+        for scenario_id in _VANILLA_GODS:
             god_id       = self.god_assignments.get(scenario_id, _VANILLA_GODS[scenario_id])
-            starting_age = _SCENARIO_STARTING_AGE[scenario_id]
+            starting_age = _SCENARIO_STARTING_AGE.get(scenario_id, 0)
             god_civ      = _civ_of_god_name(god_id)
             techs: list  = []
             for tier in range(1, starting_age + 1):
@@ -580,6 +607,8 @@ class aomWorld(World):
             if item_type == Items.Campaign:
                 if item.type.vanilla_campaign == Campaigns.aomCampaignData.FOTT_FINAL:
                     continue  # Final section has no Campaign item
+                if item.type.vanilla_campaign in self.disabled_campaigns:
+                    continue  # campaign disabled — no unlock item
                 ap_item = self.create_item(item.item_name)
                 if item.type.vanilla_campaign == start_campaign:
                     self.multiworld.push_precollected(ap_item)
@@ -603,6 +632,28 @@ class aomWorld(World):
             # Hero ability items — skip if disabled; filler padding covers the gap
             if isinstance(item.type, hero_ability_types) and not hero_abilities_on:
                 continue
+
+            # Kastor items — removed when New Atlantis campaign is disabled,
+            # except KASTOR_JOINS, which is always in pool unless the ONLY
+            # enabled campaign is New Atlantis (Kastor is already there).
+            _is_kastor_joins = (item == Items.aomItemData.KASTOR_JOINS)
+            _is_kastor_item = _is_kastor_joins or (
+                getattr(item.type, "hero", "") == "Kastor"
+                or item.item_name.startswith("Kastor ")
+                or item.item_name == "Kastor is a Manor"
+            )
+            if _is_kastor_item:
+                from .locations.Campaigns import aomCampaignData as _C
+                _na_disabled = _C.NEW_ATLANTIS in self.disabled_campaigns
+                _enabled_campaigns = {c for c in _C if c not in self.disabled_campaigns
+                                       and c != _C.FOTT_FINAL}
+                _only_na = (_enabled_campaigns == {_C.NEW_ATLANTIS})
+                if _is_kastor_joins:
+                    if _only_na:
+                        continue
+                else:
+                    if _na_disabled:
+                        continue
 
             # Myth unit items — when myth_unit_sanity is off, precollect them all
             # so the player starts with the full set of myth unit unlocks.
@@ -850,6 +901,8 @@ class aomWorld(World):
         from .locations.Scenarios import aomScenarioData
         spoiler_handle.write(f"\nRandom_Major_Gods God Assignments ({self.multiworld.get_player_name(self.player)}):\n")
         for scenario in aomScenarioData:
+            if scenario.campaign in self.disabled_campaigns:
+                continue
             n   = scenario.global_number
             god = _GOD_NAMES.get(self.god_assignments.get(n, 0), "Unknown")
             spoiler_handle.write(f"  {scenario.display_name}: {god}\n")
@@ -860,6 +913,7 @@ class aomWorld(World):
             "version_public": 0,
             "version_major":  2,
             "version_minor":  2,
+            "disabled_campaigns": [c.id for c in self.disabled_campaigns],
             "world_id":       ((time.time_ns() >> 17) + self.player) & 0x7FFF_FFFF,
             "final_mode":     int(self.options.final_scenarios.value),
             "x_scenarios":    int(self.options.x_scenarios.value),

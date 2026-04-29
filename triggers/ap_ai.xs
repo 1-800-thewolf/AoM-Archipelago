@@ -146,6 +146,8 @@ void APLocked_Greek() { aiEcho("AP_LOCKED:Greek"); }
 void APLocked_Egyptian() { aiEcho("AP_LOCKED:Egyptian"); }
 void APLocked_Norse() { aiEcho("AP_LOCKED:Norse"); }
 void APLocked_Final() { aiEcho("AP_LOCKED:Final"); }
+void APLocked_NewAtlantis() { aiEcho("AP_LOCKED:NewAtlantis"); }
+void APLocked_GoldenGift() { aiEcho("AP_LOCKED:GoldenGift"); }
 // Shop purchase signals
 void APShop_1()  { aiEcho("AP_SHOP:IDX:1"); }
 void APShop_2()  { aiEcho("AP_SHOP:IDX:2"); }

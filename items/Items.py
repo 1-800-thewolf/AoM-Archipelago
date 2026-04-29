@@ -497,6 +497,7 @@ class aomItemData(enum.IntEnum):
     # Special: spawns exactly 1 Reginleif (not REINFORCEMENT_AMOUNT)
     REGINLEIF_JOINS               = 4028, "Reginleif Joins the Campaign",              ReinforcementUseful("Reginleif", 1)
     ODYSSEUS_JOINS                = 5015, "Odysseus Joins the Campaign",               ReinforcementUseful("OdysseusSPC", 1)
+    KASTOR_JOINS                  = 4035, "Kastor Joins the Campaign",                 ReinforcementUseful("Kastor", 1)
 
     # Myth unit tier unlocks — forbidden at start, unlocked by item
     GREEK_CLASSICAL_MYTH_UNITS               = 5016, "Can train Greek Classical Myth Units", MythUnitUnlockProgression(['Centaur', 'Minotaur', 'Cyclops', 'Lykaon'], "Greek", "Classical")
@@ -711,11 +712,11 @@ class aomItemData(enum.IntEnum):
     KASTOR_HP_25        = 3400, "Kastor +25 HP",           HeroStatBoostFiller("Kastor", "Hitpoints", 25)
     KASTOR_HP_200       = 3402, "Kastor +200 HP",          HeroStatBoostFiller("Kastor", "Hitpoints", 200)
     KASTOR_ATK_1        = 3403, "Kastor +1 Attack",        HeroStatBoostFiller("Kastor", "HandAttack", 1, "HandAttack")
-    KASTOR_RECHARGE_2   = 3406, "Kastor -2 Recharge Time", HeroStatBoostFiller("Kastor", "RechargeTime", -2)
+    KASTOR_RECHARGE_1   = 3406, "Kastor -1 Recharge Time", HeroStatBoostFiller("Kastor", "RechargeTime", -1)
     KASTOR_REGEN_1      = 3408, "Kastor +1 Regen",         HeroStatBoostFiller("Kastor", "UnitRegenRate", 1)
     # Stat Boosts (Useful)
     KASTOR_ATK_10       = 3405, "Kastor +10 Attack",       HeroStatBoost("Kastor", "HandAttack", 10, "HandAttack")
-    KASTOR_RECHARGE_5   = 3407, "Kastor -5 Recharge Time", HeroStatBoost("Kastor", "RechargeTime", -5)
+    KASTOR_RECHARGE_3_5 = 3407, "Kastor -3.5 Recharge Time", HeroStatBoost("Kastor", "RechargeTime", -3.5)
     KASTOR_REGEN_5      = 3409, "Kastor +5 Regen",         HeroStatBoost("Kastor", "UnitRegenRate", 5)
     # Special Abilities (Useful, removed if hero_abilities=False)
     KASTOR_UNDERMINE_ATTACKS = 3300, "Kastor Undermines with Attacks", HeroSpecialEffect("Kastor", "HandAttack DamageOverTime Building Crush 13 25")
