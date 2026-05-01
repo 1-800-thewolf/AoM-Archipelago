@@ -17,7 +17,24 @@
       "Bash(cat)",
       "Bash(mkdir -p /tmp/aom_gen3)",
       "Bash(cp /tmp/aom_na.yaml /tmp/aom_gen3/p1.yaml)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(dir /S /B C:\\\\Archipelago_stuff\\\\AOM\\\\*.txt)",
+      "Bash(findstr /I \"greek egyptian norse atlantean\")",
+      "Bash(dir /S /B \"C:\\\\Archipelago_stuff\\\\AOM\\\\*.txt\")",
+      "Bash(findstr /I /R \"greek egyptian norse atlantean\")",
+      "Bash(cd /d C:\\\\Archipelago_stuff\\\\AOM)",
+      "Bash(dir /S /B *.txt)",
+      "Read(//c/Archipelago_stuff/AOM/**)",
+      "Bash(python -c \"import sys; sys.path.insert\\(0, '/c/ProgramData/Archipelago'\\); import importlib.util; spec = importlib.util.spec_from_file_location\\('aom', 'aom/__init__.py'\\); mod = importlib.util.load_from_spec\\(spec\\)\")",
+      "Bash(python -m py_compile /c/Archipelago_stuff/AOM/aom/__init__.py /c/Archipelago_stuff/AOM/aom/items/Items.py /c/Archipelago_stuff/AOM/aom/locations/Locations.py /c/Archipelago_stuff/AOM/aom/rules/Rules.py /c/Archipelago_stuff/AOM/aom/client/GameClient.py)",
+      "Bash(\"/c/ProgramData/Archipelago/Archipelago Launcher.exe\" --version)",
+      "Bash(.\\\\\\\\Archipelago.exe -h)",
+      "Bash(.\\\\\\\\ArchipelagoGenerate.exe --skip_output)",
+      "PowerShell(cd \"C:\\\\ProgramData\\\\Archipelago\"; .\\\\ArchipelagoGenerate.exe --skip_output; Write-Host \"Exit code: $LASTEXITCODE\")",
+      "Bash(python package.py)",
+      "Bash(python3 package.py)",
+      "PowerShell(py package.py 2>&1)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Philip\\\\AppData\\\\Local\\\\\" -Name | Where-Object { $_ -match \"arch\" })"
     ]
   }
 }

@@ -54,6 +54,7 @@ AP_CHECK_PREFIX  = "AP_CHECK:"
 AP_LOCKED_PREFIX = "AP_LOCKED:"
 AP_SHOP_PREFIX   = "AP_SHOP:"
 AP_TRAP_PREFIX   = "AP_TRAP_FIRED:"
+AP_RAND_GP_PREFIX = "AP_RAND_GP:"
 
 GEM_ITEM_ID = 9998  # aomItemData.GEM
 SHOP_SCENARIO_ID = 0  # reserved scenario ID for the shop
@@ -63,7 +64,14 @@ SHOP_SCENARIO_ID = 0  # reserved scenario ID for the shop
 _BASE_ID = 0x3B0000
 VICTORY_LOCATION_IDS: frozenset = frozenset(
     _BASE_ID + (campaign_val * 100 + chapter) * 100
-    for campaign_val, chapters in [(1, range(1,11)), (2, range(1,11)), (3, range(1,11)), (4, range(1,2))]
+    for campaign_val, chapters in [
+        (1, range(1, 11)),  # FotT Greek 1-10
+        (2, range(1, 11)),  # FotT Egyptian 11-20
+        (3, range(1, 11)),  # FotT Norse 21-30
+        (4, range(1, 2)),   # FotT Final 31
+        (5, range(1, 13)),  # New Atlantis 501-512
+        (6, range(1, 5)),   # The Golden Gift 601-604
+    ]
     for chapter in chapters
 )
 
@@ -87,6 +95,7 @@ class AoMGameContext:
     god_assignments: dict = None         # scenario_id (int) → major_god int
     minor_god_assignments: dict = None   # scenario_id (int) → [tech_name, ...]\n
     archaic_forbids: dict = None         # scenario_id (int) → [unit_name, ...]
+    god_power_assignments: dict = None   # scenario_id (int) → [tier1, tier2, tier3, tier4]
     # Cache identity — set on connect, used to build cache_folder path
     ap_server:   str = ""   # e.g. "archipelago.gg:38281"
     ap_seed:     str = ""   # seed_name from RoomInfo
@@ -433,6 +442,31 @@ def write_aom_state(ctx: AoMGameContext) -> None:
             lines.append("    }")
     lines.append("}")
 
+    # APInitGodPowers — assigns the random god power for each scenario
+    # to the four global string vars gAPRandGP1..4 based on the current
+    # APScenarioID. Called from APActivateScenario.
+    lines.append("")
+    lines.append("void APInitGodPowers()")
+    lines.append("{")
+    lines.append("    int scenId = trQuestVarGet(\"APScenarioID\");")
+    lines.append("    gAPRandGP1 = \"\";")
+    lines.append("    gAPRandGP2 = \"\";")
+    lines.append("    gAPRandGP3 = \"\";")
+    lines.append("    gAPRandGP4 = \"\";")
+    if ctx.god_power_assignments:
+        for scenario_id in sorted(ctx.god_power_assignments.keys()):
+            powers = ctx.god_power_assignments.get(scenario_id) or []
+            if not powers or len(powers) < 4:
+                continue
+            lines.append(f"    if (scenId == {scenario_id})")
+            lines.append("    {")
+            lines.append(f'        gAPRandGP1 = "{powers[0]}";')
+            lines.append(f'        gAPRandGP2 = "{powers[1]}";')
+            lines.append(f'        gAPRandGP3 = "{powers[2]}";')
+            lines.append(f'        gAPRandGP4 = "{powers[3]}";')
+            lines.append("    }")
+    lines.append("}")
+
     # APForbidVanillaArchaicUnits — forbids units from vanilla god/civ
     # that should not be available when the assigned god differs.
     lines.append("")
@@ -572,6 +606,11 @@ def write_aom_state(ctx: AoMGameContext) -> None:
             26: 7, 27: 7, 28: 7,
             29: 8, 30: 8,
             31: 1, 32: 1,
+            # New Atlantis (APScenarioIDs 501-512)
+            501: 11, 502: 10, 503: 10, 504: 10, 505: 10, 506: 10,
+            507:  5, 508:  6, 509:  8, 510: 12, 511: 11, 512: 12,
+            # The Golden Gift (APScenarioIDs 601-604)
+            601: 8, 602: 9, 603: 9, 604: 8,
         }
         _pairs = []  # list of (scenId, targetPlayer, fromProto, toProto1, toProto2)
         for _sid, _vgod in sorted(_vanilla_gods2.items()):
@@ -825,6 +864,12 @@ def read_new_checks(ctx: AoMGameContext) -> list[int]:
             if not in_current_session:
                 continue
 
+            if AP_RAND_GP_PREFIX in line:
+                idx = line.find(AP_RAND_GP_PREFIX)
+                msg = line[idx + len(AP_RAND_GP_PREFIX):].strip()
+                logger.info(f"Random God Power: {msg}")
+                continue
+
             if AP_LOCKED_PREFIX in line:
                 m = re.search(r"AP_LOCKED:(\S+)", line)
                 campaign = m.group(1) if m else "unknown"
@@ -882,7 +927,7 @@ def read_new_checks(ctx: AoMGameContext) -> list[int]:
         for _ in range(new_trap_count):
             if ctx.trap_queue:
                 fired = ctx.trap_queue.pop(0)
-                logger.info(f"Trap fired: type {fired}, {len(ctx.trap_queue)} remaining")
+                logger.debug(f"Trap fired: type {fired}, {len(ctx.trap_queue)} remaining")
             ctx.trap_ack_nonce += 1
         save_trap_state(ctx)
         write_aom_state(ctx)
@@ -931,15 +976,18 @@ async def game_loop(ctx: AoMGameContext) -> None:
             for loc_id in new_checks:
                 loc_name = location_id_to_name.get(loc_id, str(loc_id))
                 logger.debug(f"Check found: {loc_name}")
-                for attempt in range(3):
-                    try:
-                        await ctx.client_interface.on_location_received(loc_id)
-                        break
-                    except Exception as ex:
-                        if attempt < 2:
-                            logger.warning(f"Send attempt {attempt+1} failed for {loc_name}: {ex}. Retrying...")
-                            await asyncio.sleep(1.0)
-                        else:
-                            logger.error(f"Failed to send check {loc_id} ({loc_name}) after 3 attempts: {ex}. Will retry on reconnect.")
+            # Send all new checks in a single LocationChecks batch to avoid
+            # rapid-fire individual messages that have caused server disconnects
+            # (notably during shop ITEM purchases that yield 2-3 locations at once).
+            for attempt in range(3):
+                try:
+                    await ctx.client_interface.on_locations_received_batch(new_checks)
+                    break
+                except Exception as ex:
+                    if attempt < 2:
+                        logger.warning(f"Batch send attempt {attempt+1} failed for {len(new_checks)} check(s): {ex}. Retrying...")
+                        await asyncio.sleep(1.0)
+                    else:
+                        logger.error(f"Failed to send {len(new_checks)} check(s) after 3 attempts: {ex}. Will retry on reconnect.")
 
         await asyncio.sleep(2.0)

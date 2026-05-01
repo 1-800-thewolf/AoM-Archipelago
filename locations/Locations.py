@@ -890,7 +890,7 @@ class aomLocationData(enum.IntEnum):
     )
     FOTT_20_OBJ_2 = (
         global_location_id(aomScenarioData.FOTT_20.id, 3),
-        "Bring all three Osiris pieces to the Obelisk.",
+        "Bring all four Osiris pieces to the Obelisk.",
         aomScenarioData.FOTT_20,
         aomLocationType.OBJECTIVE,
     )
@@ -1167,7 +1167,7 @@ class aomLocationData(enum.IntEnum):
     )
     NA_1_OBJ_4 = (
         global_location_id(aomScenarioData.NA_1.id, 5),
-        "Garrison five Citizens into the Sky Passage",
+        "Garrison five Villagers into the Sky Passage",
         aomScenarioData.NA_1,
         aomLocationType.OBJECTIVE,
     )

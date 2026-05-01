@@ -434,6 +434,10 @@ class aomWorld(World):
                     self._fallback_start_campaign = _fallback
                     break
 
+        # Pre-determined random god powers per scenario per tier (uses self.random
+        # for deterministic regeneration). Must run after disabled_campaigns is set.
+        self.god_power_assignments: dict[int, list[str]] = self._generate_god_power_assignments()
+
 
 
     def _generate_shop_assignments(self) -> tuple:
@@ -554,6 +558,38 @@ class aomWorld(World):
                 result[scenario_id] = techs
         return result
 
+    def _generate_god_power_assignments(self) -> dict[int, list[str]]:
+        """
+        Pre-determine 4 random god powers, one per tier, for every scenario in
+        every active campaign. Scenarios in disabled campaigns get an empty list.
+
+        Returns {APScenarioID: [tier1, tier2, tier3, tier4]}
+        """
+        from .locations.Scenarios import aomScenarioData
+
+        TIER_POOLS = [
+            ["Bolt", "Deconstruction", "LocustSwarm", "GreatHunt", "Shockwave", "GaiaForest"],
+            ["Restoration", "Carnivora", "SpiderLair", "Pestilence", "Eclipse",
+            "ShiftingSands", "PlagueOfSerpents", "Undermine", "HealingSpring"],
+            ["Traitor", "FlamingWeapons", "UnderworldPassage", "Bronze", "Curse",
+            "Ancestors", "WalkingWoods", "Frost", "Chaos", "HesperidesTree"],
+            ["LightningStorm", "Earthquake", "Meteor", "Tornado", "Nidhogg",
+            "Implode", "TartarianGate"],
+        ]
+
+        result: dict[int, list[str]] = {}
+
+        for scenario in aomScenarioData:
+            scenario_id = scenario.global_number
+
+            if scenario.campaign in self.disabled_campaigns:
+                result[scenario_id] = []
+                continue
+
+            result[scenario_id] = [self.random.choice(pool) for pool in TIER_POOLS]
+
+        return result
+
     def create_items(self) -> None:
         """
         Build the item pool.
@@ -654,6 +690,52 @@ class aomWorld(World):
                 else:
                     if _na_disabled:
                         continue
+
+            # Odysseus items — removed when FotT Greek campaign is disabled,
+            # except ODYSSEUS_JOINS which follows the same logic as KASTOR_JOINS.
+            _is_odysseus_joins = (item == Items.aomItemData.ODYSSEUS_JOINS)
+            _is_odysseus_item = _is_odysseus_joins or (
+                getattr(item.type, "hero", "") in ("Odysseus", "OdysseusSPC")
+                or item.item_name.startswith("Odysseus ")
+            )
+            if _is_odysseus_item:
+                from .locations.Campaigns import aomCampaignData as _C
+                _greek_disabled = _C.FOTT_GREEK in self.disabled_campaigns
+                if _greek_disabled:
+                    continue
+
+            # Reginleif items — removed when FotT Norse campaign is disabled.
+            _is_reginleif_joins = (item == Items.aomItemData.REGINLEIF_JOINS)
+            _is_reginleif_item = _is_reginleif_joins or (
+                getattr(item.type, "hero", "") == "Reginleif"
+                or item.item_name.startswith("Reginleif ")
+            )
+            if _is_reginleif_item:
+                from .locations.Campaigns import aomCampaignData as _C
+                _norse_disabled = _C.FOTT_NORSE in self.disabled_campaigns
+                if _norse_disabled:
+                    continue
+
+            # Arkantos/Chiron items — removed when ALL FotT campaigns (Greek,
+            # Egyptian, Norse) are disabled (i.e. only new campaigns enabled).
+            _is_arkantos_item = (
+                getattr(item.type, "hero", "") == "Arkantos"
+                or item.item_name.startswith("Arkantos ")
+                or isinstance(item.type, Items.ArkantosHousing)
+            )
+            _is_chiron_item = (
+                getattr(item.type, "hero", "") == "Chiron"
+                or item.item_name.startswith("Chiron ")
+            )
+            if _is_arkantos_item or _is_chiron_item:
+                from .locations.Campaigns import aomCampaignData as _C
+                _all_fott_disabled = (
+                    _C.FOTT_GREEK in self.disabled_campaigns
+                    and _C.FOTT_EGYPTIAN in self.disabled_campaigns
+                    and _C.FOTT_NORSE in self.disabled_campaigns
+                )
+                if _all_fott_disabled:
+                    continue
 
             # Myth unit items — when myth_unit_sanity is off, precollect them all
             # so the player starts with the full set of myth unit unlocks.
@@ -894,19 +976,6 @@ class aomWorld(World):
     def set_rules(self) -> None:
         Rules.set_rules(self)
 
-    def write_spoiler_header(self, spoiler_handle) -> None:
-        """Write random_major_gods god assignments to the spoiler log."""
-        if not self.options.random_major_gods or not self.god_assignments:
-            return
-        from .locations.Scenarios import aomScenarioData
-        spoiler_handle.write(f"\nRandom_Major_Gods God Assignments ({self.multiworld.get_player_name(self.player)}):\n")
-        for scenario in aomScenarioData:
-            if scenario.campaign in self.disabled_campaigns:
-                continue
-            n   = scenario.global_number
-            god = _GOD_NAMES.get(self.god_assignments.get(n, 0), "Unknown")
-            spoiler_handle.write(f"  {scenario.display_name}: {god}\n")
-        spoiler_handle.write("\n")
 
     def fill_slot_data(self) -> Mapping[str, Any]:
         data: dict = {
@@ -925,6 +994,7 @@ class aomWorld(World):
             data["god_assignments"] = self.god_assignments
         data["minor_god_assignments"] = self.minor_god_assignments
         data["archaic_forbids"]       = self.archaic_forbids
+        data["god_power_assignments"] = self.god_power_assignments
 
         if self.gem_shop_enabled:
             data["wins_to_open_shop"]   = int(self.options.wins_to_open_shop.value)

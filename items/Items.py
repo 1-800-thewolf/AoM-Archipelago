@@ -81,6 +81,17 @@ class PassiveIncomeLarge:
 
 
 @dataclass
+class RelicTrickle:
+    resource: "Resource"
+    amount_per_relic: float
+
+
+@dataclass
+class RelicEffect:
+    effect_id: str
+
+
+@dataclass
 class Reinforcement:
     unit_name: str
     amount: int
@@ -241,6 +252,8 @@ ItemType = Union[
     StartingResourcesLarge,
     PassiveIncome,
     PassiveIncomeLarge,
+    RelicTrickle,
+    RelicEffect,
     Reinforcement,
     UnitStatBonus,
     UnitUnlockProgression,
@@ -267,6 +280,8 @@ item_type_to_classification: dict[type, ItemClassification] = {
     HeroStatBoostFiller:    ItemClassification.filler,
     StartingResourcesLarge: ItemClassification.filler,
     PassiveIncomeLarge:     ItemClassification.filler,
+    RelicTrickle:           ItemClassification.useful,
+    RelicEffect:            ItemClassification.useful,
     ReinforcementUseful:    ItemClassification.useful,
     UnitStatBonus:          ItemClassification.useful,
     UnitUnlockUseful:       ItemClassification.useful,
@@ -448,15 +463,42 @@ class aomItemData(enum.IntEnum):
     # Filler: small rate (BASE//5 x1). Granted every 60s (favor: every 20s).
     # Useful: large rate (BASE//5 x4).
     # -----------------------------------------------------------------------
-    PASSIVE_WOOD_SMALL    = 13, f"+{_passive(1)} Wood/min",              PassiveIncome(Resource.WOOD,  _passive(1))
-    PASSIVE_FOOD_SMALL    = 14, f"+{_passive(1)} Food/min",              PassiveIncome(Resource.FOOD,  _passive(1))
-    PASSIVE_GOLD_SMALL    = 15, f"+{_passive(1)} Gold/min",              PassiveIncome(Resource.GOLD,  _passive(1))
-    PASSIVE_FAVOR_SMALL   = 16, f"+{_passive(1, favor=True)} Favor/min", PassiveIncome(Resource.FAVOR, _passive(1, favor=True))
+    PASSIVE_WOOD_SMALL    = 13, "+1 Wood trickle rate",    PassiveIncome(Resource.WOOD,  1)
+    PASSIVE_FOOD_SMALL    = 14, "+1 Food trickle rate",    PassiveIncome(Resource.FOOD,  1)
+    PASSIVE_GOLD_SMALL    = 15, "+1 Gold trickle rate",    PassiveIncome(Resource.GOLD,  1)
+    PASSIVE_FAVOR_SMALL   = 16, "+0.5 Favor trickle rate", PassiveIncome(Resource.FAVOR, 0)
 
-    PASSIVE_WOOD_LARGE    = 21, f"+{_passive(4)} Wood/min",              PassiveIncomeLarge(Resource.WOOD,  _passive(4))
-    PASSIVE_FOOD_LARGE    = 22, f"+{_passive(4)} Food/min",              PassiveIncomeLarge(Resource.FOOD,  _passive(4))
-    PASSIVE_GOLD_LARGE    = 23, f"+{_passive(4)} Gold/min",              PassiveIncomeLarge(Resource.GOLD,  _passive(4))
-    PASSIVE_FAVOR_LARGE   = 24, f"+{_passive(4, favor=True)} Favor/min", PassiveIncomeLarge(Resource.FAVOR, _passive(4, favor=True))
+    PASSIVE_WOOD_LARGE    = 21, "+3 Wood trickle rate",    PassiveIncomeLarge(Resource.WOOD,  3)
+    PASSIVE_FOOD_LARGE    = 22, "+3 Food trickle rate",    PassiveIncomeLarge(Resource.FOOD,  3)
+    PASSIVE_GOLD_LARGE    = 23, "+3 Gold trickle rate",    PassiveIncomeLarge(Resource.GOLD,  3)
+    PASSIVE_FAVOR_LARGE   = 24, "+1.5 Favor trickle rate", PassiveIncomeLarge(Resource.FAVOR, 0)
+
+    # -----------------------------------------------------------------------
+    # Relic Trickle — Useful
+    # Each garrisoned relic in any player 1 temple grants the listed trickle.
+    # -----------------------------------------------------------------------
+    RELIC_TRICKLE_FOOD    = 25, "Each Owned Relic Grants 3 Food Trickle",   RelicTrickle(Resource.FOOD, 3.0)
+    RELIC_TRICKLE_WOOD    = 26, "Each Owned Relic Grants 3 Wood Trickle",   RelicTrickle(Resource.WOOD, 3.0)
+    RELIC_TRICKLE_GOLD    = 27, "Each Owned Relic Grants 3 Gold Trickle",   RelicTrickle(Resource.GOLD, 3.0)
+    RELIC_TRICKLE_FAVOR   = 28, "Each Owned Relic Grants 1.5 Favor Trickle", RelicTrickle(Resource.FAVOR, 1.5)
+
+    # -----------------------------------------------------------------------
+    # Relic Effects — Useful
+    # Per-owned-relic stat / cost / build-speed modifiers that apply to all
+    # player 1 protounits. Implemented in APRelicEnforce by replaying the
+    # underlying tr* call once per relic delta (or once with delta-multiplied
+    # value for additive effects).
+    # -----------------------------------------------------------------------
+    RELIC_EFFECT_LOS          = 29, "Each Owned Relic Grants Everything +4 Line of Sight",         RelicEffect("los")
+    RELIC_EFFECT_REGEN        = 30, "Each Owned Relic Grants Everything +1 Regeneration",          RelicEffect("regen")
+    RELIC_EFFECT_SPEED        = 31, "Each Owned Relic Grants All Units +5% Speed",                  RelicEffect("speed")
+    RELIC_EFFECT_HP           = 32, "Each Owned Relic Grants Everything +10% Max Hitpoints",        RelicEffect("hp")
+    RELIC_EFFECT_POP          = 33, "Each Owned Relic Reduces the Population Count of All Units by 1", RelicEffect("pop")
+    RELIC_EFFECT_GOLD_COST    = 34, "Each Owned Relic Reduces the Gold Cost of Everything 5%",      RelicEffect("gold_cost")
+    RELIC_EFFECT_WOOD_COST    = 35, "Each Owned Relic Reduces the Wood Cost of Everything 5%",      RelicEffect("wood_cost")
+    RELIC_EFFECT_FAVOR_COST   = 36, "Each Owned Relic Reduces the Favor Cost of Units and Buildings 5%", RelicEffect("favor_cost")
+    RELIC_EFFECT_FOOD_COST    = 37, "Each Owned Relic Reduces the Food Cost of Everything 5%",      RelicEffect("food_cost")
+    RELIC_EFFECT_BUILD_SPEED  = 38, "Each Owned Relic Makes Buildings Build 10% faster",            RelicEffect("build_speed")
 
     # -----------------------------------------------------------------------
     # Reinforcements — Filler

@@ -8,6 +8,12 @@
 
 // extern globals — visible across all XS source files including aom_state.xs
 extern int gAPItemCount = 0;
+// Pre-determined random god powers for the current scenario, populated by
+// APInitGodPowers() in aom_state.xs from slot_data on every scenario load.
+extern string gAPRandGP1 = "";
+extern string gAPRandGP2 = "";
+extern string gAPRandGP3 = "";
+extern string gAPRandGP4 = "";
 extern int[] gAPItems = default;
 
 // Shop globals — declared before include so aom_state.xs (APShopStateInit) can reference them
@@ -67,6 +73,28 @@ extern int   gAPTrapQueueSize   = 0;
 extern int[] gAPTrapQueue       = default;
 extern bool  gAPTrapPending     = false;
 extern float gAPTrapFireTime    = 0.0;
+
+// Relic-trickle running totals — per resource, current applied trickle delta.
+// Used by APRelicTrickleEnforce to compute deltas without double-applying.
+extern float gAPRelicTrickleAppliedFood  = 0.0;
+extern float gAPRelicTrickleAppliedWood  = 0.0;
+extern float gAPRelicTrickleAppliedGold  = 0.0;
+extern float gAPRelicTrickleAppliedFavor = 0.0;
+
+// Relic-effect "applied count" trackers — number of relic stacks of each
+// effect already applied to player 1. Each tick we re-count owned relics and
+// apply (target - applied) more invocations of the underlying tr* call.
+extern int gAPRelicEffAppliedLOS        = 0;
+extern int gAPRelicEffAppliedRegen      = 0;
+extern int gAPRelicEffAppliedSpeed      = 0;
+extern int gAPRelicEffAppliedHP         = 0;
+extern int gAPRelicEffAppliedPop        = 0;
+extern int gAPRelicEffAppliedGoldCost   = 0;
+extern int gAPRelicEffAppliedWoodCost   = 0;
+extern int gAPRelicEffAppliedFavorCost  = 0;
+extern int gAPRelicEffAppliedFoodCost   = 0;
+extern int gAPRelicEffAppliedBuildSpeed = 0;
+extern int gAPRelicLastCount           = -1;
 int          gAPTrapsFiredCount  = 0;  // increments each fire; client reads via quest var
 vector       gAPTrapPos         = vector(0, 0, 0);
 // Building transform data — populated by APLoadBuildingTransforms() in aom_state.xs
@@ -94,14 +122,29 @@ const int cPASSIVE_WOOD_SMALL            = 13;
 const int cPASSIVE_FOOD_SMALL            = 14;
 const int cPASSIVE_GOLD_SMALL            = 15;
 const int cPASSIVE_FAVOR_SMALL           = 16;
-const int cPASSIVE_WOOD_MEDIUM           = 17;
-const int cPASSIVE_FOOD_MEDIUM           = 18;
-const int cPASSIVE_GOLD_MEDIUM           = 19;
-const int cPASSIVE_FAVOR_MEDIUM          = 20;
+
 const int cPASSIVE_WOOD_LARGE            = 21;
 const int cPASSIVE_FOOD_LARGE            = 22;
 const int cPASSIVE_GOLD_LARGE            = 23;
 const int cPASSIVE_FAVOR_LARGE           = 24;
+
+// Relic Trickle item IDs — useful (per-owned-relic resource trickle)
+const int cRELIC_TRICKLE_FOOD            = 25;
+const int cRELIC_TRICKLE_WOOD            = 26;
+const int cRELIC_TRICKLE_GOLD            = 27;
+const int cRELIC_TRICKLE_FAVOR           = 28;
+
+// Relic Effect item IDs — useful (per-owned-relic stat / cost / build modifiers)
+const int cRELIC_EFFECT_LOS              = 29;
+const int cRELIC_EFFECT_REGEN            = 30;
+const int cRELIC_EFFECT_SPEED            = 31;
+const int cRELIC_EFFECT_HP               = 32;
+const int cRELIC_EFFECT_POP              = 33;
+const int cRELIC_EFFECT_GOLD_COST        = 34;
+const int cRELIC_EFFECT_WOOD_COST        = 35;
+const int cRELIC_EFFECT_FAVOR_COST       = 36;
+const int cRELIC_EFFECT_FOOD_COST        = 37;
+const int cRELIC_EFFECT_BUILD_SPEED      = 38;
 
 // Reinforcement item IDs — filler
 const int cREINFORCEMENT_ANUBITES        = 4000;
@@ -377,11 +420,6 @@ bool gHasNorse     = false;
 bool gHasAtlantis  = false;
 bool gHasNewAtlantis = false;
 bool gHasGoldenGift  = false;
-int gPassiveWood       = 0;
-int gPassiveFood       = 0;
-int gPassiveGold       = 0;
-int gPassiveFavor      = 0;
-int gPassiveFavorSlow  = 0;  // granted every 20s (small favor passive)
 
 const int cAPMajorNone      = 0;
 const int cAPMajorZeus      = 1;
@@ -1080,6 +1118,64 @@ string APGetCheckText(int id = 0)
     if (id == 3906826) { return "Advance to the Mythic Age and construct a Wonder."; }
     if (id == 3906827) { return "Use the Blessing of Zeus God Power on Arkantos."; }
     if (id == 3906828) { return "Defeat the Living Statue of Poseidon."; }
+    // ---- New Atlantis ----
+    if (id == 3916724) { return "Scenario Victory"; }
+    if (id == 3916726) { return "Build an army of at least ten soldiers."; }
+    if (id == 3916727) { return "Find the Sky Passage."; }
+    if (id == 3916728) { return "Defeat the barbarians guarding the Sky Passage."; }
+    if (id == 3916729) { return "Garrison five Citizens into the Sky Passage."; }
+    if (id == 3916730) { return "Build a Town Center beyond the Sky Passage."; }
+    if (id == 3916824) { return "Scenario Victory"; }
+    if (id == 3916826) { return "Repair the ancient Temples to Kronos and Oranos."; }
+    if (id == 3916827) { return "Advance to the Classical Age."; }
+    if (id == 3916828) { return "Destroy the Greek Town Center."; }
+    if (id == 3916924) { return "Scenario Victory"; }
+    if (id == 3916926) { return "Kill General Melagius."; }
+    if (id == 3917024) { return "Scenario Victory"; }
+    if (id == 3917026) { return "Replace all Norse Temples with Atlantean Temples."; }
+    if (id == 3917027) { return "Move Kastor close to Odin's Tower."; }
+    if (id == 3917028) { return "Deconstruct Odin's Wonder."; }
+    if (id == 3917124) { return "Scenario Victory"; }
+    if (id == 3917126) { return "Garrison all four sacred Relics into Kronos Temple."; }
+    if (id == 3917127) { return "Protect Kronos Temple."; }
+    if (id == 3917224) { return "Scenario Victory"; }
+    if (id == 3917226) { return "Bring soldiers to the Temple to the north."; }
+    if (id == 3917227) { return "Reach the flagged area to the east."; }
+    if (id == 3917228) { return "Bring Kastor to the peak of Mount Olympus."; }
+    if (id == 3917229) { return "Protect the Underworld Passage."; }
+    if (id == 3917324) { return "Scenario Victory"; }
+    if (id == 3917326) { return "Build up a base and survive the Titan's onslaught."; }
+    if (id == 3917327) { return "Send three Rocs to Kastor's Town Center."; }
+    if (id == 3917424) { return "Scenario Victory"; }
+    if (id == 3917426) { return "Protect the Son of Osiris while he recharges the Guardian."; }
+    if (id == 3917427) { return "Destroy the Titan Cerberus."; }
+    if (id == 3917524) { return "Scenario Victory"; }
+    if (id == 3917526) { return "Construct a Town Center."; }
+    if (id == 3917527) { return "Kill the Titan Ymir."; }
+    if (id == 3917624) { return "Scenario Victory"; }
+    if (id == 3917626) { return "Build four Town Centers and spread Gaia's Lush."; }
+    if (id == 3917627) { return "Destroy the Titan Prometheus."; }
+    if (id == 3917724) { return "Scenario Victory"; }
+    if (id == 3917726) { return "Destroy the Automatons attacking the South Atlanteans."; }
+    if (id == 3917727) { return "Destroy the Automatons attacking the West Atlanteans."; }
+    if (id == 3917728) { return "Destroy the Automatons attacking the North Atlanteans."; }
+    if (id == 3917729) { return "Kastor, Amanra, and Ajax must enter Krios's Sky Passage."; }
+    if (id == 3917824) { return "Scenario Victory"; }
+    if (id == 3917826) { return "Invoke the Seed of Gaia on all four sacred Gaia Pools."; }
+    if (id == 3917827) { return "Protect at least one Summoning Tree until Gaia appears."; }
+    if (id == 3917828) { return "Use Gaia to defeat Kronos."; }
+    // ---- The Golden Gift ----
+    if (id == 3926724) { return "Scenario Victory"; }
+    if (id == 3926726) { return "Bring Brokk and four Ox Carts to the flagged tunnel entrance."; }
+    if (id == 3926824) { return "Scenario Victory"; }
+    if (id == 3926826) { return "Build a Dock."; }
+    if (id == 3926827) { return "Bring Eitri and six Dwarves to the entrance to the mines."; }
+    if (id == 3926924) { return "Scenario Victory"; }
+    if (id == 3926926) { return "Capture the Plenty Vault."; }
+    if (id == 3926927) { return "Hold the Dwarven Forge until the timer expires."; }
+    if (id == 3927024) { return "Scenario Victory"; }
+    if (id == 3927026) { return "Destroy Loki's Temple near your Town Center."; }
+    if (id == 3927027) { return "Bring Brokk and Eitri to the Battle Boar."; }
     return "Unknown Location";
 }
 
@@ -1405,44 +1501,6 @@ void APTrapExecuteTrap(int trapType = 0)
 }
 
 
-// -----------------------------------------------------------------------
-
-
-// Helper: grant one of the scenario 25 random god power pool to player 1.
-void APGrantScen25Power(int idx = 0)
-{
-    if (idx ==  0) { trGodPowerGrant(1, "Restoration",        1, 30, true, false); }
-    if (idx ==  1) { trGodPowerGrant(1, "UnderworldPassage",  1, 30, true, false); }
-    if (idx ==  2) { trGodPowerGrant(1, "Bronze",             1, 30, true, false); }
-    if (idx ==  3) { trGodPowerGrant(1, "Curse",              1, 30, true, false); }
-    if (idx ==  4) { trGodPowerGrant(1, "ShiftingSands",      1, 30, true, false); }
-    if (idx ==  5) { trGodPowerGrant(1, "PlagueOfSerpents",   1, 30, true, false); }
-    if (idx ==  6) { trGodPowerGrant(1, "Ancestors",          1, 30, true, false); }
-    if (idx ==  7) { trGodPowerGrant(1, "Undermine",          1, 30, true, false); }
-    if (idx ==  8) { trGodPowerGrant(1, "HealingSpring",      1, 30, true, false); }
-    if (idx ==  9) { trGodPowerGrant(1, "WalkingWoods",       1, 30, true, false); }
-    if (idx == 10) { trGodPowerGrant(1, "Frost",              1, 30, true, false); }
-    if (idx == 11) { trGodPowerGrant(1, "FlamingWeapons",     1, 30, true, false); }
-    if (idx == 12) { trGodPowerGrant(1, "SpiderLair",         1, 30, true, false); }
-    if (idx == 13) { trGodPowerGrant(1, "Carnivora",          1, 30, true, false); }
-    if (idx == 14) { trGodPowerGrant(1, "Traitor",            1, 30, true, false); }
-    if (idx == 15) { trGodPowerGrant(1, "Chaos",              1, 30, true, false); }
-}
-
-// Grants 2 distinct random god powers to player 1 from the scenario 25 pool.
-// Logic lives in a proper void function so local variable declarations are
-// guaranteed function-scoped — declaring them inside an else block in a rule
-// body is unreliable in XS and was causing the second grant to silently fail.
-void APGrantScen25RandomPowers()
-{
-    trPlayerTechTreeEnabledGodPowers(1, true);
-    int p1 = xsRandInt(0, 15);
-    int p2 = xsRandInt(0, 14);
-    if (p2 >= p1) { p2++; }
-    APGrantScen25Power(p1);
-    APGrantScen25Power(p2);
-}
-
 // Returns the starting age (0=Archaic, 1=Classical, 2=Heroic, 3=Mythic)
 // for the current scenario, used to gate progressive tech upgrades.
 int APGetScenarioStartingAge()
@@ -1677,6 +1735,16 @@ runImmediately
     APReadRandomGod();
     APSetPlayerCiv();
     APForbidVanillaArchaicUnits();
+    APInitGodPowers();
+    // Reset random god power QVs at the start of each scenario.
+    trQuestVarSet("rand_gp_1", 0);
+    trQuestVarSet("rand_gp_2", 0);
+    trQuestVarSet("rand_gp_3", 0);
+    trQuestVarSet("rand_gp_4", 0);
+    xsEnableRule("APRandGP1");
+    xsEnableRule("APRandGP2");
+    xsEnableRule("APRandGP3");
+    xsEnableRule("APRandGP4");
     // APInitStartingAgeTechs() sets the seed-determined minor god tech to status 2
     // for each floor age tier. APApply*MinorGods only sets the BASE age tech to
     // status 2 in its floor block — minor god selection is handled here.
@@ -1747,48 +1815,98 @@ runImmediately
 
     gAPRandomMajorGods = (gAPItemCount > 5 && gAPItems[5] == 9010);
 
-    // Scenario 25: grant god powers to player 1.
-    // Vanilla: Healing Spring + Bronze (fixed).
-    // Godsanity: 2 distinct random powers from a pool of 16.
-    if (gAPScenarioId == 25)
+    // NA 2 (Atlantis Reborn): configure TempleOvergrown to train the full set
+    // of units that a normal temple can train, based on the assigned major god.
+    if (gAPScenarioId == 502)
     {
-        trPlayerTechTreeEnabledGodPowers(1, true);
-        if (gAPRandomMajorGods == false)
-        {
-            trGodPowerGrant(1, "HealingSpring", 1, 30, true, false);
-            trGodPowerGrant(1, "Bronze", 1, 30, true, false);
-        }
-        else
-        {
-            APGrantScen25RandomPowers();
-        }
-    }
-
-    // Scenario 11: grant 1 starting god power based on the assigned civilization.
-    // Greek → Restoration, Egyptian → ShiftingSands, Norse → HealingSpring, Atlantean → SpiderLair
-    if (gAPScenarioId == 11)
-    {
-        trPlayerTechTreeEnabledGodPowers(1, true);
+        // Greek
         if (gAPMajorGod == cAPMajorZeus || gAPMajorGod == cAPMajorPoseidon || gAPMajorGod == cAPMajorHades)
         {
-            trGodPowerGrant(1, "Restoration", 1, 30, true, false);
+            trProtounitAddTrain("TempleOvergrown", 1, "Pegasus",        0, 0);
+            trProtounitAddTrain("TempleOvergrown", 1, "Minotaur",       0, 1);
+            trProtounitAddTrain("TempleOvergrown", 1, "Centaur",        0, 1);
+            trProtounitAddTrain("TempleOvergrown", 1, "Cyclops",        0, 1);
+            trProtounitAddTrain("TempleOvergrown", 1, "LykaonVillager", 0, 1);
+            trProtounitAddTrain("TempleOvergrown", 1, "NemeanLion",     0, 2);
+            trProtounitAddTrain("TempleOvergrown", 1, "Manticore",      0, 2);
+            trProtounitAddTrain("TempleOvergrown", 1, "Hydra",          0, 2);
+            trProtounitAddTrain("TempleOvergrown", 1, "Hamadryad",      0, 2);
+            trProtounitAddTrain("TempleOvergrown", 1, "Chimera",        0, 3);
+            trProtounitAddTrain("TempleOvergrown", 1, "Colossus",       0, 3);
+            trProtounitAddTrain("TempleOvergrown", 1, "Medusa",         0, 3);
+            trProtounitAddTrain("TempleOvergrown", 1, "Siren",          0, 3);
+            trProtounitAddTrain("TempleOvergrown", 1, "HarpyMyth",      0, 4);
         }
+        // Egyptian
         if (gAPMajorGod == cAPMajorIsis || gAPMajorGod == cAPMajorRa || gAPMajorGod == cAPMajorSet)
         {
-            trGodPowerGrant(1, "ShiftingSands", 1, 30, true, false);
+            trProtounitAddTrain("TempleOvergrown", 1, "Priest",         0, 0);
+            trProtounitAddTrain("TempleOvergrown", 1, "Wadjet",         0, 1);
+            trProtounitAddTrain("TempleOvergrown", 1, "Anubite",        0, 1);
+            trProtounitAddTrain("TempleOvergrown", 1, "Sphinx",         0, 1);
+            trProtounitAddTrain("TempleOvergrown", 1, "Scarab",         0, 2);
+            trProtounitAddTrain("TempleOvergrown", 1, "Petsuchos",      0, 2);
+            trProtounitAddTrain("TempleOvergrown", 1, "ScorpionMan",    0, 2);
+            trProtounitAddTrain("TempleOvergrown", 1, "Phoenix",        0, 3);
+            trProtounitAddTrain("TempleOvergrown", 1, "Avenger",        0, 3);
+            trProtounitAddTrain("TempleOvergrown", 1, "Mummy",          0, 3);
+            trProtounitAddTrain("TempleOvergrown", 1, "Roc",            0, 4);
         }
+        // Norse
         if (gAPMajorGod == cAPMajorOdin || gAPMajorGod == cAPMajorThor || gAPMajorGod == cAPMajorLoki)
         {
-            trGodPowerGrant(1, "HealingSpring", 1, 30, true, false);
+            trProtounitAddTrain("TempleOvergrown", 1, "Hersir",         0, 0);
+            trProtounitAddTrain("TempleOvergrown", 1, "Troll",          0, 1);
+            trProtounitAddTrain("TempleOvergrown", 1, "Valkyrie",       0, 1);
+            trProtounitAddTrain("TempleOvergrown", 1, "Einheri",        0, 1);
+            trProtounitAddTrain("TempleOvergrown", 1, "Draugr",         0, 1);
+            trProtounitAddTrain("TempleOvergrown", 1, "BattleBoar",     0, 2);
+            trProtounitAddTrain("TempleOvergrown", 1, "RockGiant",      0, 2);
+            trProtounitAddTrain("TempleOvergrown", 1, "FrostGiant",     0, 3);
+            trProtounitAddTrain("TempleOvergrown", 1, "MountainGiant",  0, 4);
+            trProtounitAddTrain("TempleOvergrown", 1, "FireGiant",      0, 5);
+            trProtounitAddTrain("TempleOvergrown", 1, "FenrisWolfBrood",0, 5);
+            trProtounitAddTrain("TempleOvergrown", 1, "Fafnir",         0, 5);
         }
+        // Atlantean
         if (gAPMajorGod == cAPMajorKronos || gAPMajorGod == cAPMajorOranos || gAPMajorGod == cAPMajorGaia)
         {
-            trGodPowerGrant(1, "SpiderLair", 1, 30, true, false);
+            trProtounitAddTrain("TempleOvergrown", 1, "Oracle",         0, 0);
+            trProtounitAddTrain("TempleOvergrown", 1, "Automaton",      0, 1);
+            trProtounitAddTrain("TempleOvergrown", 1, "Promethean",     0, 1);
+            trProtounitAddTrain("TempleOvergrown", 1, "Caladria",       0, 1);
+            trProtounitAddTrain("TempleOvergrown", 1, "Satyr",          0, 2);
+            trProtounitAddTrain("TempleOvergrown", 1, "Behemoth",       0, 2);
+            trProtounitAddTrain("TempleOvergrown", 1, "StymphalianBird",0, 2);
+            trProtounitAddTrain("TempleOvergrown", 1, "Centimanus",     0, 3);
+            trProtounitAddTrain("TempleOvergrown", 1, "Lampades",       0, 3);
+            trProtounitAddTrain("TempleOvergrown", 1, "Argus",          0, 3);
         }
+
     }
 
     xsEnableRule("APApplyItems");
     xsEnableRule("APAnnounceGod");
+    //xsEnableRule("APEnforceAgeLocks");
+    xsEnableRule("APAnnounceMaxAge");
+    // Reset per-scenario relic-trickle and relic-effect accumulators, then
+    // start the unified enforcement rule.
+    gAPRelicTrickleAppliedFood  = 0.0;
+    gAPRelicTrickleAppliedWood  = 0.0;
+    gAPRelicTrickleAppliedGold  = 0.0;
+    gAPRelicTrickleAppliedFavor = 0.0;
+    gAPRelicEffAppliedLOS        = 0;
+    gAPRelicEffAppliedRegen      = 0;
+    gAPRelicEffAppliedSpeed      = 0;
+    gAPRelicEffAppliedHP         = 0;
+    gAPRelicEffAppliedPop        = 0;
+    gAPRelicEffAppliedGoldCost   = 0;
+    gAPRelicEffAppliedWoodCost   = 0;
+    gAPRelicEffAppliedFavorCost  = 0;
+    gAPRelicEffAppliedFoodCost   = 0;
+    gAPRelicEffAppliedBuildSpeed = 0;
+    gAPRelicLastCount            = -1;
+    xsEnableRule("APRelicTrickleEnforce");
     // Initialize trap queue from aom_state.xs generated state
     // Transform buildings to match random god's civilization (if enabled)
     APLoadBuildingTransforms();
@@ -2530,8 +2648,8 @@ void APApplyHeroBoosts()
     // Kastor Undermines with Attacks: HandAttack applies DamageOverTime (Crush) to Buildings
     if (kasUndermineAttacks == true)
     {
-        trProtounitActionSpecialEffect("Kastor", "HandAttack", 1, 3, "Building", -1, 13.0, 25.0);
-        trProtounitActionSpecialEffectProtoUnit("Kastor", "HandAttack", 1, 4, "Building", "UndermineDamage", 0.0, 1.0);
+        trProtounitActionSpecialEffect("Kastor", "HandAttack", 1, 3, "Building", -1, 13.0, 22.0);
+        trProtounitActionSpecialEffectProtoUnit("Kastor", "HandAttack", 1, 14, "Building", "UndermineDamage", 1.0, 1.0);
     }
 
     // Kastor Can Summon Soldiers: adds Hoplite, Spearman, Berserk, Murmillo to Kastor's train list
@@ -2632,18 +2750,14 @@ runImmediately
         if (itemId == cSTARTING_GOLD_LARGE)    { gold  += 120; }
         if (itemId == cSTARTING_FAVOR_LARGE)   { favor += 60;  }
 
-        if (itemId == cPASSIVE_WOOD_SMALL)    { gPassiveWood  += 1;  }
-        if (itemId == cPASSIVE_FOOD_SMALL)    { gPassiveFood  += 1;  }
-        if (itemId == cPASSIVE_GOLD_SMALL)    { gPassiveGold  += 1;  }
-        if (itemId == cPASSIVE_FAVOR_SMALL)   { gPassiveFavorSlow += 1; }
-        if (itemId == cPASSIVE_WOOD_MEDIUM)   { gPassiveWood  += 2;  }
-        if (itemId == cPASSIVE_FOOD_MEDIUM)   { gPassiveFood  += 2;  }
-        if (itemId == cPASSIVE_GOLD_MEDIUM)   { gPassiveGold  += 2;  }
-        if (itemId == cPASSIVE_FAVOR_MEDIUM)  { gPassiveFavor += 1;  }
-        if (itemId == cPASSIVE_WOOD_LARGE)    { gPassiveWood  += 4;  }
-        if (itemId == cPASSIVE_FOOD_LARGE)    { gPassiveFood  += 4;  }
-        if (itemId == cPASSIVE_GOLD_LARGE)    { gPassiveGold  += 4;  }
-        if (itemId == cPASSIVE_FAVOR_LARGE)   { gPassiveFavor += 2;  }
+        if (itemId == cPASSIVE_WOOD_SMALL)    { trPlayerModifyResourceData(1, 2, 1, 1.0, 0); }
+        if (itemId == cPASSIVE_FOOD_SMALL)    { trPlayerModifyResourceData(1, 2, 2, 1.0, 0); }
+        if (itemId == cPASSIVE_GOLD_SMALL)    { trPlayerModifyResourceData(1, 2, 0, 1.0, 0); }
+        if (itemId == cPASSIVE_FAVOR_SMALL)   { trPlayerModifyResourceData(1, 2, 3, 0.5, 0); }
+        if (itemId == cPASSIVE_WOOD_LARGE)    { trPlayerModifyResourceData(1, 2, 1, 3.0, 0); }
+        if (itemId == cPASSIVE_FOOD_LARGE)    { trPlayerModifyResourceData(1, 2, 2, 3.0, 0); }
+        if (itemId == cPASSIVE_GOLD_LARGE)    { trPlayerModifyResourceData(1, 2, 0, 3.0, 0); }
+        if (itemId == cPASSIVE_FAVOR_LARGE)   { trPlayerModifyResourceData(1, 2, 3, 1.5, 0); }
 
         if (itemId == cREINFORCEMENT_ANUBITES)
         {
@@ -2944,41 +3058,523 @@ runImmediately
         trModifyProtounitResource("VillagerAtlantean",  "food", 1, 0, _disc, 0);
     }
 
-    if (gPassiveWood > 0 || gPassiveFood > 0 || gPassiveGold > 0 || gPassiveFavor > 0)
-    {
-        xsEnableRule("APPassiveIncome");
-    }
-    if (gPassiveFavorSlow > 0)
-    {
-        xsEnableRule("APPassiveFavorSlow");
-    }
-
     xsDisableSelf();
 }
 
 // -----------------------------------------------------------------------
-// Passive income — fires every 60 seconds
+// APRelicTrickleEnforce relicfix_v3 - adjusts player 1 trickle rates based on the
+// FIXED v2: avoids the previous short delta variable name and unary-negative loop bounds.
+// number of relics currently captured (garrisoned in any p1 temple, or
+// being held by a hero — both states count as "captured" for this item).
+// Per-relic contributions stack across all four trickle items received.
+// We re-compute the desired trickle each tick and apply only the delta
+// from the previously-applied amount via trPlayerModifyResourceData
+// (relativity=0 is additive). Includes Relic, AbstractRelic and any
+// SPC relic variants visible to AOM:Retold's unit-type lookup.
 // -----------------------------------------------------------------------
 
-rule APPassiveIncome
-minInterval 10
+int APCountPlayer1RelicsByType(string relicType = "")
+{
+    xsSetContextPlayer(1);
+
+    int tid = kbGetUnitTypeID(relicType);
+    if (tid <= 0)
+    {
+        xsSetContextPlayer(12);
+        return (0);
+    }
+
+    int qid = kbUnitQueryCreate("APRelicCountQ" + relicType);
+    kbUnitQuerySetPlayerID(qid, 1);
+    kbUnitQuerySetUnitType(qid, tid);
+    kbUnitQuerySetState(qid, cUnitStateAlive);
+    kbUnitQueryExecute(qid);
+
+    int[] res = kbUnitQueryGetResults(qid);
+    int count = res.size();
+    kbUnitQueryDestroy(qid);
+
+    xsSetContextPlayer(12);
+    return (count);
+}
+
+int APCountPlayer1Relics()
+{
+    int abstractCount = APCountPlayer1RelicsByType("AbstractRelic");
+    if (abstractCount > 0)
+    {
+        return (abstractCount);
+    }
+
+    int total = 0;
+    total = total + APCountPlayer1RelicsByType("Relic");
+    total = total + APCountPlayer1RelicsByType("RelicMinor");
+    total = total + APCountPlayer1RelicsByType("RelicSPC");
+
+    return (total);
+}
+
+// Formats a float to at most 1 decimal place, stripping trailing zero decimals.
+// Used for trickle amounts in the relic notification chat.
+string APFormatFloat(float val = 0.0)
+{
+    // XS has no cast operators. Extract integer part via subtraction loop.
+    // Safe for the small trickle totals this function is called with.
+    int   _i   = 0;
+    float _rem = val;
+    while (_rem >= 1.0) { _rem = _rem - 1.0; _i = _i + 1; }
+    // All trickle values are multiples of 0.5, so _rem is either ~0 or ~0.5.
+    if (_rem > 0.25)
+    {
+        return ("" + _i + ".5");
+    }
+    return ("" + _i);
+}
+
+rule APRelicTrickleEnforce
+highFrequency
 inactive
 {
-    if (gPassiveWood  > 0) { trPlayerGrantResources(1, "Wood",  gPassiveWood);  }
-    if (gPassiveFood  > 0) { trPlayerGrantResources(1, "Food",  gPassiveFood);  }
-    if (gPassiveGold  > 0) { trPlayerGrantResources(1, "Gold",  gPassiveGold);  }
-    if (gPassiveFavor > 0) { trPlayerGrantResources(1, "Favor", gPassiveFavor); }
+    if (gAPItemCount <= 9) { return; }
+
+    // Sum per-resource per-relic amounts from received items.
+    float perFood  = 0.0;
+    float perWood  = 0.0;
+    float perGold  = 0.0;
+    float perFavor = 0.0;
+
+    // Boolean "have-item" flags for the relic effects. Multiple copies of a
+    // given effect item are not distinguished — having the item enables the
+    // per-relic effect; extra copies do not multiply.
+    bool hasLOS        = false;
+    bool hasRegen      = false;
+    bool hasSpeed      = false;
+    bool hasHP         = false;
+    bool hasPop        = false;
+    bool hasGoldCost   = false;
+    bool hasWoodCost   = false;
+    bool hasFavorCost  = false;
+    bool hasFoodCost   = false;
+    bool hasBuildSpeed = false;
+
+    int j = 0;
+    int id = 0;
+    for (j = 9; j < gAPItemCount; j++)
+    {
+        id = gAPItems[j];
+        if (id == cRELIC_TRICKLE_FOOD)  { perFood  = perFood  + 3.0; }
+        if (id == cRELIC_TRICKLE_WOOD)  { perWood  = perWood  + 3.0; }
+        if (id == cRELIC_TRICKLE_GOLD)  { perGold  = perGold  + 3.0; }
+        if (id == cRELIC_TRICKLE_FAVOR) { perFavor = perFavor + 1.5; }
+        if (id == cRELIC_EFFECT_LOS)         { hasLOS        = true; }
+        if (id == cRELIC_EFFECT_REGEN)       { hasRegen      = true; }
+        if (id == cRELIC_EFFECT_SPEED)       { hasSpeed      = true; }
+        if (id == cRELIC_EFFECT_HP)          { hasHP         = true; }
+        if (id == cRELIC_EFFECT_POP)         { hasPop        = true; }
+        if (id == cRELIC_EFFECT_GOLD_COST)   { hasGoldCost   = true; }
+        if (id == cRELIC_EFFECT_WOOD_COST)   { hasWoodCost   = true; }
+        if (id == cRELIC_EFFECT_FAVOR_COST)  { hasFavorCost  = true; }
+        if (id == cRELIC_EFFECT_FOOD_COST)   { hasFoodCost   = true; }
+        if (id == cRELIC_EFFECT_BUILD_SPEED) { hasBuildSpeed = true; }
+    }
+
+    int relicCount = APCountPlayer1Relics();
+
+    // ----- Resource trickles (additive trickle rate) -----
+    float wantFood  = perFood  * relicCount;
+    float wantWood  = perWood  * relicCount;
+    float wantGold  = perGold  * relicCount;
+    float wantFavor = perFavor * relicCount;
+
+    float dFood  = wantFood  - gAPRelicTrickleAppliedFood;
+    float dWood  = wantWood  - gAPRelicTrickleAppliedWood;
+    float dGold  = wantGold  - gAPRelicTrickleAppliedGold;
+    float dFavor = wantFavor - gAPRelicTrickleAppliedFavor;
+
+    // Resource IDs: GOLD=0, WOOD=1, FOOD=2, FAVOR=3. Field=2 = trickle rate.
+    if (dFood  != 0.0) { trPlayerModifyResourceData(1, 2, 2, dFood,  0); gAPRelicTrickleAppliedFood  = wantFood;  }
+    if (dWood  != 0.0) { trPlayerModifyResourceData(1, 2, 1, dWood,  0); gAPRelicTrickleAppliedWood  = wantWood;  }
+    if (dGold  != 0.0) { trPlayerModifyResourceData(1, 2, 0, dGold,  0); gAPRelicTrickleAppliedGold  = wantGold;  }
+    if (dFavor != 0.0) { trPlayerModifyResourceData(1, 2, 3, dFavor, 0); gAPRelicTrickleAppliedFavor = wantFavor; }
+
+    // ----- Per-relic stat / cost / build effects -----
+    // For each effect, the desired "applied count" is relicCount when the item
+    // is owned, else 0. We then drive the applied count toward the target by
+    // replaying the underlying tr* call (additive: scale by apRelicDelta; multiplicative:
+    // call apRelicDelta times, or call the inverse value when reducing).
+
+    int targLOS        = 0; if (hasLOS)        { targLOS        = relicCount; }
+    int targRegen      = 0; if (hasRegen)      { targRegen      = relicCount; }
+    int targSpeed      = 0; if (hasSpeed)      { targSpeed      = relicCount; }
+    int targHP         = 0; if (hasHP)         { targHP         = relicCount; }
+    int targPop        = 0; if (hasPop)        { targPop        = relicCount; }
+    int targGoldCost   = 0; if (hasGoldCost)   { targGoldCost   = relicCount; }
+    int targWoodCost   = 0; if (hasWoodCost)   { targWoodCost   = relicCount; }
+    int targFavorCost  = 0; if (hasFavorCost)  { targFavorCost  = relicCount; }
+    int targFoodCost   = 0; if (hasFoodCost)   { targFoodCost   = relicCount; }
+    int targBuildSpeed = 0; if (hasBuildSpeed) { targBuildSpeed = relicCount; }
+
+    int apRelicDelta = 0;
+    int k = 0;
+    int undoCount = 0;
+
+    // Additive: LOS +4 per relic. Field 2 = LOS.
+    apRelicDelta = targLOS - gAPRelicEffAppliedLOS;
+    if (apRelicDelta != 0)
+    {
+        trModifyProtounitData("All", 1, 2, 4.0 * apRelicDelta, 0);
+        gAPRelicEffAppliedLOS = targLOS;
+    }
+
+    // Additive: Regen +1 per relic. Field 17 = regen rate.
+    apRelicDelta = targRegen - gAPRelicEffAppliedRegen;
+    if (apRelicDelta != 0)
+    {
+        trModifyProtounitData("All", 1, 17, 1.0 * apRelicDelta, 0);
+        gAPRelicEffAppliedRegen = targRegen;
+    }
+
+    // Multiplicative: Speed x1.05 per relic. Field 1 = speed. Apply 1.05^apRelicDelta
+    // (or 1/1.05 when reducing) by repeated invocation.
+    apRelicDelta = targSpeed - gAPRelicEffAppliedSpeed;
+    if (apRelicDelta > 0)
+    {
+        k = 0;
+        while (k < apRelicDelta)
+        {
+            trModifyProtounitData("Unit", 1, 1, 1.05, 2);
+            k = k + 1;
+        }
+        gAPRelicEffAppliedSpeed = targSpeed;
+    }
+    else if (apRelicDelta < 0)
+    {
+        k = 0;
+        undoCount = 0 - apRelicDelta;
+        while (k < undoCount)
+        {
+            trModifyProtounitData("Unit", 1, 1, 1.0 / 1.05, 2);
+            k = k + 1;
+        }
+        gAPRelicEffAppliedSpeed = targSpeed;
+    }
+
+    // Multiplicative: Max HP x1.10 per relic. Field 0 = max hitpoints.
+    apRelicDelta = targHP - gAPRelicEffAppliedHP;
+    if (apRelicDelta > 0)
+    {
+        k = 0;
+        while (k < apRelicDelta)
+        {
+            trModifyProtounitData("All", 1, 0, 1.10, 2);
+            k = k + 1;
+        }
+        gAPRelicEffAppliedHP = targHP;
+    }
+    else if (apRelicDelta < 0)
+    {
+        k = 0;
+        undoCount = 0 - apRelicDelta;
+        while (k < undoCount)
+        {
+            trModifyProtounitData("All", 1, 0, 1.0 / 1.10, 2);
+            k = k + 1;
+        }
+        gAPRelicEffAppliedHP = targHP;
+    }
+
+    // Additive: Population -1 per relic. Two related fields (6 and 7) per the
+    // requested triggers — apply both each tick so the population display and
+    // cap accounting stay in sync.
+    apRelicDelta = targPop - gAPRelicEffAppliedPop;
+    if (apRelicDelta != 0)
+    {
+        trModifyProtounitData("Unit", 1, 7, 0.0 - (1.0 * apRelicDelta), 0);
+        trModifyProtounitData("Unit", 1, 6, 0.0 - (1.0 * apRelicDelta), 0);
+        gAPRelicEffAppliedPop = targPop;
+    }
+
+    // Multiplicative cost reductions: x0.95 per relic on Gold / Wood / Favor /
+    // Food; field index 0 on resource means "cost".
+    apRelicDelta = targGoldCost - gAPRelicEffAppliedGoldCost;
+    if (apRelicDelta > 0)
+    {
+        k = 0;
+        while (k < apRelicDelta)
+        {
+            trModifyProtounitResource("All", "Gold", 1, 0, 0.95, 2);
+            k = k + 1;
+        }
+        gAPRelicEffAppliedGoldCost = targGoldCost;
+    }
+    else if (apRelicDelta < 0)
+    {
+        k = 0;
+        undoCount = 0 - apRelicDelta;
+        while (k < undoCount)
+        {
+            trModifyProtounitResource("All", "Gold", 1, 0, 1.0 / 0.95, 2);
+            k = k + 1;
+        }
+        gAPRelicEffAppliedGoldCost = targGoldCost;
+    }
+
+    apRelicDelta = targWoodCost - gAPRelicEffAppliedWoodCost;
+    if (apRelicDelta > 0)
+    {
+        k = 0;
+        while (k < apRelicDelta)
+        {
+            trModifyProtounitResource("All", "Wood", 1, 0, 0.95, 2);
+            k = k + 1;
+        }
+        gAPRelicEffAppliedWoodCost = targWoodCost;
+    }
+    else if (apRelicDelta < 0)
+    {
+        k = 0;
+        undoCount = 0 - apRelicDelta;
+        while (k < undoCount)
+        {
+            trModifyProtounitResource("All", "Wood", 1, 0, 1.0 / 0.95, 2);
+            k = k + 1;
+        }
+        gAPRelicEffAppliedWoodCost = targWoodCost;
+    }
+
+    apRelicDelta = targFavorCost - gAPRelicEffAppliedFavorCost;
+    if (apRelicDelta > 0)
+    {
+        k = 0;
+        while (k < apRelicDelta)
+        {
+            trModifyProtounitResource("All", "Favor", 1, 0, 0.95, 2);
+            k = k + 1;
+        }
+        gAPRelicEffAppliedFavorCost = targFavorCost;
+    }
+    else if (apRelicDelta < 0)
+    {
+        k = 0;
+        undoCount = 0 - apRelicDelta;
+        while (k < undoCount)
+        {
+            trModifyProtounitResource("All", "Favor", 1, 0, 1.0 / 0.95, 2);
+            k = k + 1;
+        }
+        gAPRelicEffAppliedFavorCost = targFavorCost;
+    }
+
+    apRelicDelta = targFoodCost - gAPRelicEffAppliedFoodCost;
+    if (apRelicDelta > 0)
+    {
+        k = 0;
+        while (k < apRelicDelta)
+        {
+            trModifyProtounitResource("All", "Food", 1, 0, 0.95, 2);
+            k = k + 1;
+        }
+        gAPRelicEffAppliedFoodCost = targFoodCost;
+    }
+    else if (apRelicDelta < 0)
+    {
+        k = 0;
+        undoCount = 0 - apRelicDelta;
+        while (k < undoCount)
+        {
+            trModifyProtounitResource("All", "Food", 1, 0, 1.0 / 0.95, 2);
+            k = k + 1;
+        }
+        gAPRelicEffAppliedFoodCost = targFoodCost;
+    }
+
+    // Multiplicative: Build time x0.90 per relic on Building. Field 4 = build
+    // points / build time multiplier.
+    apRelicDelta = targBuildSpeed - gAPRelicEffAppliedBuildSpeed;
+    if (apRelicDelta > 0)
+    {
+        k = 0;
+        while (k < apRelicDelta)
+        {
+            trModifyProtounitData("Building", 1, 4, 0.9, 2);
+            k = k + 1;
+        }
+        gAPRelicEffAppliedBuildSpeed = targBuildSpeed;
+    }
+    else if (apRelicDelta < 0)
+    {
+        k = 0;
+        undoCount = 0 - apRelicDelta;
+        while (k < undoCount)
+        {
+            trModifyProtounitData("Building", 1, 4, 1.0 / 0.9, 2);
+            k = k + 1;
+        }
+        gAPRelicEffAppliedBuildSpeed = targBuildSpeed;
+    }
+
+    // ----- Relic count change notification -----
+    if (relicCount != gAPRelicLastCount)
+    {
+        gAPRelicLastCount = relicCount;
+
+        bool _anyEffect = false;
+        if (perFood  > 0.0) { _anyEffect = true; }
+        if (perWood  > 0.0) { _anyEffect = true; }
+        if (perGold  > 0.0) { _anyEffect = true; }
+        if (perFavor > 0.0) { _anyEffect = true; }
+        if (hasLOS)        { _anyEffect = true; }
+        if (hasRegen)      { _anyEffect = true; }
+        if (hasSpeed)      { _anyEffect = true; }
+        if (hasHP)         { _anyEffect = true; }
+        if (hasPop)        { _anyEffect = true; }
+        if (hasGoldCost)   { _anyEffect = true; }
+        if (hasWoodCost)   { _anyEffect = true; }
+        if (hasFavorCost)  { _anyEffect = true; }
+        if (hasFoodCost)   { _anyEffect = true; }
+        if (hasBuildSpeed) { _anyEffect = true; }
+
+        if (_anyEffect && relicCount > 0)
+        {
+            string _msg   = "";
+            bool   _first = true;
+            string _pfx   = "You have " + relicCount + " relic(s) ";
+            string _and   = "\nand ";
+            string _line  = "";
+
+            if (perFood > 0.0)
+            {
+                _line = "granting +" + APFormatFloat(perFood * relicCount) + " Food Trickle";
+                if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
+            }
+            if (perWood > 0.0)
+            {
+                _line = "granting +" + APFormatFloat(perWood * relicCount) + " Wood Trickle";
+                if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
+            }
+            if (perGold > 0.0)
+            {
+                _line = "granting +" + APFormatFloat(perGold * relicCount) + " Gold Trickle";
+                if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
+            }
+            if (perFavor > 0.0)
+            {
+                _line = "granting +" + APFormatFloat(perFavor * relicCount) + " Favor Trickle";
+                if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
+            }
+            if (hasLOS)
+            {
+                _line = "granting +" + (relicCount * 4) + " Line of Sight to everything";
+                if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
+            }
+            if (hasRegen)
+            {
+                _line = "granting +" + relicCount + " Regeneration to everything";
+                if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
+            }
+            if (hasSpeed)
+            {
+                _line = "granting all units +" + (relicCount * 5) + "% Speed";
+                if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
+            }
+            if (hasHP)
+            {
+                _line = "granting everything +" + (relicCount * 10) + "% Max HP";
+                if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
+            }
+            if (hasPop)
+            {
+                _line = "reducing all unit population slots by " + relicCount;
+                if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
+            }
+            if (hasGoldCost)
+            {
+                _line = "reducing all Gold costs by " + (relicCount * 5) + "%";
+                if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
+            }
+            if (hasWoodCost)
+            {
+                _line = "reducing all Wood costs by " + (relicCount * 5) + "%";
+                if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
+            }
+            if (hasFavorCost)
+            {
+                _line = "reducing all Favor costs by " + (relicCount * 5) + "%";
+                if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
+            }
+            if (hasFoodCost)
+            {
+                _line = "reducing all Food costs by " + (relicCount * 5) + "%";
+                if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
+            }
+            if (hasBuildSpeed)
+            {
+                _line = "making buildings build " + (relicCount * 10) + "% faster";
+                if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
+            }
+
+            trChatSend(0, _msg);
+        }
+    }
 }
 
 // -----------------------------------------------------------------------
-// Passive favor (small tier) — fires every 20 seconds = 3/min
+// APEnforceAgeLocks — continuously re-applies age unlock state.
+// AOM auto-enables next-tier age techs once prereqs are met (researching
+// Classical re-enables Heroic). One-shot disable in APApplyItems isn't
+// enough; we re-disable each tick.
+// APEnforceAgeLocks is intentionally unused.
+// APApplyAgeUnlocks() must only run once, from APApplyItems.
+// Re-running it re-applies generic age techs and stacks effects like Berserk LOS
+// and dock myth-unit samples.
 // -----------------------------------------------------------------------
+rule APEnforceAgeLocks
+inactive
+minInterval 1
+{
+    APApplyAgeUnlocks();
+    xsDisableSelf();
+    //trDisableTrigger(APEnforceAgeLocks);
+}
 
-rule APPassiveFavorSlow
-minInterval 20
+// -----------------------------------------------------------------------
+// APAnnounceMaxAge — debug chat showing the max age the player can reach
+// for their assigned civilization. Fires once at scenario start.
+// -----------------------------------------------------------------------
+rule APAnnounceMaxAge
+highFrequency
 inactive
 {
-    if (gPassiveFavorSlow > 0) { trPlayerGrantResources(1, "Favor", gPassiveFavorSlow); }
+    int _ageCount = 0;
+    int _ai = 0;
+    int _aid = 0;
+    string _civ = "";
+    if (gAPMajorGod == cAPMajorZeus || gAPMajorGod == cAPMajorPoseidon || gAPMajorGod == cAPMajorHades) { _civ = "Greek"; }
+    if (gAPMajorGod == cAPMajorIsis || gAPMajorGod == cAPMajorRa       || gAPMajorGod == cAPMajorSet)   { _civ = "Egyptian"; }
+    if (gAPMajorGod == cAPMajorOdin || gAPMajorGod == cAPMajorThor     || gAPMajorGod == cAPMajorLoki)  { _civ = "Norse"; }
+    if (gAPMajorGod == cAPMajorKronos || gAPMajorGod == cAPMajorOranos || gAPMajorGod == cAPMajorGaia)  { _civ = "Atlantean"; }
+
+    for (_ai = 9; _ai < gAPItemCount; _ai++)
+    {
+        _aid = gAPItems[_ai];
+        if (_civ == "Greek"     && _aid == cGREEK_AGE_UNLOCK)     { _ageCount++; }
+        if (_civ == "Egyptian"  && _aid == cEGYPTIAN_AGE_UNLOCK)  { _ageCount++; }
+        if (_civ == "Norse"     && _aid == cNORSE_AGE_UNLOCK)     { _ageCount++; }
+        if (_civ == "Atlantean" && _aid == cATLANTEAN_AGE_UNLOCK) { _ageCount++; }
+    }
+
+    int _floor = APGetStartingAgeCount(gAPScenarioId);
+    int _max = _floor;
+    if (_ageCount > _max) { _max = _ageCount; }
+    if (_max > 3) { _max = 3; }
+
+    string _ageName = "Archaic";
+    if (_max == 1) { _ageName = "Classical"; }
+    if (_max == 2) { _ageName = "Heroic"; }
+    if (_max == 3) { _ageName = "Mythic"; }
+
+    trChatSend(0, "AP DEBUG: Max reachable age = " + _ageName + " (civ=" + _civ + ", floor=" + _floor + ", unlocks=" + _ageCount + ")");
+    xsDisableSelf();
 }
 
 // -----------------------------------------------------------------------
@@ -3009,4 +3605,87 @@ inactive
     APTrapExecuteTrap(trapType);
     gAPTrapsFiredCount++;
     trQuestVarSet("APTrapsFiredThisScenario", gAPTrapsFiredCount);
+}
+
+// -----------------------------------------------------------------------
+// Random God Power tier system
+// Quest vars rand_gp_1..4 are set in scenario editor (or by external triggers).
+// When a QV > 0, grant the predetermined god power for that tier `n` times,
+// then clear the QV. The chosen god powers are populated per scenario by
+// APInitGodPowers() in aom_state.xs from generation-time slot_data.
+// Cooldown scales with tier: 45s, 90s, 135s, 180s.
+// repeatable=true, useCost=true.
+// -----------------------------------------------------------------------
+
+void APGrantRandGP(string powerName = "", int count = 0, int cooldown = 45)
+{
+    if (powerName == "" || count <= 0)
+    {
+        return;
+    }
+
+    trPlayerTechTreeEnabledGodPowers(1, true);
+    trGodPowerEnableBlocking(false);
+    trGodPowerGrant(1, powerName, count, cooldown, true, true);
+    trGodPowerEnableBlocking(true);
+}
+
+rule APRandGP1
+minInterval 1
+inactive
+{
+    int n = trQuestVarGet("rand_gp_1");
+    if (n <= 0) { return; }
+    if (gAPRandGP1 == "")
+    {
+        trQuestVarSet("rand_gp_1", 0);
+        return;
+    }
+    APGrantRandGP(gAPRandGP1, n, 45);
+    trQuestVarSet("rand_gp_1", 0);
+}
+
+rule APRandGP2
+minInterval 1
+inactive
+{
+    int n = trQuestVarGet("rand_gp_2");
+    if (n <= 0) { return; }
+    if (gAPRandGP2 == "")
+    {
+        trQuestVarSet("rand_gp_2", 0);
+        return;
+    }
+    APGrantRandGP(gAPRandGP2, n, 90);
+    trQuestVarSet("rand_gp_2", 0);
+}
+
+rule APRandGP3
+minInterval 1
+inactive
+{
+    int n = trQuestVarGet("rand_gp_3");
+    if (n <= 0) { return; }
+    if (gAPRandGP3 == "")
+    {
+        trQuestVarSet("rand_gp_3", 0);
+        return;
+    }
+    APGrantRandGP(gAPRandGP3, n, 135);
+    trQuestVarSet("rand_gp_3", 0);
+}
+
+rule APRandGP4
+minInterval 1
+inactive
+{
+    int n = trQuestVarGet("rand_gp_4");
+    if (n <= 0) { return; }
+    if (gAPRandGP4 == "")
+    {
+        trQuestVarSet("rand_gp_4", 0);
+        return;
+    }
+    APGrantRandGP(gAPRandGP4, n, 180);
+    trQuestVarSet("rand_gp_4", 0);
 }

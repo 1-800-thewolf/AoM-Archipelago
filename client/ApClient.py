@@ -172,14 +172,19 @@ def _count_beaten_scenarios(ctx: "AoMContext") -> int:
     Completion locations have address=None (they are AP events, never sent
     as LocationChecks). Victory locations are real addressed locations that
     ARE sent when the player wins a scenario, so they appear in sent_checks.
-    Scenarios 1-30 are non-final (global_number <= 30).
+    Scenarios that count: FotT 1-30 (global_number <= 30), all of New Atlantis
+    (501-512), and all of The Golden Gift (601-604). FotT 31 (the goal) is
+    excluded.
     """
     from ..locations.Locations import aomLocationData, aomLocationType
     beaten = 0
     for loc in aomLocationData:
-        if loc.type == aomLocationType.VICTORY and loc.scenario.global_number <= 30:
-            if loc.id in ctx.game_ctx.sent_checks:
-                beaten += 1
+        if loc.type != aomLocationType.VICTORY:
+            continue
+        gn = loc.scenario.global_number
+        counts = (gn <= 30) or (501 <= gn <= 512) or (601 <= gn <= 604)
+        if counts and loc.id in ctx.game_ctx.sent_checks:
+            beaten += 1
     return beaten
 
 
@@ -941,6 +946,10 @@ class AoMContext(CommonContext):
         self.game_ctx.archaic_forbids = (
             {int(k): v for k, v in raw_forbids.items()} if raw_forbids else {}
         )
+        raw_gp = slot_data.get("god_power_assignments", {})
+        self.game_ctx.god_power_assignments = (
+            {int(k): list(v) for k, v in raw_gp.items()} if raw_gp else {}
+        )
         self.game_ctx.gem_shop_enabled      = bool(slot_data.get("gem_shop", True))
         self.game_ctx.wins_to_open_shop     = int(slot_data.get("wins_to_open_shop", 4))
         self._disabled_campaign_ids: set[int] = set(slot_data.get("disabled_campaigns", []))
@@ -1064,13 +1073,19 @@ class AoMContext(CommonContext):
         if not hint_ids:
             return
 
-        asyncio.ensure_future(self.send_msgs([{
-            "cmd": "LocationScouts",
-            "locations": hint_ids,
-            "create_as_hint": 2,
-        }]))
+        async def _do_scout(ids: list[int], mission_nums: list[int]) -> None:
+            try:
+                await self.send_msgs([{
+                    "cmd": "LocationScouts",
+                    "locations": ids,
+                    "create_as_hint": 2,
+                }])
+                logger.info(f"Hinted {len(ids)} location(s) across missions {mission_nums}")
+            except Exception as ex:
+                logger.error(f"Failed to send hint LocationScouts: {ex}")
+
         mission_nums = [n for n, _ in chosen]
-        logger.info(f"Hinted {len(hint_ids)} location(s) across missions {mission_nums}")
+        asyncio.ensure_future(_do_scout(hint_ids, mission_nums))
 
     async def on_location_received(self, location_id: int) -> None:
         from ..locations.Locations import aomLocationData, aomLocationType
@@ -1097,6 +1112,32 @@ class AoMContext(CommonContext):
                     logger.info(f"[AoMR] {progress}")
                 _update_atlantis_ui(self)
 
+        await self.send_msgs([{"cmd": "LocationChecks", "locations": locations_to_send}])
+
+    async def on_locations_received_batch(self, location_ids: list[int]) -> None:
+        """Send a batch of LocationChecks in a single message.
+
+        Expands VICTORY locations to also include their paired completion id.
+        Used for shop purchases that yield multiple item locations at once,
+        avoiding rapid-fire individual LocationChecks messages that have caused
+        server disconnects.
+        """
+        from ..locations.Locations import aomLocationData, aomLocationType
+
+        locations_to_send: list[int] = []
+        for loc_id in location_ids:
+            locations_to_send.append(loc_id)
+            loc_data = next((l for l in aomLocationData if l.id == loc_id), None)
+            if loc_data is not None and loc_data.type == aomLocationType.VICTORY:
+                locations_to_send.append(loc_id + 1)
+                if loc_data.scenario.global_number <= 30:
+                    progress = _format_progress(self)
+                    if progress:
+                        logger.info(f"[AoMR] {progress}")
+                    _update_atlantis_ui(self)
+
+        if not locations_to_send:
+            return
         await self.send_msgs([{"cmd": "LocationChecks", "locations": locations_to_send}])
 
     def _start_game_loop(self) -> None:
