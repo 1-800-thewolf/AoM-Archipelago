@@ -463,24 +463,24 @@ class aomItemData(enum.IntEnum):
     # Filler: small rate (BASE//5 x1). Granted every 60s (favor: every 20s).
     # Useful: large rate (BASE//5 x4).
     # -----------------------------------------------------------------------
-    PASSIVE_WOOD_SMALL    = 13, "+1 Wood trickle rate",    PassiveIncome(Resource.WOOD,  1)
-    PASSIVE_FOOD_SMALL    = 14, "+1 Food trickle rate",    PassiveIncome(Resource.FOOD,  1)
-    PASSIVE_GOLD_SMALL    = 15, "+1 Gold trickle rate",    PassiveIncome(Resource.GOLD,  1)
-    PASSIVE_FAVOR_SMALL   = 16, "+0.5 Favor trickle rate", PassiveIncome(Resource.FAVOR, 0)
+    PASSIVE_WOOD_SMALL    = 13, "+0.5 Wood trickle rate",  PassiveIncome(Resource.WOOD,  1)
+    PASSIVE_FOOD_SMALL    = 14, "+0.5 Food trickle rate",  PassiveIncome(Resource.FOOD,  1)
+    PASSIVE_GOLD_SMALL    = 15, "+0.5 Gold trickle rate",  PassiveIncome(Resource.GOLD,  1)
+    PASSIVE_FAVOR_SMALL   = 16, "+0.25 Favor trickle rate", PassiveIncome(Resource.FAVOR, 0)
 
-    PASSIVE_WOOD_LARGE    = 21, "+3 Wood trickle rate",    PassiveIncomeLarge(Resource.WOOD,  3)
-    PASSIVE_FOOD_LARGE    = 22, "+3 Food trickle rate",    PassiveIncomeLarge(Resource.FOOD,  3)
-    PASSIVE_GOLD_LARGE    = 23, "+3 Gold trickle rate",    PassiveIncomeLarge(Resource.GOLD,  3)
-    PASSIVE_FAVOR_LARGE   = 24, "+1.5 Favor trickle rate", PassiveIncomeLarge(Resource.FAVOR, 0)
+    PASSIVE_WOOD_LARGE    = 21, "+2 Wood trickle rate",    PassiveIncomeLarge(Resource.WOOD,  3)
+    PASSIVE_FOOD_LARGE    = 22, "+2 Food trickle rate",    PassiveIncomeLarge(Resource.FOOD,  3)
+    PASSIVE_GOLD_LARGE    = 23, "+2 Gold trickle rate",    PassiveIncomeLarge(Resource.GOLD,  3)
+    PASSIVE_FAVOR_LARGE   = 24, "+1 Favor trickle rate",   PassiveIncomeLarge(Resource.FAVOR, 0)
 
     # -----------------------------------------------------------------------
     # Relic Trickle — Useful
     # Each garrisoned relic in any player 1 temple grants the listed trickle.
     # -----------------------------------------------------------------------
-    RELIC_TRICKLE_FOOD    = 25, "Each Owned Relic Grants 3 Food Trickle",   RelicTrickle(Resource.FOOD, 3.0)
-    RELIC_TRICKLE_WOOD    = 26, "Each Owned Relic Grants 3 Wood Trickle",   RelicTrickle(Resource.WOOD, 3.0)
-    RELIC_TRICKLE_GOLD    = 27, "Each Owned Relic Grants 3 Gold Trickle",   RelicTrickle(Resource.GOLD, 3.0)
-    RELIC_TRICKLE_FAVOR   = 28, "Each Owned Relic Grants 1.5 Favor Trickle", RelicTrickle(Resource.FAVOR, 1.5)
+    RELIC_TRICKLE_FOOD    = 25, "Each Owned Relic Grants 2 Food Trickle",   RelicTrickle(Resource.FOOD, 2.0)
+    RELIC_TRICKLE_WOOD    = 26, "Each Owned Relic Grants 2 Wood Trickle",   RelicTrickle(Resource.WOOD, 2.0)
+    RELIC_TRICKLE_GOLD    = 27, "Each Owned Relic Grants 2 Gold Trickle",   RelicTrickle(Resource.GOLD, 2.0)
+    RELIC_TRICKLE_FAVOR   = 28, "Each Owned Relic Grants 1 Favor Trickle",  RelicTrickle(Resource.FAVOR, 1.0)
 
     # -----------------------------------------------------------------------
     # Relic Effects — Useful

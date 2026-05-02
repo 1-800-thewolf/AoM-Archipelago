@@ -310,12 +310,17 @@ def _get_has_atlantis(ctx: AoMGameContext, received_set: set) -> int:
     if ctx.final_mode == 1:  # always_open
         return 9004
     if ctx.final_mode == 0 and ctx.x_scenarios_threshold > 0:  # beat_x_scenarios
-        BASE_ID = 0x3B0000
         from ..locations.Locations import aomLocationData, aomLocationType
+        # Count victories across all activated campaigns (FotT 1-30, NA 501-512,
+        # GG 601-604). Filtering by global_number <= 30 used to silently exclude
+        # NA and GG victories, leaving the in-game state at 9000 even when the
+        # AP UI showed the Atlantis Key as obtained.
         beaten = sum(
             1 for loc in aomLocationData
             if loc.type == aomLocationType.VICTORY
-            and loc.scenario.global_number <= 30
+            and (loc.scenario.global_number <= 30
+                 or 501 <= loc.scenario.global_number <= 512
+                 or 601 <= loc.scenario.global_number <= 604)
             and loc.id in ctx.sent_checks
         )
         if beaten >= ctx.x_scenarios_threshold:

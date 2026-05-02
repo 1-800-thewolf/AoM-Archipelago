@@ -2750,14 +2750,14 @@ runImmediately
         if (itemId == cSTARTING_GOLD_LARGE)    { gold  += 120; }
         if (itemId == cSTARTING_FAVOR_LARGE)   { favor += 60;  }
 
-        if (itemId == cPASSIVE_WOOD_SMALL)    { trPlayerModifyResourceData(1, 2, 1, 1.0, 0); }
-        if (itemId == cPASSIVE_FOOD_SMALL)    { trPlayerModifyResourceData(1, 2, 2, 1.0, 0); }
-        if (itemId == cPASSIVE_GOLD_SMALL)    { trPlayerModifyResourceData(1, 2, 0, 1.0, 0); }
-        if (itemId == cPASSIVE_FAVOR_SMALL)   { trPlayerModifyResourceData(1, 2, 3, 0.5, 0); }
-        if (itemId == cPASSIVE_WOOD_LARGE)    { trPlayerModifyResourceData(1, 2, 1, 3.0, 0); }
-        if (itemId == cPASSIVE_FOOD_LARGE)    { trPlayerModifyResourceData(1, 2, 2, 3.0, 0); }
-        if (itemId == cPASSIVE_GOLD_LARGE)    { trPlayerModifyResourceData(1, 2, 0, 3.0, 0); }
-        if (itemId == cPASSIVE_FAVOR_LARGE)   { trPlayerModifyResourceData(1, 2, 3, 1.5, 0); }
+        if (itemId == cPASSIVE_WOOD_SMALL)    { trPlayerModifyResourceData(1, 2, 1, 0.5,  0); }
+        if (itemId == cPASSIVE_FOOD_SMALL)    { trPlayerModifyResourceData(1, 2, 2, 0.5,  0); }
+        if (itemId == cPASSIVE_GOLD_SMALL)    { trPlayerModifyResourceData(1, 2, 0, 0.5,  0); }
+        if (itemId == cPASSIVE_FAVOR_SMALL)   { trPlayerModifyResourceData(1, 2, 3, 0.25, 0); }
+        if (itemId == cPASSIVE_WOOD_LARGE)    { trPlayerModifyResourceData(1, 2, 1, 2.0,  0); }
+        if (itemId == cPASSIVE_FOOD_LARGE)    { trPlayerModifyResourceData(1, 2, 2, 2.0,  0); }
+        if (itemId == cPASSIVE_GOLD_LARGE)    { trPlayerModifyResourceData(1, 2, 0, 2.0,  0); }
+        if (itemId == cPASSIVE_FAVOR_LARGE)   { trPlayerModifyResourceData(1, 2, 3, 1.0,  0); }
 
         if (itemId == cREINFORCEMENT_ANUBITES)
         {
@@ -3162,10 +3162,10 @@ inactive
     for (j = 9; j < gAPItemCount; j++)
     {
         id = gAPItems[j];
-        if (id == cRELIC_TRICKLE_FOOD)  { perFood  = perFood  + 3.0; }
-        if (id == cRELIC_TRICKLE_WOOD)  { perWood  = perWood  + 3.0; }
-        if (id == cRELIC_TRICKLE_GOLD)  { perGold  = perGold  + 3.0; }
-        if (id == cRELIC_TRICKLE_FAVOR) { perFavor = perFavor + 1.5; }
+        if (id == cRELIC_TRICKLE_FOOD)  { perFood  = perFood  + 2.0; }
+        if (id == cRELIC_TRICKLE_WOOD)  { perWood  = perWood  + 2.0; }
+        if (id == cRELIC_TRICKLE_GOLD)  { perGold  = perGold  + 2.0; }
+        if (id == cRELIC_TRICKLE_FAVOR) { perFavor = perFavor + 1.0; }
         if (id == cRELIC_EFFECT_LOS)         { hasLOS        = true; }
         if (id == cRELIC_EFFECT_REGEN)       { hasRegen      = true; }
         if (id == cRELIC_EFFECT_SPEED)       { hasSpeed      = true; }

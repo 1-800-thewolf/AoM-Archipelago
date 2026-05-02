@@ -1050,14 +1050,24 @@ class AoMContext(CommonContext):
         from ..locations.Scenarios import aomScenarioData
         from ..locations.Locations import SCENARIO_TO_LOCATIONS
 
+        # Restrict to locations that actually exist in this player's pool.
+        # Disabled campaigns (e.g., FotT scenarios when the player has them
+        # off) are absent from missing_locations; scouting their IDs causes
+        # the server to drop the connection.
+        valid_loc_ids = self.missing_locations | self.checked_locations
+
         unbeaten = []
         for scenario in aomScenarioData:
             vic_loc = next((l for l in SCENARIO_TO_LOCATIONS.get(scenario, [])
                             if l.type == aomLocationType.VICTORY), None)
-            if vic_loc and vic_loc.id not in self.game_ctx.sent_checks:
-                # Find unchecked objective locations for this scenario
+            if vic_loc is None or vic_loc.id not in valid_loc_ids:
+                continue
+            if vic_loc.id not in self.game_ctx.sent_checks:
+                # Find unchecked objective locations for this scenario,
+                # filtered to those present in the player's pool.
                 unchecked = [l.id for l in SCENARIO_TO_LOCATIONS.get(scenario, [])
                              if l.type == aomLocationType.OBJECTIVE
+                             and l.id in valid_loc_ids
                              and l.id not in self.game_ctx.sent_checks]
                 if unchecked:
                     unbeaten.append((scenario.global_number, unchecked))
