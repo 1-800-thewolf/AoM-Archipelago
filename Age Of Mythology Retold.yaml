@@ -187,6 +187,14 @@ Age Of Mythology Retold:
     'false': 50
     'true': 0
 
+  relicsanity:
+    # Each captured relic (garrisoned in a Temple) becomes its own check.
+    # Adds 174 location checks across all campaigns: 103 in Fall of the Trident,
+    # 51 in The New Atlantis, 20 in The Golden Gift. Relics in disabled
+    # campaigns are removed alongside the rest of that campaign's locations.
+    'false': 50
+    'true': 0
+
   shuffle_greek_major_gods:
     # Include Greek major gods (Zeus, Poseidon, Hades) in the random major god pool.
     'false': 0

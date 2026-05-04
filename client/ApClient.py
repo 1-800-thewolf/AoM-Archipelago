@@ -592,11 +592,41 @@ class AoMCommandProcessor(ClientCommandProcessor):
 
 
 
+    def _cmd_new_game(self) -> None:
+        """Start a fresh playthrough of the current seed+slot. Generates a new
+        session UUID so received items, sent checks, shop purchases, and trap
+        queue from the previous playthrough are not loaded. The previous
+        session's files remain on disk under the same generation folder; use
+        /purge_aom_cache to delete them. Must be connected."""
+        ctx = self.ctx.game_ctx
+        if not ctx.ap_seed or not ctx.ap_slot:
+            self.output("Not connected — connect first, then run /new_game.")
+            return
+        from .GameClient import start_new_session, write_aom_state
+        old = ctx.session_id
+        new = start_new_session(ctx)
+        # Rewrite aom_state.xs immediately so the in-game trigger sees an empty
+        # item list; also clear the AI output log so stale AP_CHECK lines from
+        # the previous playthrough cannot replay.
+        try:
+            write_aom_state(ctx)
+        except Exception as ex:
+            logger.warning(f"Failed to rewrite aom_state.xs after /new_game: {ex}")
+        try:
+            log_file = ctx.ai_output_file
+            log_file.parent.mkdir(parents=True, exist_ok=True)
+            log_file.write_bytes(b"")
+        except Exception as ex:
+            logger.warning(f"Failed to clear AI output log: {ex}")
+        ctx.log_start_offset = 0
+        self.output(f"New game started. Session {new[:8]}… (was {old[:8] if old else 'none'}…).")
+        self.output("Reconnect or rejoin the AP server if items are not refreshed in-game.")
+
     def _cmd_purge_aom_cache(self) -> None:
-        """Delete all cached session state (sent checks, shop state, trap state).
-        Use this as a troubleshooting step if checks or shop items appear incorrectly
-        after switching to a new world. The ap_randomizer_cache folder is kept but all
-        session subdirectories and their contents are removed."""
+        """Delete all cached session state (sent checks, shop state, trap state,
+        and session pointers). The ap_randomizer_cache folder itself is kept but
+        everything inside it is removed. Use /new_game instead if you only want
+        to start a fresh playthrough of the current seed."""
         import shutil
         from pathlib import Path
         from .GameClient import CACHE_DIR_NAME
@@ -607,15 +637,19 @@ class AoMCommandProcessor(ClientCommandProcessor):
         deleted = 0
         errors  = 0
         for child in list(cache_root.iterdir()):
-            if child.is_dir():
-                try:
+            try:
+                if child.is_dir():
                     shutil.rmtree(child)
-                    deleted += 1
-                except Exception as ex:
-                    self.output(f"Failed to delete {child.name}: {ex}")
-                    errors += 1
+                else:
+                    child.unlink()
+                deleted += 1
+            except Exception as ex:
+                self.output(f"Failed to delete {child.name}: {ex}")
+                errors += 1
+        # Clear in-memory session id so the next connect creates a fresh one
+        self.ctx.game_ctx.session_id = ""
         if errors == 0:
-            self.output(f"Cache purged: {deleted} session folder(s) removed.")
+            self.output(f"Cache purged: {deleted} item(s) removed.")
         else:
             self.output(f"Cache partially purged: {deleted} removed, {errors} failed.")
 
@@ -905,7 +939,11 @@ class AoMContext(CommonContext):
         # Because cache_folder is uniquely scoped to server/seed/slot/world_id,
         # a new world always resolves to an empty (non-existent) directory,
         # so stale checks from previous sessions can never load here.
-        from .GameClient import load_sent_checks, save_sent_checks, load_shop_state, load_trap_state
+        from .GameClient import (load_sent_checks, save_sent_checks, load_shop_state,
+                                  load_trap_state, load_or_create_session_id)
+        # Resolve which replay-session of this generation we belong to. Must
+        # happen before any load_* call: cache_folder depends on session_id.
+        load_or_create_session_id(self.game_ctx)
         load_sent_checks(self.game_ctx)
         load_shop_state(self.game_ctx)
         load_trap_state(self.game_ctx)
@@ -951,6 +989,7 @@ class AoMContext(CommonContext):
             {int(k): list(v) for k, v in raw_gp.items()} if raw_gp else {}
         )
         self.game_ctx.gem_shop_enabled      = bool(slot_data.get("gem_shop", True))
+        self.game_ctx.relicsanity_enabled   = bool(slot_data.get("relicsanity", False))
         self.game_ctx.wins_to_open_shop     = int(slot_data.get("wins_to_open_shop", 4))
         self._disabled_campaign_ids: set[int] = set(slot_data.get("disabled_campaigns", []))
         self.game_ctx.shop_obelisk_assignments = slot_data.get("shop_obelisk_assignments", {})

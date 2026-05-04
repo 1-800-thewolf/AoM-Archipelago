@@ -8,6 +8,7 @@ class aomLocationType(enum.Flag):
     VICTORY    = enum.auto()
     COMPLETION = enum.auto()
     OBJECTIVE  = enum.auto()
+    RELIC      = enum.auto()
 
 
 def global_location_id(scenario_id: int, local_location_id: int) -> int:
@@ -1601,6 +1602,260 @@ class aomLocationData(enum.IntEnum):
         aomScenarioData.GG_4,
         aomLocationType.OBJECTIVE,
     )
+
+    # ===========================================================================
+    # RELICSANITY — one location per garrisoned relic.
+    # local_id starts at 10 to leave a buffer above the highest objective local_id.
+    # 174 total: FoTT 103, New Atlantis 51, Golden Gift 20.
+    # ===========================================================================
+
+    # FOTT 3 relics
+    FOTT_3_RELIC_1  = (global_location_id(aomScenarioData.FOTT_3.id, 10), "Relic 1: Near Stone Pillars at Camp", aomScenarioData.FOTT_3, aomLocationType.RELIC)
+    FOTT_3_RELIC_2  = (global_location_id(aomScenarioData.FOTT_3.id, 11), "Relic 2: End of North Valley", aomScenarioData.FOTT_3, aomLocationType.RELIC)
+    FOTT_3_RELIC_3  = (global_location_id(aomScenarioData.FOTT_3.id, 12), "Relic 3: End of North-East Beach", aomScenarioData.FOTT_3, aomLocationType.RELIC)
+
+    # FOTT 4 relics
+    FOTT_4_RELIC_1  = (global_location_id(aomScenarioData.FOTT_4.id, 10), "Relic 1: End of West Beach", aomScenarioData.FOTT_4, aomLocationType.RELIC)
+    FOTT_4_RELIC_2  = (global_location_id(aomScenarioData.FOTT_4.id, 11), "Relic 2: North-West Shrine", aomScenarioData.FOTT_4, aomLocationType.RELIC)
+    FOTT_4_RELIC_3  = (global_location_id(aomScenarioData.FOTT_4.id, 12), "Relic 3: Stone Pillars at the Valley", aomScenarioData.FOTT_4, aomLocationType.RELIC)
+    FOTT_4_RELIC_4  = (global_location_id(aomScenarioData.FOTT_4.id, 13), "Relic 4: Shrine at Pink Enemy Base", aomScenarioData.FOTT_4, aomLocationType.RELIC)
+
+    # FOTT 5 relics
+    FOTT_5_RELIC_1  = (global_location_id(aomScenarioData.FOTT_5.id, 10), "Relic 1: Stone Pillars on Way to Camp", aomScenarioData.FOTT_5, aomLocationType.RELIC)
+    FOTT_5_RELIC_2  = (global_location_id(aomScenarioData.FOTT_5.id, 11), "Relic 2: North of Market", aomScenarioData.FOTT_5, aomLocationType.RELIC)
+
+    # FOTT 6 relics
+    FOTT_6_RELIC_1  = (global_location_id(aomScenarioData.FOTT_6.id, 10), "Relic 1: East of Camp", aomScenarioData.FOTT_6, aomLocationType.RELIC)
+    FOTT_6_RELIC_2  = (global_location_id(aomScenarioData.FOTT_6.id, 11), "Relic 2: West of Camp", aomScenarioData.FOTT_6, aomLocationType.RELIC)
+    FOTT_6_RELIC_3  = (global_location_id(aomScenarioData.FOTT_6.id, 12), "Relic 3: Just South Near Pillars", aomScenarioData.FOTT_6, aomLocationType.RELIC)
+    FOTT_6_RELIC_4  = (global_location_id(aomScenarioData.FOTT_6.id, 13), "Relic 4: Far South Near Wrecked Buildings", aomScenarioData.FOTT_6, aomLocationType.RELIC)
+    FOTT_6_RELIC_5  = (global_location_id(aomScenarioData.FOTT_6.id, 14), "Relic 5: Far South Near Beach", aomScenarioData.FOTT_6, aomLocationType.RELIC)
+
+    # FOTT 7 relics
+    FOTT_7_RELIC_1  = (global_location_id(aomScenarioData.FOTT_7.id, 10), "Relic 1: Bay Before Centaurs", aomScenarioData.FOTT_7, aomLocationType.RELIC)
+    FOTT_7_RELIC_2  = (global_location_id(aomScenarioData.FOTT_7.id, 11), "Relic 2: Shrine North of Second Prison", aomScenarioData.FOTT_7, aomLocationType.RELIC)
+    FOTT_7_RELIC_3  = (global_location_id(aomScenarioData.FOTT_7.id, 12), "Relic 3: At Bay, Far South of Imprisoned Temple", aomScenarioData.FOTT_7, aomLocationType.RELIC)
+    FOTT_7_RELIC_4  = (global_location_id(aomScenarioData.FOTT_7.id, 13), "Relic 4: Shrine North of Imprisoned Temple", aomScenarioData.FOTT_7, aomLocationType.RELIC)
+
+    # FOTT 8 relics
+    FOTT_8_RELIC_1  = (global_location_id(aomScenarioData.FOTT_8.id, 10), "Relic 1: South Forest of East Camp", aomScenarioData.FOTT_8, aomLocationType.RELIC)
+    FOTT_8_RELIC_2  = (global_location_id(aomScenarioData.FOTT_8.id, 11), "Relic 2: West Camp North of Cliffs", aomScenarioData.FOTT_8, aomLocationType.RELIC)
+
+    # FOTT 12 relics
+    FOTT_12_RELIC_1 = (global_location_id(aomScenarioData.FOTT_12.id, 10), "Relic 1: At World Wonder North of Base", aomScenarioData.FOTT_12, aomLocationType.RELIC)
+
+    # FOTT 13 relics
+    FOTT_13_RELIC_1 = (global_location_id(aomScenarioData.FOTT_13.id, 10), "Relic 1: At Starting Temple #1", aomScenarioData.FOTT_13, aomLocationType.RELIC)
+    FOTT_13_RELIC_2 = (global_location_id(aomScenarioData.FOTT_13.id, 11), "Relic 2: At Starting Temple #2", aomScenarioData.FOTT_13, aomLocationType.RELIC)
+    FOTT_13_RELIC_3 = (global_location_id(aomScenarioData.FOTT_13.id, 12), "Relic 3: At Starting Temple #3", aomScenarioData.FOTT_13, aomLocationType.RELIC)
+    FOTT_13_RELIC_4 = (global_location_id(aomScenarioData.FOTT_13.id, 13), "Relic 4: Shrine Northeast of River", aomScenarioData.FOTT_13, aomLocationType.RELIC)
+    FOTT_13_RELIC_5 = (global_location_id(aomScenarioData.FOTT_13.id, 14), "Relic 5: Shrine Far North of River", aomScenarioData.FOTT_13, aomLocationType.RELIC)
+    FOTT_13_RELIC_6 = (global_location_id(aomScenarioData.FOTT_13.id, 15), "Relic 6: Stone Pillars at First U-Turn", aomScenarioData.FOTT_13, aomLocationType.RELIC)
+    FOTT_13_RELIC_7 = (global_location_id(aomScenarioData.FOTT_13.id, 16), "Relic 7: Stone Pillars at End of Shortcut", aomScenarioData.FOTT_13, aomLocationType.RELIC)
+
+    # FOTT 14 relics
+    FOTT_14_RELIC_1 = (global_location_id(aomScenarioData.FOTT_14.id, 10), "Relic 1: At Sphinx East of Base", aomScenarioData.FOTT_14, aomLocationType.RELIC)
+
+    # FOTT 15 relics
+    FOTT_15_RELIC_1 = (global_location_id(aomScenarioData.FOTT_15.id, 10), "Relic 1: In the North River", aomScenarioData.FOTT_15, aomLocationType.RELIC)
+    FOTT_15_RELIC_2 = (global_location_id(aomScenarioData.FOTT_15.id, 11), "Relic 2: At Pink Temple #1", aomScenarioData.FOTT_15, aomLocationType.RELIC)
+    FOTT_15_RELIC_3 = (global_location_id(aomScenarioData.FOTT_15.id, 12), "Relic 3: At Pink Temple #2", aomScenarioData.FOTT_15, aomLocationType.RELIC)
+    FOTT_15_RELIC_4 = (global_location_id(aomScenarioData.FOTT_15.id, 13), "Relic 4: Far North at Pink Lighthouse #1", aomScenarioData.FOTT_15, aomLocationType.RELIC)
+    FOTT_15_RELIC_5 = (global_location_id(aomScenarioData.FOTT_15.id, 14), "Relic 5: Far North at Pink Lighthouse #2", aomScenarioData.FOTT_15, aomLocationType.RELIC)
+    FOTT_15_RELIC_6 = (global_location_id(aomScenarioData.FOTT_15.id, 15), "Relic 6: Southwest of Final Wall", aomScenarioData.FOTT_15, aomLocationType.RELIC)
+    FOTT_15_RELIC_7 = (global_location_id(aomScenarioData.FOTT_15.id, 16), "Relic 7: At Enemy World Wonder", aomScenarioData.FOTT_15, aomLocationType.RELIC)
+    FOTT_15_RELIC_8 = (global_location_id(aomScenarioData.FOTT_15.id, 17), "Relic 8: Yellow Houses at Far East", aomScenarioData.FOTT_15, aomLocationType.RELIC)
+    FOTT_15_RELIC_9 = (global_location_id(aomScenarioData.FOTT_15.id, 18), "Relic 9: At Enemy Citadel Far North", aomScenarioData.FOTT_15, aomLocationType.RELIC)
+
+    # FOTT 16 relics
+    FOTT_16_RELIC_1  = (global_location_id(aomScenarioData.FOTT_16.id, 10), "Relic 1: Part 2 - Beach of Starting Island", aomScenarioData.FOTT_16, aomLocationType.RELIC)
+    FOTT_16_RELIC_2  = (global_location_id(aomScenarioData.FOTT_16.id, 11), "Relic 2: Part 2 - South of Starting Island", aomScenarioData.FOTT_16, aomLocationType.RELIC)
+    FOTT_16_RELIC_3  = (global_location_id(aomScenarioData.FOTT_16.id, 12), "Relic 3: Part 2 - Stone Pillar at Base", aomScenarioData.FOTT_16, aomLocationType.RELIC)
+    FOTT_16_RELIC_4  = (global_location_id(aomScenarioData.FOTT_16.id, 13), "Relic 4: Part 2 - Wreck at South Beach", aomScenarioData.FOTT_16, aomLocationType.RELIC)
+    FOTT_16_RELIC_5  = (global_location_id(aomScenarioData.FOTT_16.id, 14), "Relic 5: Part 2 - Southwest of Beach", aomScenarioData.FOTT_16, aomLocationType.RELIC)
+    FOTT_16_RELIC_6  = (global_location_id(aomScenarioData.FOTT_16.id, 15), "Relic 6: Part 2 - East of Beach", aomScenarioData.FOTT_16, aomLocationType.RELIC)
+    FOTT_16_RELIC_7  = (global_location_id(aomScenarioData.FOTT_16.id, 16), "Relic 7: Part 2 - West of Northern Settlement", aomScenarioData.FOTT_16, aomLocationType.RELIC)
+    FOTT_16_RELIC_8  = (global_location_id(aomScenarioData.FOTT_16.id, 17), "Relic 8: Part 2 - East of Northern Settlement", aomScenarioData.FOTT_16, aomLocationType.RELIC)
+    FOTT_16_RELIC_9  = (global_location_id(aomScenarioData.FOTT_16.id, 18), "Relic 9: Part 2 - On Cliff at Enemy Entrance", aomScenarioData.FOTT_16, aomLocationType.RELIC)
+    FOTT_16_RELIC_10 = (global_location_id(aomScenarioData.FOTT_16.id, 19), "Relic 10: Part 2 - Under Cliff at Enemy Entrance", aomScenarioData.FOTT_16, aomLocationType.RELIC)
+
+    # FOTT 17 relics
+    FOTT_17_RELIC_1  = (global_location_id(aomScenarioData.FOTT_17.id, 10), "Relic 1: Stone Pillars North of Start", aomScenarioData.FOTT_17, aomLocationType.RELIC)
+    FOTT_17_RELIC_2  = (global_location_id(aomScenarioData.FOTT_17.id, 11), "Relic 2: South of Start Near Tent", aomScenarioData.FOTT_17, aomLocationType.RELIC)
+    FOTT_17_RELIC_3  = (global_location_id(aomScenarioData.FOTT_17.id, 12), "Relic 3: Ra Statue at North of Southeast Settlement", aomScenarioData.FOTT_17, aomLocationType.RELIC)
+    FOTT_17_RELIC_4  = (global_location_id(aomScenarioData.FOTT_17.id, 13), "Relic 4: Ra Statue at South Village", aomScenarioData.FOTT_17, aomLocationType.RELIC)
+    FOTT_17_RELIC_5  = (global_location_id(aomScenarioData.FOTT_17.id, 14), "Relic 5: Stone Pillars at Half-Island", aomScenarioData.FOTT_17, aomLocationType.RELIC)
+    FOTT_17_RELIC_6  = (global_location_id(aomScenarioData.FOTT_17.id, 15), "Relic 6: Osiris Statue at Mini Island", aomScenarioData.FOTT_17, aomLocationType.RELIC)
+    FOTT_17_RELIC_7  = (global_location_id(aomScenarioData.FOTT_17.id, 16), "Relic 7: Entrance of Northern Bay", aomScenarioData.FOTT_17, aomLocationType.RELIC)
+    FOTT_17_RELIC_8  = (global_location_id(aomScenarioData.FOTT_17.id, 17), "Relic 8: Secret Oasis at Northern Bay #1", aomScenarioData.FOTT_17, aomLocationType.RELIC)
+    FOTT_17_RELIC_9  = (global_location_id(aomScenarioData.FOTT_17.id, 18), "Relic 9: Secret Oasis of Northern Bay #2", aomScenarioData.FOTT_17, aomLocationType.RELIC)
+    FOTT_17_RELIC_10 = (global_location_id(aomScenarioData.FOTT_17.id, 19), "Relic 10: Secret Oasis of Northern Bay #3", aomScenarioData.FOTT_17, aomLocationType.RELIC)
+
+    # FOTT 18 relics
+    FOTT_18_RELIC_1 = (global_location_id(aomScenarioData.FOTT_18.id, 10), "Relic 1: Far South of Map", aomScenarioData.FOTT_18, aomLocationType.RELIC)
+    FOTT_18_RELIC_2 = (global_location_id(aomScenarioData.FOTT_18.id, 11), "Relic 2: Far West Near Mummy Temple #1", aomScenarioData.FOTT_18, aomLocationType.RELIC)
+    FOTT_18_RELIC_3 = (global_location_id(aomScenarioData.FOTT_18.id, 12), "Relic 3: Far West Near Mummy Temple #2", aomScenarioData.FOTT_18, aomLocationType.RELIC)
+    FOTT_18_RELIC_4 = (global_location_id(aomScenarioData.FOTT_18.id, 13), "Relic 4: Osiris Statue Near Base", aomScenarioData.FOTT_18, aomLocationType.RELIC)
+    FOTT_18_RELIC_5 = (global_location_id(aomScenarioData.FOTT_18.id, 14), "Relic 5: In Front of Eastern Enemy Outpost", aomScenarioData.FOTT_18, aomLocationType.RELIC)
+
+    # FOTT 19 relics
+    FOTT_19_RELIC_1 = (global_location_id(aomScenarioData.FOTT_19.id, 10), "Relic 1: West of Far Southern Island", aomScenarioData.FOTT_19, aomLocationType.RELIC)
+    FOTT_19_RELIC_2 = (global_location_id(aomScenarioData.FOTT_19.id, 11), "Relic 2: East of Far Southern Island", aomScenarioData.FOTT_19, aomLocationType.RELIC)
+    FOTT_19_RELIC_3 = (global_location_id(aomScenarioData.FOTT_19.id, 12), "Relic 3: Shipwreck at North of Enemy Harbor", aomScenarioData.FOTT_19, aomLocationType.RELIC)
+
+    # FOTT 20 relics
+    FOTT_20_RELIC_1 = (global_location_id(aomScenarioData.FOTT_20.id, 10), "Relic 1: Far South of Map", aomScenarioData.FOTT_20, aomLocationType.RELIC)
+    FOTT_20_RELIC_2 = (global_location_id(aomScenarioData.FOTT_20.id, 11), "Relic 2: Trees Between Bases", aomScenarioData.FOTT_20, aomLocationType.RELIC)
+    FOTT_20_RELIC_3 = (global_location_id(aomScenarioData.FOTT_20.id, 12), "Relic 3: Enemy Temple at Lake", aomScenarioData.FOTT_20, aomLocationType.RELIC)
+    FOTT_20_RELIC_4 = (global_location_id(aomScenarioData.FOTT_20.id, 13), "Relic 4: At Far Eastern Settlement", aomScenarioData.FOTT_20, aomLocationType.RELIC)
+    FOTT_20_RELIC_5 = (global_location_id(aomScenarioData.FOTT_20.id, 14), "Relic 5: North of Far Eastern Settlement", aomScenarioData.FOTT_20, aomLocationType.RELIC)
+
+    # FOTT 21 relics
+    FOTT_21_RELIC_1 = (global_location_id(aomScenarioData.FOTT_21.id, 10), "Relic 1: Shipwreck West of Zeus Temple", aomScenarioData.FOTT_21, aomLocationType.RELIC)
+    FOTT_21_RELIC_2 = (global_location_id(aomScenarioData.FOTT_21.id, 11), "Relic 2: Lion Statue Far South of Western Settlement", aomScenarioData.FOTT_21, aomLocationType.RELIC)
+    FOTT_21_RELIC_3 = (global_location_id(aomScenarioData.FOTT_21.id, 12), "Relic 3: Stone Pillars Southwest of Island", aomScenarioData.FOTT_21, aomLocationType.RELIC)
+    FOTT_21_RELIC_4 = (global_location_id(aomScenarioData.FOTT_21.id, 13), "Relic 4: Shipwreck North of Eastern Settlement", aomScenarioData.FOTT_21, aomLocationType.RELIC)
+    FOTT_21_RELIC_5 = (global_location_id(aomScenarioData.FOTT_21.id, 14), "Relic 5: South Stone Pillars of Eastern Settlement", aomScenarioData.FOTT_21, aomLocationType.RELIC)
+    FOTT_21_RELIC_6 = (global_location_id(aomScenarioData.FOTT_21.id, 15), "Relic 6: East of Eastern Settlement", aomScenarioData.FOTT_21, aomLocationType.RELIC)
+
+    # FOTT 22 relics
+    FOTT_22_RELIC_1 = (global_location_id(aomScenarioData.FOTT_22.id, 10), "Relic 1: Far South of Western Settlement", aomScenarioData.FOTT_22, aomLocationType.RELIC)
+    FOTT_22_RELIC_2 = (global_location_id(aomScenarioData.FOTT_22.id, 11), "Relic 2: West of Ice Lake", aomScenarioData.FOTT_22, aomLocationType.RELIC)
+    FOTT_22_RELIC_3 = (global_location_id(aomScenarioData.FOTT_22.id, 12), "Relic 3: Statue at North of Ice Lake", aomScenarioData.FOTT_22, aomLocationType.RELIC)
+    FOTT_22_RELIC_4 = (global_location_id(aomScenarioData.FOTT_22.id, 13), "Relic 4: Stone Pillars East of Eastern Settlement", aomScenarioData.FOTT_22, aomLocationType.RELIC)
+
+    # FOTT 23 relics
+    FOTT_23_RELIC_1 = (global_location_id(aomScenarioData.FOTT_23.id, 10), "Relic 1: Crumbling Wall Eastern Cave #1", aomScenarioData.FOTT_23, aomLocationType.RELIC)
+    FOTT_23_RELIC_2 = (global_location_id(aomScenarioData.FOTT_23.id, 11), "Relic 2: Crumbling Wall Eastern Cave #2", aomScenarioData.FOTT_23, aomLocationType.RELIC)
+    FOTT_23_RELIC_3 = (global_location_id(aomScenarioData.FOTT_23.id, 12), "Relic 3: Crumbling Wall Eastern Cave #3", aomScenarioData.FOTT_23, aomLocationType.RELIC)
+
+    # FOTT 27 relics
+    FOTT_27_RELIC_1 = (global_location_id(aomScenarioData.FOTT_27.id, 10), "Relic 1: At Western Lake", aomScenarioData.FOTT_27, aomLocationType.RELIC)
+    FOTT_27_RELIC_2 = (global_location_id(aomScenarioData.FOTT_27.id, 11), "Relic 2: Stone Pillars at Southwest of Well of Urd", aomScenarioData.FOTT_27, aomLocationType.RELIC)
+    FOTT_27_RELIC_3 = (global_location_id(aomScenarioData.FOTT_27.id, 12), "Relic 3: Far East of Map", aomScenarioData.FOTT_27, aomLocationType.RELIC)
+
+    # FOTT 28 relics
+    FOTT_28_RELIC_1 = (global_location_id(aomScenarioData.FOTT_28.id, 10), "Relic 1: Broken Buildings in Northwest", aomScenarioData.FOTT_28, aomLocationType.RELIC)
+    FOTT_28_RELIC_2 = (global_location_id(aomScenarioData.FOTT_28.id, 11), "Relic 2: Far South of Settlement", aomScenarioData.FOTT_28, aomLocationType.RELIC)
+    FOTT_28_RELIC_3 = (global_location_id(aomScenarioData.FOTT_28.id, 12), "Relic 3: At South in Underworld Entrance", aomScenarioData.FOTT_28, aomLocationType.RELIC)
+    FOTT_28_RELIC_4 = (global_location_id(aomScenarioData.FOTT_28.id, 13), "Relic 4: North of Underworld Entrance", aomScenarioData.FOTT_28, aomLocationType.RELIC)
+    FOTT_28_RELIC_5 = (global_location_id(aomScenarioData.FOTT_28.id, 14), "Relic 5: Far North of Underworld Entrance", aomScenarioData.FOTT_28, aomLocationType.RELIC)
+
+    # FOTT 30 relics
+    FOTT_30_RELIC_1 = (global_location_id(aomScenarioData.FOTT_30.id, 10), "Relic 1: West of Temple", aomScenarioData.FOTT_30, aomLocationType.RELIC)
+    FOTT_30_RELIC_2 = (global_location_id(aomScenarioData.FOTT_30.id, 11), "Relic 2: Southern Settlement", aomScenarioData.FOTT_30, aomLocationType.RELIC)
+    FOTT_30_RELIC_3 = (global_location_id(aomScenarioData.FOTT_30.id, 12), "Relic 3: North of Eastern Walls", aomScenarioData.FOTT_30, aomLocationType.RELIC)
+    FOTT_30_RELIC_4 = (global_location_id(aomScenarioData.FOTT_30.id, 13), "Relic 4: At Western Lake", aomScenarioData.FOTT_30, aomLocationType.RELIC)
+    FOTT_30_RELIC_5 = (global_location_id(aomScenarioData.FOTT_30.id, 14), "Relic 5: East of Eastern Lake", aomScenarioData.FOTT_30, aomLocationType.RELIC)
+    FOTT_30_RELIC_6 = (global_location_id(aomScenarioData.FOTT_30.id, 15), "Relic 6: Stone Pillars in Orange Base", aomScenarioData.FOTT_30, aomLocationType.RELIC)
+
+    # FOTT 31 relics
+    FOTT_31_RELIC_1 = (global_location_id(aomScenarioData.FOTT_31.id, 10), "Relic 1: Starting Island", aomScenarioData.FOTT_31, aomLocationType.RELIC)
+    FOTT_31_RELIC_2 = (global_location_id(aomScenarioData.FOTT_31.id, 11), "Relic 2: Far East Valley", aomScenarioData.FOTT_31, aomLocationType.RELIC)
+
+    # FOTT 32 relics
+    FOTT_32_RELIC_1 = (global_location_id(aomScenarioData.FOTT_32.id, 10), "Relic 1: Stone Pillars of Blue Village", aomScenarioData.FOTT_32, aomLocationType.RELIC)
+    FOTT_32_RELIC_2 = (global_location_id(aomScenarioData.FOTT_32.id, 11), "Relic 2: North of Western Plenty Vault", aomScenarioData.FOTT_32, aomLocationType.RELIC)
+    FOTT_32_RELIC_3 = (global_location_id(aomScenarioData.FOTT_32.id, 12), "Relic 3: Southeast Lake at Enemy Outpost", aomScenarioData.FOTT_32, aomLocationType.RELIC)
+
+    # NA 2 relics (special: trigger condition checks Temple OR Overgrown Temple)
+    NA_2_RELIC_1 = (global_location_id(aomScenarioData.NA_2.id, 10), "Relic 1: Starting Oranos Temple", aomScenarioData.NA_2, aomLocationType.RELIC)
+    NA_2_RELIC_2 = (global_location_id(aomScenarioData.NA_2.id, 11), "Relic 2: Western Beach", aomScenarioData.NA_2, aomLocationType.RELIC)
+    NA_2_RELIC_3 = (global_location_id(aomScenarioData.NA_2.id, 12), "Relic 3: Central Lake Southeast Temple", aomScenarioData.NA_2, aomLocationType.RELIC)
+    NA_2_RELIC_4 = (global_location_id(aomScenarioData.NA_2.id, 13), "Relic 4: Central Lake Southwest Temple", aomScenarioData.NA_2, aomLocationType.RELIC)
+    NA_2_RELIC_5 = (global_location_id(aomScenarioData.NA_2.id, 14), "Relic 5: Central Forest", aomScenarioData.NA_2, aomLocationType.RELIC)
+    NA_2_RELIC_6 = (global_location_id(aomScenarioData.NA_2.id, 15), "Relic 6: Southwest Beach #1", aomScenarioData.NA_2, aomLocationType.RELIC)
+    NA_2_RELIC_7 = (global_location_id(aomScenarioData.NA_2.id, 16), "Relic 7: Southwest Beach #2", aomScenarioData.NA_2, aomLocationType.RELIC)
+    NA_2_RELIC_8 = (global_location_id(aomScenarioData.NA_2.id, 17), "Relic 8: Burning Forest", aomScenarioData.NA_2, aomLocationType.RELIC)
+    NA_2_RELIC_9 = (global_location_id(aomScenarioData.NA_2.id, 18), "Relic 9: Far South Island", aomScenarioData.NA_2, aomLocationType.RELIC)
+
+    # NA 3 relics
+    NA_3_RELIC_1 = (global_location_id(aomScenarioData.NA_3.id, 10), "Relic 1: In Center of 3 Scyllas", aomScenarioData.NA_3, aomLocationType.RELIC)
+    NA_3_RELIC_2 = (global_location_id(aomScenarioData.NA_3.id, 11), "Relic 2: Center Plenty Vault", aomScenarioData.NA_3, aomLocationType.RELIC)
+    NA_3_RELIC_3 = (global_location_id(aomScenarioData.NA_3.id, 12), "Relic 3: Northwest Cave #1", aomScenarioData.NA_3, aomLocationType.RELIC)
+    NA_3_RELIC_4 = (global_location_id(aomScenarioData.NA_3.id, 13), "Relic 4: Northwest Cave #2", aomScenarioData.NA_3, aomLocationType.RELIC)
+
+    # NA 4 relics
+    NA_4_RELIC_1 = (global_location_id(aomScenarioData.NA_4.id, 10), "Relic 1: West Hill of Starting Section", aomScenarioData.NA_4, aomLocationType.RELIC)
+    NA_4_RELIC_2 = (global_location_id(aomScenarioData.NA_4.id, 11), "Relic 2: Center Statue of Red's Base", aomScenarioData.NA_4, aomLocationType.RELIC)
+    NA_4_RELIC_3 = (global_location_id(aomScenarioData.NA_4.id, 12), "Relic 3: Stone Pillars at North of Red's Base", aomScenarioData.NA_4, aomLocationType.RELIC)
+    NA_4_RELIC_4 = (global_location_id(aomScenarioData.NA_4.id, 13), "Relic 4: Northern Statue of Purple's Base", aomScenarioData.NA_4, aomLocationType.RELIC)
+    NA_4_RELIC_5 = (global_location_id(aomScenarioData.NA_4.id, 14), "Relic 5: Southern Statue of Purple's Base", aomScenarioData.NA_4, aomLocationType.RELIC)
+    NA_4_RELIC_6 = (global_location_id(aomScenarioData.NA_4.id, 15), "Relic 6: Cliff Between Purple and Pink", aomScenarioData.NA_4, aomLocationType.RELIC)
+    NA_4_RELIC_7 = (global_location_id(aomScenarioData.NA_4.id, 16), "Relic 7: Statue at Center of Pink's Base", aomScenarioData.NA_4, aomLocationType.RELIC)
+
+    # NA 5 relics (these doubly serve as the main objective; both fire when garrisoned)
+    NA_5_RELIC_1 = (global_location_id(aomScenarioData.NA_5.id, 10), "Relic 1: Base of Orange's Base", aomScenarioData.NA_5, aomLocationType.RELIC)
+    NA_5_RELIC_2 = (global_location_id(aomScenarioData.NA_5.id, 11), "Relic 2: Base of Pink's Base", aomScenarioData.NA_5, aomLocationType.RELIC)
+    NA_5_RELIC_3 = (global_location_id(aomScenarioData.NA_5.id, 12), "Relic 3: Base of Yellow's Base", aomScenarioData.NA_5, aomLocationType.RELIC)
+    NA_5_RELIC_4 = (global_location_id(aomScenarioData.NA_5.id, 13), "Relic 4: Base of Red's Base", aomScenarioData.NA_5, aomLocationType.RELIC)
+
+    # NA 7 relics
+    NA_7_RELIC_1 = (global_location_id(aomScenarioData.NA_7.id, 10), "Relic 1: West of Center Village", aomScenarioData.NA_7, aomLocationType.RELIC)
+    NA_7_RELIC_2 = (global_location_id(aomScenarioData.NA_7.id, 11), "Relic 2: East of Center Village", aomScenarioData.NA_7, aomLocationType.RELIC)
+
+    # NA 8 relics
+    NA_8_RELIC_1 = (global_location_id(aomScenarioData.NA_8.id, 10), "Relic 1: Left of Northern Lake #1", aomScenarioData.NA_8, aomLocationType.RELIC)
+    NA_8_RELIC_2 = (global_location_id(aomScenarioData.NA_8.id, 11), "Relic 2: Left of Northern Lake #2", aomScenarioData.NA_8, aomLocationType.RELIC)
+    NA_8_RELIC_3 = (global_location_id(aomScenarioData.NA_8.id, 12), "Relic 3: Hill Between Southern Walls", aomScenarioData.NA_8, aomLocationType.RELIC)
+    NA_8_RELIC_4 = (global_location_id(aomScenarioData.NA_8.id, 13), "Relic 4: Hill Between Eastern Walls", aomScenarioData.NA_8, aomLocationType.RELIC)
+    NA_8_RELIC_5 = (global_location_id(aomScenarioData.NA_8.id, 14), "Relic 5: Statue on Center of Map", aomScenarioData.NA_8, aomLocationType.RELIC)
+    NA_8_RELIC_6 = (global_location_id(aomScenarioData.NA_8.id, 15), "Relic 6: Stone Pillars Far Southeast", aomScenarioData.NA_8, aomLocationType.RELIC)
+    NA_8_RELIC_7 = (global_location_id(aomScenarioData.NA_8.id, 16), "Relic 7: Statue on Western River", aomScenarioData.NA_8, aomLocationType.RELIC)
+
+    # NA 9 relics
+    NA_9_RELIC_1 = (global_location_id(aomScenarioData.NA_9.id, 10), "Relic 1: East Corner Forest", aomScenarioData.NA_9, aomLocationType.RELIC)
+    NA_9_RELIC_2 = (global_location_id(aomScenarioData.NA_9.id, 11), "Relic 2: Stone Pillars South Corner of Map", aomScenarioData.NA_9, aomLocationType.RELIC)
+
+    # NA 10 relics
+    NA_10_RELIC_1 = (global_location_id(aomScenarioData.NA_10.id, 10), "Relic 1: Southeast of Starting Settlement", aomScenarioData.NA_10, aomLocationType.RELIC)
+    NA_10_RELIC_2 = (global_location_id(aomScenarioData.NA_10.id, 11), "Relic 2: Stone Pillars at Southeast Settlement", aomScenarioData.NA_10, aomLocationType.RELIC)
+    NA_10_RELIC_3 = (global_location_id(aomScenarioData.NA_10.id, 12), "Relic 3: Shrine at Eastern Settlement", aomScenarioData.NA_10, aomLocationType.RELIC)
+
+    # NA 11 relics
+    NA_11_RELIC_1 = (global_location_id(aomScenarioData.NA_11.id, 10), "Relic 1: Eastern Fountain at Start", aomScenarioData.NA_11, aomLocationType.RELIC)
+    NA_11_RELIC_2 = (global_location_id(aomScenarioData.NA_11.id, 11), "Relic 2: Western Harbor", aomScenarioData.NA_11, aomLocationType.RELIC)
+    NA_11_RELIC_3 = (global_location_id(aomScenarioData.NA_11.id, 12), "Relic 3: Shrine Island at East of Western Harbor", aomScenarioData.NA_11, aomLocationType.RELIC)
+    NA_11_RELIC_4 = (global_location_id(aomScenarioData.NA_11.id, 13), "Relic 4: Northeast Entrance to Center", aomScenarioData.NA_11, aomLocationType.RELIC)
+
+    # NA 12 relics
+    NA_12_RELIC_1 = (global_location_id(aomScenarioData.NA_12.id, 10), "Relic 1: East of Gaia", aomScenarioData.NA_12, aomLocationType.RELIC)
+    NA_12_RELIC_2 = (global_location_id(aomScenarioData.NA_12.id, 11), "Relic 2: Stone Pillars Northeast From Start", aomScenarioData.NA_12, aomLocationType.RELIC)
+    NA_12_RELIC_3 = (global_location_id(aomScenarioData.NA_12.id, 12), "Relic 3: Stone Pillars Far Northeast From Start", aomScenarioData.NA_12, aomLocationType.RELIC)
+    NA_12_RELIC_4 = (global_location_id(aomScenarioData.NA_12.id, 13), "Relic 4: North of East Fountain", aomScenarioData.NA_12, aomLocationType.RELIC)
+    NA_12_RELIC_5 = (global_location_id(aomScenarioData.NA_12.id, 14), "Relic 5: Southwest of North Fountain", aomScenarioData.NA_12, aomLocationType.RELIC)
+    NA_12_RELIC_6 = (global_location_id(aomScenarioData.NA_12.id, 15), "Relic 6: North Fountain #1", aomScenarioData.NA_12, aomLocationType.RELIC)
+    NA_12_RELIC_7 = (global_location_id(aomScenarioData.NA_12.id, 16), "Relic 7: North Fountain #2", aomScenarioData.NA_12, aomLocationType.RELIC)
+    NA_12_RELIC_8 = (global_location_id(aomScenarioData.NA_12.id, 17), "Relic 8: North Fountain #3", aomScenarioData.NA_12, aomLocationType.RELIC)
+    NA_12_RELIC_9 = (global_location_id(aomScenarioData.NA_12.id, 18), "Relic 9: North Fountain #4", aomScenarioData.NA_12, aomLocationType.RELIC)
+
+    # GG 1 relics
+    GG_1_RELIC_1 = (global_location_id(aomScenarioData.GG_1.id, 10), "Relic 1: At the Southern River", aomScenarioData.GG_1, aomLocationType.RELIC)
+    GG_1_RELIC_2 = (global_location_id(aomScenarioData.GG_1.id, 11), "Relic 2: North of Circle Lake", aomScenarioData.GG_1, aomLocationType.RELIC)
+    GG_1_RELIC_3 = (global_location_id(aomScenarioData.GG_1.id, 12), "Relic 3: North Small Island", aomScenarioData.GG_1, aomLocationType.RELIC)
+    GG_1_RELIC_4 = (global_location_id(aomScenarioData.GG_1.id, 13), "Relic 4: East of Northern Settlement", aomScenarioData.GG_1, aomLocationType.RELIC)
+    GG_1_RELIC_5 = (global_location_id(aomScenarioData.GG_1.id, 14), "Relic 5: Center Hill of Map", aomScenarioData.GG_1, aomLocationType.RELIC)
+
+    # GG 2 relics
+    GG_2_RELIC_1 = (global_location_id(aomScenarioData.GG_2.id, 10), "Relic 1: East on Starting Island", aomScenarioData.GG_2, aomLocationType.RELIC)
+    GG_2_RELIC_2 = (global_location_id(aomScenarioData.GG_2.id, 11), "Relic 2: Northwest Goldmine Island", aomScenarioData.GG_2, aomLocationType.RELIC)
+    GG_2_RELIC_3 = (global_location_id(aomScenarioData.GG_2.id, 12), "Relic 3: Northeast Goldmine Island", aomScenarioData.GG_2, aomLocationType.RELIC)
+
+    # GG 3 relics
+    GG_3_RELIC_1 = (global_location_id(aomScenarioData.GG_3.id, 10), "Relic 1: East Lake", aomScenarioData.GG_3, aomLocationType.RELIC)
+    GG_3_RELIC_2 = (global_location_id(aomScenarioData.GG_3.id, 11), "Relic 2: East Side of Northern Lake", aomScenarioData.GG_3, aomLocationType.RELIC)
+    GG_3_RELIC_3 = (global_location_id(aomScenarioData.GG_3.id, 12), "Relic 3: East Side of Central Lake", aomScenarioData.GG_3, aomLocationType.RELIC)
+    GG_3_RELIC_4 = (global_location_id(aomScenarioData.GG_3.id, 13), "Relic 4: East of Southeast Minecircle", aomScenarioData.GG_3, aomLocationType.RELIC)
+    GG_3_RELIC_5 = (global_location_id(aomScenarioData.GG_3.id, 14), "Relic 5: Northern Troll Temple", aomScenarioData.GG_3, aomLocationType.RELIC)
+    GG_3_RELIC_6 = (global_location_id(aomScenarioData.GG_3.id, 15), "Relic 6: Southern Troll Temple", aomScenarioData.GG_3, aomLocationType.RELIC)
+
+    # GG 4 relics
+    GG_4_RELIC_1 = (global_location_id(aomScenarioData.GG_4.id, 10), "Relic 1: North of Settlement", aomScenarioData.GG_4, aomLocationType.RELIC)
+    GG_4_RELIC_2 = (global_location_id(aomScenarioData.GG_4.id, 11), "Relic 2: Mountain Giant Temple on Northeast", aomScenarioData.GG_4, aomLocationType.RELIC)
+    GG_4_RELIC_3 = (global_location_id(aomScenarioData.GG_4.id, 12), "Relic 3: Southeast Troll Temple", aomScenarioData.GG_4, aomLocationType.RELIC)
+    GG_4_RELIC_4 = (global_location_id(aomScenarioData.GG_4.id, 13), "Relic 4: Stone Pillars West of Troll Temple", aomScenarioData.GG_4, aomLocationType.RELIC)
+    GG_4_RELIC_5 = (global_location_id(aomScenarioData.GG_4.id, 14), "Relic 5: Center Lake Temple", aomScenarioData.GG_4, aomLocationType.RELIC)
+    GG_4_RELIC_6 = (global_location_id(aomScenarioData.GG_4.id, 15), "Relic 6: Stone Pillars West of Center Lake Temple", aomScenarioData.GG_4, aomLocationType.RELIC)
 
 
 

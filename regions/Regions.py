@@ -136,14 +136,21 @@ def create_regions(multiworld: MultiWorld, player: int) -> None:
     # Scenario regions — each connects directly to its campaign section region.
     # All scenarios in a section are accessible as soon as the section is unlocked,
     # gated only by their individual age-unlock and point requirements (set in Rules.py).
+    relicsanity_on = bool(getattr(multiworld.worlds[player], "relicsanity_enabled", False))
     for scenario in aomScenarioData:
         if scenario.campaign in disabled_campaigns:
             continue
+        scenario_locations = REGION_TO_LOCATIONS.get(scenario, [])
+        if not relicsanity_on:
+            scenario_locations = [
+                loc for loc in scenario_locations
+                if loc.type != aomLocationType.RELIC
+            ]
         scenario_region = create_region(
             multiworld,
             player,
             get_scenario_region_name(scenario),
-            REGION_TO_LOCATIONS.get(scenario, []),
+            scenario_locations,
         )
         connect_regions(campaign_regions[scenario.campaign], scenario_region)
     # Shop region — only create it when the Gem Shop option is enabled.

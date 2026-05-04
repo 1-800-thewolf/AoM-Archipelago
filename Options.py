@@ -300,6 +300,17 @@ When disabled, all 4 Golden Gift scenarios are removed from the pool."""
     default = 0
 
 
+class Relicsanity(Toggle):
+    """Include Relicsanity locations in the pool.
+
+When enabled, every relic in the campaigns becomes its own check — garrisoning a relic in a Temple sends a check to the multiworld.
+174 total relic locations across all campaigns: 103 in Fall of the Trident, 51 in The New Atlantis, 20 in The Golden Gift.
+Relics in disabled campaigns are removed alongside that campaign's other locations."""
+    internal_name = "relicsanity"
+    display_name  = "Relicsanity"
+    default = 0
+
+
 @dataclass
 class AomOptions(PerGameCommonOptions):
     """All options for the Age of Mythology Retold Archipelago world."""
@@ -326,3 +337,4 @@ class AomOptions(PerGameCommonOptions):
     fott_norse_campaign:             FottNorseCampaign
     new_atlantis_campaign:           NewAtlantis
     golden_gift_campaign:            GoldenGift
+    relicsanity:                     Relicsanity

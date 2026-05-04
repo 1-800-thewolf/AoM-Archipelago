@@ -97,13 +97,17 @@ class AoMGameContext:
     archaic_forbids: dict = None         # scenario_id (int) → [unit_name, ...]
     god_power_assignments: dict = None   # scenario_id (int) → [tier1, tier2, tier3, tier4]
     # Cache identity — set on connect, used to build cache_folder path
-    ap_server:   str = ""   # e.g. "archipelago.gg:38281"
+    ap_server:   str = ""   # e.g. "archipelago.gg:38281" (informational only; not in cache key)
     ap_seed:     str = ""   # seed_name from RoomInfo
     ap_slot:     str = ""   # slot name (auth) the player connected with
+    # Session UUID distinguishes replays of the same generation (same seed/slot/world_id).
+    # Resolved on connect from current_session.txt under session_root, or generated fresh.
+    session_id:  str = ""
     # Shop state
     wins_to_open_shop: int = 5
     world_id: int = 0
     gem_shop_enabled: bool = True
+    relicsanity_enabled: bool = False
     trap_queue: list  = field(default_factory=list)   # list of trap_type ints
     trap_ack_nonce: int = 0                           # written to aom_state.xs
     traps_fired_this_scenario: int = 0                 # reset each scenario load
@@ -126,21 +130,30 @@ class AoMGameContext:
         return Path(self.user_folder) / TRIGGER_FOLDER_NAME
 
     @property
-    def cache_folder(self) -> Path:
-        """Per-session cache directory, uniquely scoped by server/seed/slot/world_id.
-        Sanitises each component so the path is valid on Windows.
+    def session_root(self) -> Path:
+        """Folder identifying a unique multiworld generation for this slot.
+        Holds current_session.txt (the active session UUID pointer) plus one
+        subfolder per session UUID. Server is intentionally excluded from the
+        key so a server rename / port change does not orphan progress.
         """
         def _sanitise(s: str) -> str:
-            # Replace characters invalid in Windows directory names
             for ch in r'\/:*?"<>|':
                 s = s.replace(ch, "_")
             return s.strip("._") or "_"
 
-        server  = _sanitise(self.ap_server  or "unknown_server")
-        seed    = _sanitise(self.ap_seed    or "unknown_seed")
-        slot    = _sanitise(self.ap_slot    or "unknown_slot")
-        world   = str(self.world_id)
-        return (Path(self.user_folder) / CACHE_DIR_NAME / server / seed / slot / world)
+        seed  = _sanitise(self.ap_seed or "unknown_seed")
+        slot  = _sanitise(self.ap_slot or "unknown_slot")
+        world = str(self.world_id)
+        return Path(self.user_folder) / CACHE_DIR_NAME / seed / slot / world
+
+    @property
+    def cache_folder(self) -> Path:
+        """Per-session cache directory. Distinguishes replays of the same
+        generation via session_id, so completing a game and starting fresh on
+        the same seed+slot does not inherit the old game's items/checks.
+        """
+        sid = self.session_id or "unknown_session"
+        return self.session_root / sid
 
     @property
     def ai_output_file(self) -> Path:
@@ -499,6 +512,18 @@ def write_aom_state(ctx: AoMGameContext) -> None:
                 lines.append(f"    trForbidProtounit(1, \"{unit}\");")
     lines.append("}")
 
+    # APUnforbidUnlockedUnits — un-forbids every unit whose unlock item HAS been
+    # received. Called by APReapplyUnitUnlocks every 5 seconds so that save/load
+    # resets (which clear the forbid state) are recovered quickly.
+    lines.append("")
+    lines.append("void APUnforbidUnlockedUnits()")
+    lines.append("{")
+    for item_id, units in _ITEM_TO_UNITS.items():
+        if item_id in received_set:
+            for unit in units:
+                lines.append(f"    trUnforbidProtounit(1, \"{unit}\");")
+    lines.append("}")
+
     # ----------------------------------------------------------------
     # APShopStateInit — sets shop globals and per-obelisk labels.
     # ----------------------------------------------------------------
@@ -651,7 +676,66 @@ def write_aom_state(ctx: AoMGameContext) -> None:
     # Patch it into the existing APShopStateInit by inserting before closing brace
     # We do this by re-finding and replacing the end of APShopStateInit generation
 
+    # ----------------------------------------------------------------
+    # APRelicCounterInit / APCountRelicCheck
+    # Generates the relic counter setup and increment functions.
+    # APRelicCounterInit() is called from APActivateScenario in archipelago.xs.
+    # APCountRelicCheck(id) is called from APProcessQueuedCheck in archipelago.xs.
+    # ----------------------------------------------------------------
+    from ..locations.Locations import aomLocationData as _all_locs, aomLocationType as _locType
+    from ..items.Items import BASE_ID as _RELIC_BASE_ID
 
+    # Build: APScenarioID (global_number) → (internal scenario.id, relic count)
+    _relic_scenario_map: dict = {}
+    for _rloc in _all_locs:
+        if _rloc.type == _locType.RELIC:
+            _gn  = _rloc.scenario.global_number
+            _sid = _rloc.scenario.id
+            if _gn not in _relic_scenario_map:
+                _relic_scenario_map[_gn] = (_sid, 0)
+            _relic_scenario_map[_gn] = (_relic_scenario_map[_gn][0], _relic_scenario_map[_gn][1] + 1)
+
+    _relicsanity = ctx.relicsanity_enabled
+
+    _xs("")
+    _xs("extern int gAPHasRelicCounter = 0;")
+    _xs("")
+    _xs("void APRelicCounterInit()")
+    _xs("{")
+    _xs("    gAPHasRelicCounter = 0;")
+    if _relicsanity and _relic_scenario_map:
+        _xs("    int _scenId = trQuestVarGet(\"APScenarioID\");")
+        _first = True
+        for _gn in sorted(_relic_scenario_map.keys()):
+            _sid, _cnt = _relic_scenario_map[_gn]
+            _kw = "if" if _first else "else if"
+            _first = False
+            _xs(f"    {_kw} (_scenId == {_gn})")
+            _xs( "    {")
+            _xs(f'        trCounterAddGenericXS("Archipelago Relics Checked", "Archipelago Relics Checked", "", "", -1, 0, {_cnt}, false, true);')
+            _xs( '        trCounterPersistent("Archipelago Relics Checked", true);')
+            _xs( "        gAPHasRelicCounter = 1;")
+            _xs( "    }")
+    _xs("    if (gAPHasRelicCounter == 0) { trSetCounterDisplay(\"No Archipelago Relics\"); }")
+    _xs("}")
+    _xs("")
+    _xs("void APCountRelicCheck(int id = 0)")
+    _xs("{")
+    _xs("    if (gAPHasRelicCounter == 0) { return; }")
+    if _relicsanity and _relic_scenario_map:
+        _xs("    int _scenId2 = trQuestVarGet(\"APScenarioID\");")
+        _first = True
+        for _gn in sorted(_relic_scenario_map.keys()):
+            _sid, _cnt = _relic_scenario_map[_gn]
+            _base_rid  = _RELIC_BASE_ID + _sid * 100 + 10
+            _max_rid   = _base_rid + _cnt - 1
+            _kw = "if" if _first else "else if"
+            _first = False
+            _xs(f"    {_kw} (_scenId2 == {_gn} && id >= {_base_rid} && id <= {_max_rid})")
+            _xs( "    {")
+            _xs( "        trCounterIncrementManual(\"Archipelago Relics Checked\", 1);")
+            _xs( "    }")
+    _xs("}")
 
     content = "\n".join(lines) + "\n"
 
@@ -666,6 +750,68 @@ def write_aom_state(ctx: AoMGameContext) -> None:
 # -----------------------------------------------------------------------
 # AI output file reading
 # -----------------------------------------------------------------------
+
+SESSION_POINTER_FILENAME = "current_session.txt"
+
+
+def _new_session_uuid() -> str:
+    import uuid
+    return uuid.uuid4().hex
+
+
+def load_or_create_session_id(ctx: AoMGameContext) -> str:
+    """Resolve the active session UUID for the current (seed, slot, world_id).
+    Reads session_root/current_session.txt if present; otherwise generates a
+    new UUID and writes the pointer. Sets ctx.session_id and returns it.
+    """
+    root = ctx.session_root
+    pointer = root / SESSION_POINTER_FILENAME
+    sid = ""
+    try:
+        if pointer.exists():
+            sid = pointer.read_text(encoding="utf-8").strip()
+    except Exception as ex:
+        logger.warning(f"Failed to read session pointer {pointer}: {ex}")
+    if not sid:
+        sid = _new_session_uuid()
+        try:
+            root.mkdir(parents=True, exist_ok=True)
+            pointer.write_text(sid, encoding="utf-8")
+            logger.info(f"Started new session {sid} at {root}")
+        except Exception as ex:
+            logger.warning(f"Failed to write session pointer {pointer}: {ex}")
+    else:
+        logger.info(f"Resumed session {sid} at {root}")
+    ctx.session_id = sid
+    return sid
+
+
+def start_new_session(ctx: AoMGameContext) -> str:
+    """Generate a fresh session UUID for the current (seed, slot, world_id),
+    overwrite the pointer, and clear in-memory game state so nothing from the
+    previous session bleeds into the new one. Old session folders are left on
+    disk; /purge_aom_cache removes them. Returns the new UUID.
+    """
+    sid = _new_session_uuid()
+    root = ctx.session_root
+    try:
+        root.mkdir(parents=True, exist_ok=True)
+        (root / SESSION_POINTER_FILENAME).write_text(sid, encoding="utf-8")
+    except Exception as ex:
+        logger.error(f"Failed to write new session pointer: {ex}")
+    ctx.session_id = sid
+
+    ctx.received_items     = []
+    ctx.sent_checks        = set()
+    ctx.server_known_checks = set()
+    ctx.locked_warning_campaigns = set()
+    ctx.trap_queue         = []
+    ctx.trap_ack_nonce     = 0
+    ctx.traps_fired_this_scenario = 0
+    ctx.purchased_slots    = set()
+    logger.info(f"New session started: {sid}")
+    return sid
+
 
 def save_trap_state(ctx: AoMGameContext) -> None:
     """Persist trap_queue to the session cache directory."""
@@ -765,7 +911,7 @@ def _resolve_shop_signal(ctx: AoMGameContext, slot_id: str) -> list[int]:
         return []
 
     ctx.purchased_slots.add(slot_id)
-    logger.info(f"Shop purchase: {slot_id}")
+    logger.debug(f"Shop purchase: {slot_id}")
     save_shop_state(ctx)
     write_aom_state(ctx)
     # Update GUI gems/shops count immediately after purchase
@@ -775,7 +921,7 @@ def _resolve_shop_signal(ctx: AoMGameContext, slot_id: str) -> list[int]:
 
     if "ITEM" in slot_id:
         loc_ids = ctx.shop_obelisk_assignments.get(slot_id, [])
-        logger.info(f"  → checking {len(loc_ids)} item location(s)")
+        logger.debug(f"  → checking {len(loc_ids)} item location(s)")
         return loc_ids
 
     if "HINT" in slot_id:
@@ -798,7 +944,7 @@ def _send_shop_hints(ctx: AoMGameContext, slot_id: str) -> None:
             ctx.sent_checks.add(loc_id)
             save_sent_checks(ctx)
             asyncio.ensure_future(ctx.client_interface.on_location_received(loc_id))
-            logger.info(f"Progressive Shop Info purchased: {slot_id} → location {loc_id}")
+            logger.debug(f"Progressive Shop Info purchased: {slot_id} → location {loc_id}")
             logger.info("Shop Information upgraded! Go back to the shop to see more details.")
         return
 

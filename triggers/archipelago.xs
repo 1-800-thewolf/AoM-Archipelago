@@ -413,6 +413,9 @@ void APFindReinforcementSpawn()
 int gAPScenarioId  = 0;
 int gAPCampaignId  = 0;
 int gAPMajorGod    = 0;
+// Age cap = floor + ageCount, clamped 0..3. Set in APApplyAgeUnlocks.
+// 0=Archaic, 1=Classical, 2=Heroic, 3=Mythic. -1 = uninit (watcher no-op).
+int gAPAgeCap      = -1;
 bool gAPRandomMajorGods  = false;
 bool gHasGreek     = false;
 bool gHasEgyptian  = false;
@@ -1176,6 +1179,219 @@ string APGetCheckText(int id = 0)
     if (id == 3927024) { return "Scenario Victory"; }
     if (id == 3927026) { return "Destroy Loki's Temple near your Town Center."; }
     if (id == 3927027) { return "Bring Brokk and Eitri to the Battle Boar."; }
+    // ---- Relicsanity locations (local_id >= 10) ----
+    // FOTT 3
+    if (id == 3876934) { return "Relic 1: Near Stone Pillars at Camp"; }
+    if (id == 3876935) { return "Relic 2: End of North Valley"; }
+    if (id == 3876936) { return "Relic 3: End of North-East Beach"; }
+    // FOTT 4
+    if (id == 3877034) { return "Relic 1: End of West Beach"; }
+    if (id == 3877035) { return "Relic 2: North-West Shrine"; }
+    if (id == 3877036) { return "Relic 3: Stone Pillars at the Valley"; }
+    if (id == 3877037) { return "Relic 4: Shrine at Pink Enemy Base"; }
+    // FOTT 5
+    if (id == 3877134) { return "Relic 1: Stone Pillars on Way to Camp"; }
+    if (id == 3877135) { return "Relic 2: North of Market"; }
+    // FOTT 6
+    if (id == 3877234) { return "Relic 1: East of Camp"; }
+    if (id == 3877235) { return "Relic 2: West of Camp"; }
+    if (id == 3877236) { return "Relic 3: Just South Near Pillars"; }
+    if (id == 3877237) { return "Relic 4: Far South Near Wrecked Buildings"; }
+    if (id == 3877238) { return "Relic 5: Far South Near Beach"; }
+    // FOTT 7
+    if (id == 3877334) { return "Relic 1: Bay Before Centaurs"; }
+    if (id == 3877335) { return "Relic 2: Shrine North of Second Prison"; }
+    if (id == 3877336) { return "Relic 3: At Bay, Far South of Imprisoned Temple"; }
+    if (id == 3877337) { return "Relic 4: Shrine North of Imprisoned Temple"; }
+    // FOTT 8
+    if (id == 3877434) { return "Relic 1: South Forest of East Camp"; }
+    if (id == 3877435) { return "Relic 2: West Camp North of Cliffs"; }
+    // FOTT 12
+    if (id == 3886834) { return "Relic 1: At World Wonder North of Base"; }
+    // FOTT 13
+    if (id == 3886934) { return "Relic 1: At Starting Temple #1"; }
+    if (id == 3886935) { return "Relic 2: At Starting Temple #2"; }
+    if (id == 3886936) { return "Relic 3: At Starting Temple #3"; }
+    if (id == 3886937) { return "Relic 4: Shrine Northeast of River"; }
+    if (id == 3886938) { return "Relic 5: Shrine Far North of River"; }
+    if (id == 3886939) { return "Relic 6: Stone Pillars at First U-Turn"; }
+    if (id == 3886940) { return "Relic 7: Stone Pillars at End of Shortcut"; }
+    // FOTT 14
+    if (id == 3887034) { return "Relic 1: At Sphinx East of Base"; }
+    // FOTT 15
+    if (id == 3887134) { return "Relic 1: In the North River"; }
+    if (id == 3887135) { return "Relic 2: At Pink Temple #1"; }
+    if (id == 3887136) { return "Relic 3: At Pink Temple #2"; }
+    if (id == 3887137) { return "Relic 4: Far North at Pink Lighthouse #1"; }
+    if (id == 3887138) { return "Relic 5: Far North at Pink Lighthouse #2"; }
+    if (id == 3887139) { return "Relic 6: Southwest of Final Wall"; }
+    if (id == 3887140) { return "Relic 7: At Enemy World Wonder"; }
+    if (id == 3887141) { return "Relic 8: Yellow Houses at Far East"; }
+    if (id == 3887142) { return "Relic 9: At Enemy Citadel Far North"; }
+    // FOTT 16
+    if (id == 3887234) { return "Relic 1: Part 2 - Beach of Starting Island"; }
+    if (id == 3887235) { return "Relic 2: Part 2 - South of Starting Island"; }
+    if (id == 3887236) { return "Relic 3: Part 2 - Stone Pillar at Base"; }
+    if (id == 3887237) { return "Relic 4: Part 2 - Wreck at South Beach"; }
+    if (id == 3887238) { return "Relic 5: Part 2 - Southwest of Beach"; }
+    if (id == 3887239) { return "Relic 6: Part 2 - East of Beach"; }
+    if (id == 3887240) { return "Relic 7: Part 2 - West of Northern Settlement"; }
+    if (id == 3887241) { return "Relic 8: Part 2 - East of Northern Settlement"; }
+    if (id == 3887242) { return "Relic 9: Part 2 - On Cliff at Enemy Entrance"; }
+    if (id == 3887243) { return "Relic 10: Part 2 - Under Cliff at Enemy Entrance"; }
+    // FOTT 17
+    if (id == 3887334) { return "Relic 1: Stone Pillars North of Start"; }
+    if (id == 3887335) { return "Relic 2: South of Start Near Tent"; }
+    if (id == 3887336) { return "Relic 3: Ra Statue at North of Southeast Settlement"; }
+    if (id == 3887337) { return "Relic 4: Ra Statue at South Village"; }
+    if (id == 3887338) { return "Relic 5: Stone Pillars at Half-Island"; }
+    if (id == 3887339) { return "Relic 6: Osiris Statue at Mini Island"; }
+    if (id == 3887340) { return "Relic 7: Entrance of Northern Bay"; }
+    if (id == 3887341) { return "Relic 8: Secret Oasis at Northern Bay #1"; }
+    if (id == 3887342) { return "Relic 9: Secret Oasis of Northern Bay #2"; }
+    if (id == 3887343) { return "Relic 10: Secret Oasis of Northern Bay #3"; }
+    // FOTT 18
+    if (id == 3887434) { return "Relic 1: Far South of Map"; }
+    if (id == 3887435) { return "Relic 2: Far West Near Mummy Temple #1"; }
+    if (id == 3887436) { return "Relic 3: Far West Near Mummy Temple #2"; }
+    if (id == 3887437) { return "Relic 4: Osiris Statue Near Base"; }
+    if (id == 3887438) { return "Relic 5: In Front of Eastern Enemy Outpost"; }
+    // FOTT 19
+    if (id == 3887534) { return "Relic 1: West of Far Southern Island"; }
+    if (id == 3887535) { return "Relic 2: East of Far Southern Island"; }
+    if (id == 3887536) { return "Relic 3: Shipwreck at North of Enemy Harbor"; }
+    // FOTT 20
+    if (id == 3887634) { return "Relic 1: Far South of Map"; }
+    if (id == 3887635) { return "Relic 2: Trees Between Bases"; }
+    if (id == 3887636) { return "Relic 3: Enemy Temple at Lake"; }
+    if (id == 3887637) { return "Relic 4: At Far Eastern Settlement"; }
+    if (id == 3887638) { return "Relic 5: North of Far Eastern Settlement"; }
+    // FOTT 21
+    if (id == 3896734) { return "Relic 1: Shipwreck West of Zeus Temple"; }
+    if (id == 3896735) { return "Relic 2: Lion Statue Far South of Western Settlement"; }
+    if (id == 3896736) { return "Relic 3: Stone Pillars Southwest of Island"; }
+    if (id == 3896737) { return "Relic 4: Shipwreck North of Eastern Settlement"; }
+    if (id == 3896738) { return "Relic 5: South Stone Pillars of Eastern Settlement"; }
+    if (id == 3896739) { return "Relic 6: East of Eastern Settlement"; }
+    // FOTT 22
+    if (id == 3896834) { return "Relic 1: Far South of Western Settlement"; }
+    if (id == 3896835) { return "Relic 2: West of Ice Lake"; }
+    if (id == 3896836) { return "Relic 3: Statue at North of Ice Lake"; }
+    if (id == 3896837) { return "Relic 4: Stone Pillars East of Eastern Settlement"; }
+    // FOTT 23
+    if (id == 3896934) { return "Relic 1: Crumbling Wall Eastern Cave #1"; }
+    if (id == 3896935) { return "Relic 2: Crumbling Wall Eastern Cave #2"; }
+    if (id == 3896936) { return "Relic 3: Crumbling Wall Eastern Cave #3"; }
+    // FOTT 27
+    if (id == 3897334) { return "Relic 1: At Western Lake"; }
+    if (id == 3897335) { return "Relic 2: Stone Pillars at Southwest of Well of Urd"; }
+    if (id == 3897336) { return "Relic 3: Far East of Map"; }
+    // FOTT 28
+    if (id == 3897434) { return "Relic 1: Broken Buildings in Northwest"; }
+    if (id == 3897435) { return "Relic 2: Far South of Settlement"; }
+    if (id == 3897436) { return "Relic 3: At South in Underworld Entrance"; }
+    if (id == 3897437) { return "Relic 4: North of Underworld Entrance"; }
+    if (id == 3897438) { return "Relic 5: Far North of Underworld Entrance"; }
+    // FOTT 30
+    if (id == 3897634) { return "Relic 1: West of Temple"; }
+    if (id == 3897635) { return "Relic 2: Southern Settlement"; }
+    if (id == 3897636) { return "Relic 3: North of Eastern Walls"; }
+    if (id == 3897637) { return "Relic 4: At Western Lake"; }
+    if (id == 3897638) { return "Relic 5: East of Eastern Lake"; }
+    if (id == 3897639) { return "Relic 6: Stone Pillars in Orange Base"; }
+    // FOTT 31
+    if (id == 3906734) { return "Relic 1: Starting Island"; }
+    if (id == 3906735) { return "Relic 2: Far East Valley"; }
+    // FOTT 32
+    if (id == 3906834) { return "Relic 1: Stone Pillars of Blue Village"; }
+    if (id == 3906835) { return "Relic 2: North of Western Plenty Vault"; }
+    if (id == 3906836) { return "Relic 3: Southeast Lake at Enemy Outpost"; }
+    // NA 2
+    if (id == 3916834) { return "Relic 1: Starting Oranos Temple"; }
+    if (id == 3916835) { return "Relic 2: Western Beach"; }
+    if (id == 3916836) { return "Relic 3: Central Lake Southeast Temple"; }
+    if (id == 3916837) { return "Relic 4: Central Lake Southwest Temple"; }
+    if (id == 3916838) { return "Relic 5: Central Forest"; }
+    if (id == 3916839) { return "Relic 6: Southwest Beach #1"; }
+    if (id == 3916840) { return "Relic 7: Southwest Beach #2"; }
+    if (id == 3916841) { return "Relic 8: Burning Forest"; }
+    if (id == 3916842) { return "Relic 9: Far South Island"; }
+    // NA 3
+    if (id == 3916934) { return "Relic 1: In Center of 3 Scyllas"; }
+    if (id == 3916935) { return "Relic 2: Center Plenty Vault"; }
+    if (id == 3916936) { return "Relic 3: Northwest Cave #1"; }
+    if (id == 3916937) { return "Relic 4: Northwest Cave #2"; }
+    // NA 4
+    if (id == 3917034) { return "Relic 1: West Hill of Starting Section"; }
+    if (id == 3917035) { return "Relic 2: Center Statue of Red's Base"; }
+    if (id == 3917036) { return "Relic 3: Stone Pillars at North of Red's Base"; }
+    if (id == 3917037) { return "Relic 4: Northern Statue of Purple's Base"; }
+    if (id == 3917038) { return "Relic 5: Southern Statue of Purple's Base"; }
+    if (id == 3917039) { return "Relic 6: Cliff Between Purple and Pink"; }
+    if (id == 3917040) { return "Relic 7: Statue at Center of Pink's Base"; }
+    // NA 5
+    if (id == 3917134) { return "Relic 1: Base of Orange's Base"; }
+    if (id == 3917135) { return "Relic 2: Base of Pink's Base"; }
+    if (id == 3917136) { return "Relic 3: Base of Yellow's Base"; }
+    if (id == 3917137) { return "Relic 4: Base of Red's Base"; }
+    // NA 7
+    if (id == 3917334) { return "Relic 1: West of Center Village"; }
+    if (id == 3917335) { return "Relic 2: East of Center Village"; }
+    // NA 8
+    if (id == 3917434) { return "Relic 1: Left of Northern Lake #1"; }
+    if (id == 3917435) { return "Relic 2: Left of Northern Lake #2"; }
+    if (id == 3917436) { return "Relic 3: Hill Between Southern Walls"; }
+    if (id == 3917437) { return "Relic 4: Hill Between Eastern Walls"; }
+    if (id == 3917438) { return "Relic 5: Statue on Center of Map"; }
+    if (id == 3917439) { return "Relic 6: Stone Pillars Far Southeast"; }
+    if (id == 3917440) { return "Relic 7: Statue on Western River"; }
+    // NA 9
+    if (id == 3917534) { return "Relic 1: East Corner Forest"; }
+    if (id == 3917535) { return "Relic 2: Stone Pillars South Corner of Map"; }
+    // NA 10
+    if (id == 3917634) { return "Relic 1: Southeast of Starting Settlement"; }
+    if (id == 3917635) { return "Relic 2: Stone Pillars at Southeast Settlement"; }
+    if (id == 3917636) { return "Relic 3: Shrine at Eastern Settlement"; }
+    // NA 11
+    if (id == 3917734) { return "Relic 1: Eastern Fountain at Start"; }
+    if (id == 3917735) { return "Relic 2: Western Harbor"; }
+    if (id == 3917736) { return "Relic 3: Shrine Island at East of Western Harbor"; }
+    if (id == 3917737) { return "Relic 4: Northeast Entrance to Center"; }
+    // NA 12
+    if (id == 3917834) { return "Relic 1: East of Gaia"; }
+    if (id == 3917835) { return "Relic 2: Stone Pillars Northeast From Start"; }
+    if (id == 3917836) { return "Relic 3: Stone Pillars Far Northeast From Start"; }
+    if (id == 3917837) { return "Relic 4: North of East Fountain"; }
+    if (id == 3917838) { return "Relic 5: Southwest of North Fountain"; }
+    if (id == 3917839) { return "Relic 6: North Fountain #1"; }
+    if (id == 3917840) { return "Relic 7: North Fountain #2"; }
+    if (id == 3917841) { return "Relic 8: North Fountain #3"; }
+    if (id == 3917842) { return "Relic 9: North Fountain #4"; }
+    // GG 1
+    if (id == 3926734) { return "Relic 1: At the Southern River"; }
+    if (id == 3926735) { return "Relic 2: North of Circle Lake"; }
+    if (id == 3926736) { return "Relic 3: North Small Island"; }
+    if (id == 3926737) { return "Relic 4: East of Northern Settlement"; }
+    if (id == 3926738) { return "Relic 5: Center Hill of Map"; }
+    // GG 2
+    if (id == 3926834) { return "Relic 1: East on Starting Island"; }
+    if (id == 3926835) { return "Relic 2: Northwest Goldmine Island"; }
+    if (id == 3926836) { return "Relic 3: Northeast Goldmine Island"; }
+    // GG 3
+    if (id == 3926934) { return "Relic 1: East Lake"; }
+    if (id == 3926935) { return "Relic 2: East Side of Northern Lake"; }
+    if (id == 3926936) { return "Relic 3: East Side of Central Lake"; }
+    if (id == 3926937) { return "Relic 4: East of Southeast Minecircle"; }
+    if (id == 3926938) { return "Relic 5: Northern Troll Temple"; }
+    if (id == 3926939) { return "Relic 6: Southern Troll Temple"; }
+    // GG 4
+    if (id == 3927034) { return "Relic 1: North of Settlement"; }
+    if (id == 3927035) { return "Relic 2: Mountain Giant Temple on Northeast"; }
+    if (id == 3927036) { return "Relic 3: Southeast Troll Temple"; }
+    if (id == 3927037) { return "Relic 4: Stone Pillars West of Troll Temple"; }
+    if (id == 3927038) { return "Relic 5: Center Lake Temple"; }
+    if (id == 3927039) { return "Relic 6: Stone Pillars West of Center Lake Temple"; }
+
     return "Unknown Location";
 }
 
@@ -1889,6 +2105,7 @@ runImmediately
     xsEnableRule("APAnnounceGod");
     //xsEnableRule("APEnforceAgeLocks");
     xsEnableRule("APAnnounceMaxAge");
+    xsEnableRule("APReapplyUnitUnlocks");
     // Reset per-scenario relic-trickle and relic-effect accumulators, then
     // start the unified enforcement rule.
     gAPRelicTrickleAppliedFood  = 0.0;
@@ -1937,6 +2154,7 @@ runImmediately
         trQuestVarSet("APTrapActive", 1);
         APTrapScheduleNext(true);
     }
+    APRelicCounterInit();
     trMusicPlayCurrent();
     xsDisableSelf();
 }
@@ -1963,6 +2181,7 @@ runImmediately
     {
         int id = trQuestVarGet("APQueuedCheckID");
         APShowQueuedCheckMessage(id);
+        APCountRelicCheck(id);
         gAPLastProcessedCheckNonce = nonce;
     }
 }
@@ -2314,12 +2533,14 @@ void APApplyAgeUnlocks()
     //   - Set tiers above the floor as status 1 (researchable) only if playerCount allows
     //   - Leave everything else at status 0
     int scenarioFloor = APGetStartingAgeCount(gAPScenarioId);
+    int civCount = 0;
     if (gAPMajorGod == cAPMajorZeus || gAPMajorGod == cAPMajorPoseidon || gAPMajorGod == cAPMajorHades)
     {
         APApplyGreekMinorGods(gAPMajorGod, greekCount, scenarioFloor);
         APForceDisableAllEgyptianAgeTechs();
         APForceDisableAllNorseAgeTechs();
         APForceDisableAllAtlanteanAgeTechs();
+        civCount = greekCount;
     }
     if (gAPMajorGod == cAPMajorIsis || gAPMajorGod == cAPMajorRa || gAPMajorGod == cAPMajorSet)
     {
@@ -2327,6 +2548,7 @@ void APApplyAgeUnlocks()
         APForceDisableAllGreekAgeTechs();
         APForceDisableAllNorseAgeTechs();
         APForceDisableAllAtlanteanAgeTechs();
+        civCount = egyptianCount;
     }
     if (gAPMajorGod == cAPMajorOdin || gAPMajorGod == cAPMajorThor || gAPMajorGod == cAPMajorLoki)
     {
@@ -2334,6 +2556,7 @@ void APApplyAgeUnlocks()
         APForceDisableAllGreekAgeTechs();
         APForceDisableAllEgyptianAgeTechs();
         APForceDisableAllAtlanteanAgeTechs();
+        civCount = norseCount;
     }
     if (gAPMajorGod == cAPMajorKronos || gAPMajorGod == cAPMajorOranos || gAPMajorGod == cAPMajorGaia)
     {
@@ -2341,10 +2564,17 @@ void APApplyAgeUnlocks()
         APForceDisableAllGreekAgeTechs();
         APForceDisableAllEgyptianAgeTechs();
         APForceDisableAllNorseAgeTechs();
+        civCount = atlanteanCount;
     }
 
-
+    // Cache cap for the watcher rule (APEnforceAgeLocks). AOM auto-enables
+    // next-tier age techs when prereqs are researched, so we re-disable
+    // forbidden tiers each tick.
+    int cap = scenarioFloor + civCount;
+    if (cap > 3) { cap = 3; }
+    gAPAgeCap = cap;
 }
+
 
 
 void APApplyHeroBoosts()
@@ -3143,13 +3373,13 @@ inactive
     float perGold  = 0.0;
     float perFavor = 0.0;
 
-    // Boolean "have-item" flags for the relic effects. Multiple copies of a
-    // given effect item are not distinguished — having the item enables the
-    // per-relic effect; extra copies do not multiply.
-    bool hasLOS        = false;
-    bool hasRegen      = false;
-    bool hasSpeed      = false;
-    bool hasHP         = false;
+    // Stack-count trackers for scalable relic effects (LOS/Regen/Speed/HP).
+    // Each copy of the item received adds another layer of per-relic benefit.
+    // Remaining effects use boolean flags — extra copies do not multiply.
+    int  countLOS      = 0;
+    int  countRegen    = 0;
+    int  countSpeed    = 0;
+    int  countHP       = 0;
     bool hasPop        = false;
     bool hasGoldCost   = false;
     bool hasWoodCost   = false;
@@ -3162,14 +3392,14 @@ inactive
     for (j = 9; j < gAPItemCount; j++)
     {
         id = gAPItems[j];
-        if (id == cRELIC_TRICKLE_FOOD)  { perFood  = perFood  + 2.0; }
-        if (id == cRELIC_TRICKLE_WOOD)  { perWood  = perWood  + 2.0; }
-        if (id == cRELIC_TRICKLE_GOLD)  { perGold  = perGold  + 2.0; }
-        if (id == cRELIC_TRICKLE_FAVOR) { perFavor = perFavor + 1.0; }
-        if (id == cRELIC_EFFECT_LOS)         { hasLOS        = true; }
-        if (id == cRELIC_EFFECT_REGEN)       { hasRegen      = true; }
-        if (id == cRELIC_EFFECT_SPEED)       { hasSpeed      = true; }
-        if (id == cRELIC_EFFECT_HP)          { hasHP         = true; }
+        if (id == cRELIC_TRICKLE_FOOD)  { perFood  = perFood  + 1.0;  }
+        if (id == cRELIC_TRICKLE_WOOD)  { perWood  = perWood  + 1.0;  }
+        if (id == cRELIC_TRICKLE_GOLD)  { perGold  = perGold  + 1.0;  }
+        if (id == cRELIC_TRICKLE_FAVOR) { perFavor = perFavor + 0.25; }
+        if (id == cRELIC_EFFECT_LOS)         { countLOS++;           }
+        if (id == cRELIC_EFFECT_REGEN)       { countRegen++;         }
+        if (id == cRELIC_EFFECT_SPEED)       { countSpeed++;         }
+        if (id == cRELIC_EFFECT_HP)          { countHP++;            }
         if (id == cRELIC_EFFECT_POP)         { hasPop        = true; }
         if (id == cRELIC_EFFECT_GOLD_COST)   { hasGoldCost   = true; }
         if (id == cRELIC_EFFECT_WOOD_COST)   { hasWoodCost   = true; }
@@ -3203,11 +3433,11 @@ inactive
     // replaying the underlying tr* call (additive: scale by apRelicDelta; multiplicative:
     // call apRelicDelta times, or call the inverse value when reducing).
 
-    int targLOS        = 0; if (hasLOS)        { targLOS        = relicCount; }
-    int targRegen      = 0; if (hasRegen)      { targRegen      = relicCount; }
-    int targSpeed      = 0; if (hasSpeed)      { targSpeed      = relicCount; }
-    int targHP         = 0; if (hasHP)         { targHP         = relicCount; }
-    int targPop        = 0; if (hasPop)        { targPop        = relicCount; }
+    int targLOS        = countLOS   * relicCount;
+    int targRegen      = countRegen * relicCount;
+    int targSpeed      = countSpeed * relicCount;
+    int targHP         = countHP    * relicCount;
+    int targPop        = 0; if (hasPop) { targPop = relicCount; }
     int targGoldCost   = 0; if (hasGoldCost)   { targGoldCost   = relicCount; }
     int targWoodCost   = 0; if (hasWoodCost)   { targWoodCost   = relicCount; }
     int targFavorCost  = 0; if (hasFavorCost)  { targFavorCost  = relicCount; }
@@ -3423,11 +3653,11 @@ inactive
         if (perWood  > 0.0) { _anyEffect = true; }
         if (perGold  > 0.0) { _anyEffect = true; }
         if (perFavor > 0.0) { _anyEffect = true; }
-        if (hasLOS)        { _anyEffect = true; }
-        if (hasRegen)      { _anyEffect = true; }
-        if (hasSpeed)      { _anyEffect = true; }
-        if (hasHP)         { _anyEffect = true; }
-        if (hasPop)        { _anyEffect = true; }
+        if (countLOS   > 0) { _anyEffect = true; }
+        if (countRegen > 0) { _anyEffect = true; }
+        if (countSpeed > 0) { _anyEffect = true; }
+        if (countHP    > 0) { _anyEffect = true; }
+        if (hasPop)         { _anyEffect = true; }
         if (hasGoldCost)   { _anyEffect = true; }
         if (hasWoodCost)   { _anyEffect = true; }
         if (hasFavorCost)  { _anyEffect = true; }
@@ -3441,75 +3671,78 @@ inactive
             string _pfx   = "You have " + relicCount + " relic(s) ";
             string _and   = "\nand ";
             string _line  = "";
+            string _cY    = "<color1,1,0>";      // yellow  – variable numbers
+            string _cG    = "<color0.5,1,0.5>";  // light green – unique keywords
+            string _cE    = "</color>";
 
             if (perFood > 0.0)
             {
-                _line = "granting +" + APFormatFloat(perFood * relicCount) + " Food Trickle";
+                _line = "granting " + _cY + "+" + APFormatFloat(perFood * relicCount) + _cE + " " + _cG + "Food" + _cE + " Trickle";
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
             if (perWood > 0.0)
             {
-                _line = "granting +" + APFormatFloat(perWood * relicCount) + " Wood Trickle";
+                _line = "granting " + _cY + "+" + APFormatFloat(perWood * relicCount) + _cE + " " + _cG + "Wood" + _cE + " Trickle";
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
             if (perGold > 0.0)
             {
-                _line = "granting +" + APFormatFloat(perGold * relicCount) + " Gold Trickle";
+                _line = "granting " + _cY + "+" + APFormatFloat(perGold * relicCount) + _cE + " " + _cG + "Gold" + _cE + " Trickle";
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
             if (perFavor > 0.0)
             {
-                _line = "granting +" + APFormatFloat(perFavor * relicCount) + " Favor Trickle";
+                _line = "granting " + _cY + "+" + APFormatFloat(perFavor * relicCount) + _cE + " " + _cG + "Favor" + _cE + " Trickle";
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
-            if (hasLOS)
+            if (countLOS > 0)
             {
-                _line = "granting +" + (relicCount * 4) + " Line of Sight to everything";
+                _line = "granting " + _cY + "+" + (relicCount * 4 * countLOS) + _cE + " " + _cG + "Line of Sight" + _cE + " to everything";
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
-            if (hasRegen)
+            if (countRegen > 0)
             {
-                _line = "granting +" + relicCount + " Regeneration to everything";
+                _line = "granting " + _cY + "+" + (relicCount * countRegen) + _cE + " " + _cG + "Regeneration" + _cE + " to everything";
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
-            if (hasSpeed)
+            if (countSpeed > 0)
             {
-                _line = "granting all units +" + (relicCount * 5) + "% Speed";
+                _line = "granting all units " + _cY + "+" + (relicCount * 5 * countSpeed) + "%" + _cE + " " + _cG + "Speed" + _cE;
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
-            if (hasHP)
+            if (countHP > 0)
             {
-                _line = "granting everything +" + (relicCount * 10) + "% Max HP";
+                _line = "granting everything " + _cY + "+" + (relicCount * 10 * countHP) + "%" + _cE + " " + _cG + "Max HP" + _cE;
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
             if (hasPop)
             {
-                _line = "reducing all unit population slots by " + relicCount;
+                _line = "reducing all unit " + _cG + "population slots" + _cE + " by " + _cY + relicCount + _cE;
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
             if (hasGoldCost)
             {
-                _line = "reducing all Gold costs by " + (relicCount * 5) + "%";
+                _line = "reducing all " + _cG + "Gold" + _cE + " costs by " + _cY + (relicCount * 5) + "%" + _cE;
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
             if (hasWoodCost)
             {
-                _line = "reducing all Wood costs by " + (relicCount * 5) + "%";
+                _line = "reducing all " + _cG + "Wood" + _cE + " costs by " + _cY + (relicCount * 5) + "%" + _cE;
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
             if (hasFavorCost)
             {
-                _line = "reducing all Favor costs by " + (relicCount * 5) + "%";
+                _line = "reducing all " + _cG + "Favor" + _cE + " costs by " + _cY + (relicCount * 5) + "%" + _cE;
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
             if (hasFoodCost)
             {
-                _line = "reducing all Food costs by " + (relicCount * 5) + "%";
+                _line = "reducing all " + _cG + "Food" + _cE + " costs by " + _cY + (relicCount * 5) + "%" + _cE;
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
             if (hasBuildSpeed)
             {
-                _line = "making buildings build " + (relicCount * 10) + "% faster";
+                _line = "making " + _cG + "buildings" + _cE + " build " + _cY + (relicCount * 10) + "%" + _cE + " faster";
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
 
@@ -3519,22 +3752,81 @@ inactive
 }
 
 // -----------------------------------------------------------------------
-// APEnforceAgeLocks — continuously re-applies age unlock state.
-// AOM auto-enables next-tier age techs once prereqs are met (researching
-// Classical re-enables Heroic). One-shot disable in APApplyItems isn't
-// enough; we re-disable each tick.
-// APEnforceAgeLocks is intentionally unused.
-// APApplyAgeUnlocks() must only run once, from APApplyItems.
-// Re-running it re-applies generic age techs and stacks effects like Berserk LOS
-// and dock myth-unit samples.
+// APEnforceAgeLocks — constant watcher that re-disables age techs above
+// the player's cap. AOM auto-enables the next-tier minor god techs once
+// the previous age is researched, so we must watch every tick and push
+// forbidden techs back to 0 immediately.
+//
+// Cap < 1: re-disable Classical every tick (no condition — just lock).
+// Cap < 2: re-disable Heroic every tick that ClassicalAgeGeneral is active.
+// Cap < 3: re-disable Mythic every tick that HeroicAgeGeneral is active.
+// All 4 civs covered; non-assigned civs are already 0, re-setting is fine.
 // -----------------------------------------------------------------------
 rule APEnforceAgeLocks
-inactive
-minInterval 1
+highFrequency
+active
 {
-    APApplyAgeUnlocks();
-    xsDisableSelf();
-    //trDisableTrigger(APEnforceAgeLocks);
+    if (gAPAgeCap < 0) { return; }
+
+    if (gAPAgeCap < 1)
+    {
+        trTechSetStatus(1, cTechClassicalAgeGreek,      0);
+        trTechSetStatus(1, cTechClassicalAgeAthena,     0);
+        trTechSetStatus(1, cTechClassicalAgeHermes,     0);
+        trTechSetStatus(1, cTechClassicalAgeAres,       0);
+        trTechSetStatus(1, cTechClassicalAgeEgyptian,   0);
+        trTechSetStatus(1, cTechClassicalAgeAnubis,     0);
+        trTechSetStatus(1, cTechClassicalAgeBast,       0);
+        trTechSetStatus(1, cTechClassicalAgePtah,       0);
+        trTechSetStatus(1, cTechClassicalAgeNorse,      0);
+        trTechSetStatus(1, cTechClassicalAgeFreyja,     0);
+        trTechSetStatus(1, cTechClassicalAgeHeimdall,   0);
+        trTechSetStatus(1, cTechClassicalAgeForseti,    0);
+        trTechSetStatus(1, cTechClassicalAgeAtlantean,  0);
+        trTechSetStatus(1, cTechClassicalAgePrometheus, 0);
+        trTechSetStatus(1, cTechClassicalAgeLeto,       0);
+        trTechSetStatus(1, cTechClassicalAgeOceanus,    0);
+    }
+
+    if (gAPAgeCap < 2 && trTechStatusActive(1, cTechClassicalAgeGeneral))
+    {
+        trTechSetStatus(1, cTechHeroicAgeGreek,     0);
+        trTechSetStatus(1, cTechHeroicAgeApollo,    0);
+        trTechSetStatus(1, cTechHeroicAgeDionysus,  0);
+        trTechSetStatus(1, cTechHeroicAgeAphrodite, 0);
+        trTechSetStatus(1, cTechHeroicAgeEgyptian,  0);
+        trTechSetStatus(1, cTechHeroicAgeSekhmet,   0);
+        trTechSetStatus(1, cTechHeroicAgeSobek,     0);
+        trTechSetStatus(1, cTechHeroicAgeNephthys,  0);
+        trTechSetStatus(1, cTechHeroicAgeNorse,     0);
+        trTechSetStatus(1, cTechHeroicAgeBragi,     0);
+        trTechSetStatus(1, cTechHeroicAgeNjord,     0);
+        trTechSetStatus(1, cTechHeroicAgeSkadi,     0);
+        trTechSetStatus(1, cTechHeroicAgeAtlantean, 0);
+        trTechSetStatus(1, cTechHeroicAgeHyperion,  0);
+        trTechSetStatus(1, cTechHeroicAgeRheia,     0);
+        trTechSetStatus(1, cTechHeroicAgeTheia,     0);
+    }
+
+    if (gAPAgeCap < 3 && trTechStatusActive(1, cTechHeroicAgeGeneral))
+    {
+        trTechSetStatus(1, cTechMythicAgeGreek,      0);
+        trTechSetStatus(1, cTechMythicAgeHera,       0);
+        trTechSetStatus(1, cTechMythicAgeHephaestus, 0);
+        trTechSetStatus(1, cTechMythicAgeArtemis,    0);
+        trTechSetStatus(1, cTechMythicAgeEgyptian,   0);
+        trTechSetStatus(1, cTechMythicAgeOsiris,     0);
+        trTechSetStatus(1, cTechMythicAgeHorus,      0);
+        trTechSetStatus(1, cTechMythicAgeThoth,      0);
+        trTechSetStatus(1, cTechMythicAgeNorse,      0);
+        trTechSetStatus(1, cTechMythicAgeBaldr,      0);
+        trTechSetStatus(1, cTechMythicAgeTyr,        0);
+        trTechSetStatus(1, cTechMythicAgeHel,        0);
+        trTechSetStatus(1, cTechMythicAgeAtlantean,  0);
+        trTechSetStatus(1, cTechMythicAgeHelios,     0);
+        trTechSetStatus(1, cTechMythicAgeAtlas,      0);
+        trTechSetStatus(1, cTechMythicAgeHekate,     0);
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -3688,4 +3980,17 @@ inactive
     }
     APGrantRandGP(gAPRandGP4, n, 180);
     trQuestVarSet("rand_gp_4", 0);
+}
+
+// -----------------------------------------------------------------------
+// APReapplyUnitUnlocks — re-asserts trUnforbidProtounit for every unit
+// whose unlock item has been received. Runs every 5 seconds so that
+// save/load resets (which clear the forbid state) are recovered quickly.
+// APUnforbidUnlockedUnits() is generated into aom_state.xs by the client.
+// -----------------------------------------------------------------------
+rule APReapplyUnitUnlocks
+minInterval 5
+inactive
+{
+    APUnforbidUnlockedUnits();
 }

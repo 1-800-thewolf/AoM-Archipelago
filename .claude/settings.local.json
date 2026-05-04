@@ -34,7 +34,25 @@
       "Bash(python package.py)",
       "Bash(python3 package.py)",
       "PowerShell(py package.py 2>&1)",
-      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Philip\\\\AppData\\\\Local\\\\\" -Name | Where-Object { $_ -match \"arch\" })"
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Philip\\\\AppData\\\\Local\\\\\" -Name | Where-Object { $_ -match \"arch\" })",
+      "Bash(python3 -c ' *)",
+      "PowerShell(python --version 2>&1)",
+      "PowerShell(python3 --version 2>&1)",
+      "PowerShell(py --version 2>&1)",
+      "Bash(python -c \"import openpyxl; wb = openpyxl.load_workbook\\('Relicsanity.xlsx'\\); print\\(wb.sheetnames\\)\")",
+      "Bash(py --version)",
+      "Bash(python -c ' *)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Bash(where python *)",
+      "Bash(where py *)",
+      "Bash(ls /c/Python*)",
+      "Read(//c/Users/Philip/AppData/Local/Programs/**)",
+      "Bash(pandoc \"C:/Archipelago_stuff/AOM/Memory Files/major_and_minor_gods.docx\" -o /tmp/gods.md)",
+      "PowerShell($src = \"C:\\\\Archipelago_stuff\\\\AOM\\\\Memory Files\\\\major_and_minor_gods.docx\"; $dst = \"C:\\\\Temp\\\\gods_docx\"; if \\(Test-Path $dst\\) { Remove-Item $dst -Recurse -Force }; Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::ExtractToDirectory\\($src, $dst\\); Get-ChildItem $dst -Recurse | Select-Object FullName)",
+      "PowerShell($f = \"C:\\\\Archipelago_stuff\\\\AOM\\\\Memory Files\\\\major_and_minor_gods.docx\"; Get-Item $f | Format-List Length, LastWriteTime; $bytes = [System.IO.File]::ReadAllBytes\\($f\\) | Select-Object -First 16; $bytes | ForEach-Object { \"{0:X2}\" -f $_ })",
+      "Bash(python -m py_compile \"C:/Archipelago_stuff/AOM/aom/client/GameClient.py\" \"C:/Archipelago_stuff/AOM/aom/client/ApClient.py\")",
+      "Bash(py -m py_compile \"C:/Archipelago_stuff/AOM/aom/client/GameClient.py\" \"C:/Archipelago_stuff/AOM/aom/client/ApClient.py\")",
+      "Bash(py -m py_compile \"C:/Archipelago_stuff/AOM/aom/client/ApClient.py\")"
     ]
   }
 }

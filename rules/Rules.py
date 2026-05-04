@@ -661,12 +661,15 @@ def exclude_scenario_32_locations(world) -> None:
     player    = world.player
     multiworld = world.multiworld
     disabled_campaigns = getattr(world, "disabled_campaigns", set())
+    relicsanity_on = bool(getattr(world, "relicsanity_enabled", False))
     for location_data in aomLocationData:
         if location_data.scenario.campaign in disabled_campaigns:
             continue
         if location_data.scenario != aomScenarioData.FOTT_32:
             continue
         if location_data.type in (aomLocationType.VICTORY, aomLocationType.COMPLETION):
+            continue
+        if not relicsanity_on and location_data.type == aomLocationType.RELIC:
             continue
         location = multiworld.get_location(location_data.global_name(), player)
         location.progress_type = LocationProgressType.EXCLUDED
@@ -688,8 +691,11 @@ def set_item_placement_restrictions(world) -> None:
         "GOLDEN_GIFT":   aomItemData.UNLOCK_GOLDEN_GIFT.item_name,
     }
     disabled_campaigns = getattr(world, "disabled_campaigns", set())
+    relicsanity_on = bool(getattr(world, "relicsanity_enabled", False))
     for location_data in aomLocationData:
         if location_data.scenario.campaign in disabled_campaigns:
+            continue
+        if not relicsanity_on and location_data.type == aomLocationType.RELIC:
             continue
         location  = multiworld.get_location(location_data.global_name(), player)
         forbidden = campaign_to_forbidden.get(location_data.scenario.campaign.name)

@@ -28,6 +28,7 @@ from .Options import (Random_Major_Gods, ForceDifferentGod, MythUnitSanity, Extr
     AtlanteanMajorGods,
     NewAtlantis,
     GoldenGift,
+    Relicsanity,
 )
 from .items import Items
 from .locations import Campaigns, Locations
@@ -407,6 +408,9 @@ class aomWorld(World):
             self.shop_obelisk_assignments = {}
             self.shop_progression_slots   = {}
             self.shop_filler_only         = set()
+
+        # Relicsanity flag — read once so Regions/Rules/create_items can branch on it.
+        self.relicsanity_enabled: bool = bool(self.options.relicsanity.value)
 
         # Disabled-campaign set: campaigns can be opted out via YAML.
         # FOTT_FINAL is always enabled (its scenarios are the goal).
@@ -840,10 +844,12 @@ class aomWorld(World):
         # The 60 shop item slots remain free fill targets.
         gem_shop_on = self.gem_shop_enabled
         disabled_campaigns = self.disabled_campaigns
+        relicsanity_on = self.relicsanity_enabled
         visible_location_count = (
             sum(1 for loc in Locations.aomLocationData
                 if loc.type != Locations.aomLocationType.COMPLETION
-                and loc.scenario.campaign not in disabled_campaigns)
+                and loc.scenario.campaign not in disabled_campaigns
+                and (relicsanity_on or loc.type != Locations.aomLocationType.RELIC))
             - 1  # scenario 32 Victory is always locked to the Victory item
         )
         if gem_shop_on:
@@ -913,14 +919,50 @@ class aomWorld(World):
         # Flatten useful and filler into shuffled lists
         all_useful  = [n for names in useful_groups.values() for n in names]
         all_filler  = [n for names in filler_groups.values() for n in names]
-        # Infinite padding pool: filler items only, excluding reinforcements.
-        # Used when all distinct filler items are exhausted, and as the sole
-        # fallback when useful items run out (we never repeat useful items).
-        all_nonreinf_filler_inf = [
-            item.item_name for item in Items.aomItemData
-            if Items.item_type_to_classification.get(type(item.type)) == ItemClassification.filler
-            and not isinstance(item.type, Items.Reinforcement)
+        # Infinite padding pool: non-reinforcement filler items plus a curated
+        # set of stackable useful items (relic trickle and LOS/Regen/Speed/HP
+        # effects) whose XS handlers correctly accumulate multiple copies.
+        # "Joins the Campaign" items are intentionally excluded — they must
+        # appear at most once and are not present in either list below.
+        _repeatable_useful_names = [
+            Items.aomItemData.RELIC_TRICKLE_FOOD.item_name,
+            Items.aomItemData.RELIC_TRICKLE_WOOD.item_name,
+            Items.aomItemData.RELIC_TRICKLE_GOLD.item_name,
+            Items.aomItemData.RELIC_TRICKLE_FAVOR.item_name,
+            Items.aomItemData.RELIC_EFFECT_LOS.item_name,
+            Items.aomItemData.RELIC_EFFECT_REGEN.item_name,
+            Items.aomItemData.RELIC_EFFECT_SPEED.item_name,
+            Items.aomItemData.RELIC_EFFECT_HP.item_name,
         ]
+        # Build from filler_groups (already filtered by campaign/civ/hero-ability
+        # exclusions in the main item loop) rather than iterating Items.aomItemData
+        # directly — otherwise Chiron/Arkantos/Kastor/etc. filler items would leak
+        # into the infinite padding pool even when their campaigns are disabled.
+        all_nonreinf_filler_inf = [
+            name
+            for type_, names in filler_groups.items()
+            for name in names
+            if not issubclass(type_, Items.Reinforcement)
+        ] + _repeatable_useful_names
+
+        # Cap "Joins the Campaign" items at exactly 1 copy in the pool.
+        # They appear once via all_useful (each is a unique enum member), but
+        # this deduplication makes the cap explicit and robust against future changes.
+        _joins_item_names = frozenset({
+            Items.aomItemData.REGINLEIF_JOINS.item_name,
+            Items.aomItemData.ODYSSEUS_JOINS.item_name,
+            Items.aomItemData.KASTOR_JOINS.item_name,
+        })
+        _seen_joins: set = set()
+        _deduped_useful = []
+        for _name in all_useful:
+            if _name in _joins_item_names:
+                if _name in _seen_joins:
+                    continue
+                _seen_joins.add(_name)
+            _deduped_useful.append(_name)
+        all_useful = _deduped_useful
+
         self.random.shuffle(all_useful)
         self.random.shuffle(all_filler)
         self.random.shuffle(all_nonreinf_filler_inf)
@@ -989,6 +1031,7 @@ class aomWorld(World):
             "random_major_gods":      bool(self.options.random_major_gods.value),
             "update_buildings_for_random_god": bool(self.options.update_buildings_for_random_god.value),
             "gem_shop":       self.gem_shop_enabled,
+            "relicsanity":    self.relicsanity_enabled,
         }
         if self.options.random_major_gods:
             data["god_assignments"] = self.god_assignments
