@@ -4,7 +4,10 @@
 
 An [Archipelago](https://archipelago.gg) multiworld randomizer for the **Fall of the Trident** campaign in Age of Mythology: Retold.
 
-Current version: **0.3.3**
+Current version: **0.5.1**
+---
+## Video Tutorial:
+> https://youtu.be/Tjp0x-ZtOP0
 
 ---
 
@@ -23,19 +26,21 @@ Archipelago is a free, open-source multiworld randomizer platform that connects 
 
 ## Features
 
-**32 randomized scenarios** across the Greek, Egyptian, Norse, and Final campaign sections. All sections unlock independently — finding the Egyptian Scenarios item immediately opens missions 11–20 regardless of Greek progress.
+**48 randomized scenarios** across the Greek, Egyptian, and Norse Fall of the Trident campaign sections.
+- Also includes Golden Gift and New Atlantis Campaigns. 
+- All sections unlock independently — finding the Egyptian Scenarios item immediately opens missions 11–20 regardless of Greek progress.
 
-**Over 150 items** in the pool, including:
+**Hundreds of items** in the pool, including:
 - Hero special abilities (Arkantos lifesteal, Ajax shield bash in an area, Chiron poison arrow, Amanra reincarnating enemies as minions, and more)
-- Progressive Age Unlock items (Classical, Heroic, Mythic) per civilization
+- Progressive Age Unlock items per civilization
 - Unit unlock items for each civ (Hoplite, Berserk, Spearman, and more)
 - Section unlock items (Greek Scenarios, Egyptian Scenarios, Norse Scenarios, Atlantis Key)
-- Starting resource and passive income boosts
-- Reinforcement units that spawn in your base
-- Villager carry capacity and cost upgrades
-- Hero stat boosts (HP, Attack, Recharge Time, Regen) for major heroes
+- Resources
+- Reinforcement units that spawn in your base each scenario
+- Stronger Relic items
+- Hero stat boosts for major heroes
 
-**Over 150 locations** across all 32 scenarios — Victory checks and primary objectives.
+**Hundreds of locations** across all 48 scenarios plus optional Relicsanity.
 -Primary Objectives are indicated in the upper right corner in each scenario. Secondary and option objectives aren't locations.
 
 **Logic system** that ensures scenarios are only in logic when you have enough age unlocks and items to reasonably complete them. The game won't expect you to beat a Mythic Age scenario with nothing in your inventory.
