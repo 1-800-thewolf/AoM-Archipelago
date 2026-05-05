@@ -52,7 +52,11 @@
       "PowerShell($f = \"C:\\\\Archipelago_stuff\\\\AOM\\\\Memory Files\\\\major_and_minor_gods.docx\"; Get-Item $f | Format-List Length, LastWriteTime; $bytes = [System.IO.File]::ReadAllBytes\\($f\\) | Select-Object -First 16; $bytes | ForEach-Object { \"{0:X2}\" -f $_ })",
       "Bash(python -m py_compile \"C:/Archipelago_stuff/AOM/aom/client/GameClient.py\" \"C:/Archipelago_stuff/AOM/aom/client/ApClient.py\")",
       "Bash(py -m py_compile \"C:/Archipelago_stuff/AOM/aom/client/GameClient.py\" \"C:/Archipelago_stuff/AOM/aom/client/ApClient.py\")",
-      "Bash(py -m py_compile \"C:/Archipelago_stuff/AOM/aom/client/ApClient.py\")"
+      "Bash(py -m py_compile \"C:/Archipelago_stuff/AOM/aom/client/ApClient.py\")",
+      "Bash(dir \"C:\\\\Archipelago_stuff\\\\AOM\" /s /b /a-d)",
+      "Bash(findstr aom_state)",
+      "Bash(py -c ' *)",
+      "Bash(xargs -I {} sh -c 'basename {} | grep -i \"^Options\\\\.\" && echo {}')"
     ]
   }
 }

@@ -99,6 +99,10 @@ int          gAPTrapsFiredCount  = 0;  // increments each fire; client reads via
 vector       gAPTrapPos         = vector(0, 0, 0);
 // Building transform data — populated by APLoadBuildingTransforms() in aom_state.xs
 
+// Scenario / campaign IDs — must be declared before include so aom_state.xs sees them
+extern int gAPScenarioId  = 0;
+extern int gAPCampaignId  = 0;
+
 include "aom_state.xs";
 
 // -----------------------------------------------------------------------
@@ -410,8 +414,7 @@ void APFindReinforcementSpawn()
 // -----------------------------------------------------------------------
 
 
-int gAPScenarioId  = 0;
-int gAPCampaignId  = 0;
+// Moved above include — see top of file
 int gAPMajorGod    = 0;
 // Age cap = floor + ageCount, clamped 0..3. Set in APApplyAgeUnlocks.
 // 0=Archaic, 1=Classical, 2=Heroic, 3=Mythic. -1 = uninit (watcher no-op).
@@ -2307,102 +2310,48 @@ void APDisableAllNorseAgeTechs()
 
 void APApplyGreekMinorGods(int majorGod = 0, int ageCount = 0, int startingFloor = 0)
 {
-    // Force-disable all Greek age techs. APInitStartingAgeTechs has already set
-    // floor tiers to status 2 (active); we only set tiers ABOVE the floor to
-    // status 1 (researchable), based on the player's age unlock count.
+    // Force-disable all Greek age techs, then re-enable the base age techs only.
+    // Minor-god tech selection (exactly one per tier) is handled by the generated
+    // APApplyMinorGodSelection(), called after this function in APApplyAgeUnlocks().
     APForceDisableAllGreekAgeTechs();
 
-    // Re-activate floor tiers (force-disable cleared them)
-    // For floor tiers: only set the base age tech to status 2.
-    // The seed-determined minor god tech is activated by APInitStartingAgeTechs().
+    // Re-activate floor base age techs (force-disable cleared them).
     if (startingFloor >= 1) { trTechSetStatus(1, cTechClassicalAgeGreek, 2); }
     if (startingFloor >= 2) { trTechSetStatus(1, cTechHeroicAgeGreek,    2); }
     if (startingFloor >= 3) { trTechSetStatus(1, cTechMythicAgeGreek,    2); }
 
-    // Set researchable (status 1) only for tiers above the starting floor
-    if (ageCount >= 1 && startingFloor < 1)
-    {
-        trTechSetStatus(1, cTechClassicalAgeGreek, 1);
-        if (majorGod == cAPMajorZeus)     { trTechSetStatus(1, cTechClassicalAgeAthena, 1); trTechSetStatus(1, cTechClassicalAgeHermes, 1); }
-        if (majorGod == cAPMajorPoseidon) { trTechSetStatus(1, cTechClassicalAgeHermes, 1); trTechSetStatus(1, cTechClassicalAgeAres, 1);   }
-        if (majorGod == cAPMajorHades)    { trTechSetStatus(1, cTechClassicalAgeAthena, 1); trTechSetStatus(1, cTechClassicalAgeAres, 1);    }
-    }
-    if (ageCount >= 2 && startingFloor < 2)
-    {
-        trTechSetStatus(1, cTechHeroicAgeGreek, 1);
-        if (majorGod == cAPMajorZeus)     { trTechSetStatus(1, cTechHeroicAgeApollo, 1);     trTechSetStatus(1, cTechHeroicAgeDionysus, 1);   }
-        if (majorGod == cAPMajorPoseidon) { trTechSetStatus(1, cTechHeroicAgeDionysus, 1);   trTechSetStatus(1, cTechHeroicAgeAphrodite, 1);  }
-        if (majorGod == cAPMajorHades)    { trTechSetStatus(1, cTechHeroicAgeApollo, 1);     trTechSetStatus(1, cTechHeroicAgeAphrodite, 1);  }
-    }
-    if (ageCount >= 3 && startingFloor < 3)
-    {
-        trTechSetStatus(1, cTechMythicAgeGreek, 1);
-        if (majorGod == cAPMajorZeus)     { trTechSetStatus(1, cTechMythicAgeHera, 1);        trTechSetStatus(1, cTechMythicAgeHephaestus, 1); }
-        if (majorGod == cAPMajorPoseidon) { trTechSetStatus(1, cTechMythicAgeHephaestus, 1); trTechSetStatus(1, cTechMythicAgeArtemis, 1);    }
-        if (majorGod == cAPMajorHades)    { trTechSetStatus(1, cTechMythicAgeHera, 1);        trTechSetStatus(1, cTechMythicAgeArtemis, 1);    }
-    }
+    // Set base age techs researchable for tiers above the starting floor.
+    if (ageCount >= 1 && startingFloor < 1) { trTechSetStatus(1, cTechClassicalAgeGreek, 1); }
+    if (ageCount >= 2 && startingFloor < 2) { trTechSetStatus(1, cTechHeroicAgeGreek,    1); }
+    if (ageCount >= 3 && startingFloor < 3) { trTechSetStatus(1, cTechMythicAgeGreek,    1); }
 }
 
 void APApplyEgyptianMinorGods(int majorGod = 0, int ageCount = 0, int startingFloor = 0)
 {
+    // Base age techs only — minor-god selection handled by APApplyMinorGodSelection().
     APForceDisableAllEgyptianAgeTechs();
 
     if (startingFloor >= 1) { trTechSetStatus(1, cTechClassicalAgeEgyptian, 2); }
-    if (startingFloor >= 2) { trTechSetStatus(1, cTechHeroicAgeEgyptian,  2); }
-    if (startingFloor >= 3) { trTechSetStatus(1, cTechMythicAgeEgyptian,  2); }
+    if (startingFloor >= 2) { trTechSetStatus(1, cTechHeroicAgeEgyptian,    2); }
+    if (startingFloor >= 3) { trTechSetStatus(1, cTechMythicAgeEgyptian,    2); }
 
-    if (ageCount >= 1 && startingFloor < 1)
-    {
-        trTechSetStatus(1, cTechClassicalAgeEgyptian, 1);
-        if (majorGod == cAPMajorRa)   { trTechSetStatus(1, cTechClassicalAgeBast, 1);   trTechSetStatus(1, cTechClassicalAgePtah, 1);   }
-        if (majorGod == cAPMajorIsis) { trTechSetStatus(1, cTechClassicalAgeAnubis, 1); trTechSetStatus(1, cTechClassicalAgeBast, 1);   }
-        if (majorGod == cAPMajorSet)  { trTechSetStatus(1, cTechClassicalAgeAnubis, 1); trTechSetStatus(1, cTechClassicalAgeBast, 1);   }
-    }
-    if (ageCount >= 2 && startingFloor < 2)
-    {
-        trTechSetStatus(1, cTechHeroicAgeEgyptian, 1);
-        if (majorGod == cAPMajorRa)   { trTechSetStatus(1, cTechHeroicAgeSekhmet, 1);   trTechSetStatus(1, cTechHeroicAgeSobek, 1);     }
-        if (majorGod == cAPMajorIsis) { trTechSetStatus(1, cTechHeroicAgeSobek, 1);     trTechSetStatus(1, cTechHeroicAgeNephthys, 1);  }
-        if (majorGod == cAPMajorSet)  { trTechSetStatus(1, cTechHeroicAgeSekhmet, 1);   trTechSetStatus(1, cTechHeroicAgeNephthys, 1);  }
-    }
-    if (ageCount >= 3 && startingFloor < 3)
-    {
-        trTechSetStatus(1, cTechMythicAgeEgyptian, 1);
-        if (majorGod == cAPMajorRa)   { trTechSetStatus(1, cTechMythicAgeOsiris, 1);    trTechSetStatus(1, cTechMythicAgeHorus, 1);     }
-        if (majorGod == cAPMajorIsis) { trTechSetStatus(1, cTechMythicAgeHorus, 1);     trTechSetStatus(1, cTechMythicAgeThoth, 1);     }
-        if (majorGod == cAPMajorSet)  { trTechSetStatus(1, cTechMythicAgeOsiris, 1);    trTechSetStatus(1, cTechMythicAgeThoth, 1);     }
-    }
+    if (ageCount >= 1 && startingFloor < 1) { trTechSetStatus(1, cTechClassicalAgeEgyptian, 1); }
+    if (ageCount >= 2 && startingFloor < 2) { trTechSetStatus(1, cTechHeroicAgeEgyptian,    1); }
+    if (ageCount >= 3 && startingFloor < 3) { trTechSetStatus(1, cTechMythicAgeEgyptian,    1); }
 }
 
 void APApplyNorseMinorGods(int majorGod = 0, int ageCount = 0, int startingFloor = 0)
 {
+    // Base age techs only — minor-god selection handled by APApplyMinorGodSelection().
     APForceDisableAllNorseAgeTechs();
 
     if (startingFloor >= 1) { trTechSetStatus(1, cTechClassicalAgeNorse, 2); }
     if (startingFloor >= 2) { trTechSetStatus(1, cTechHeroicAgeNorse,    2); }
     if (startingFloor >= 3) { trTechSetStatus(1, cTechMythicAgeNorse,    2); }
 
-    if (ageCount >= 1 && startingFloor < 1)
-    {
-        trTechSetStatus(1, cTechClassicalAgeNorse, 1);
-        if (majorGod == cAPMajorOdin) { trTechSetStatus(1, cTechClassicalAgeFreyja, 1);   trTechSetStatus(1, cTechClassicalAgeHeimdall, 1); }
-        if (majorGod == cAPMajorThor) { trTechSetStatus(1, cTechClassicalAgeFreyja, 1);   trTechSetStatus(1, cTechClassicalAgeForseti, 1);  }
-        if (majorGod == cAPMajorLoki) { trTechSetStatus(1, cTechClassicalAgeForseti, 1);  trTechSetStatus(1, cTechClassicalAgeHeimdall, 1); }
-    }
-    if (ageCount >= 2 && startingFloor < 2)
-    {
-        trTechSetStatus(1, cTechHeroicAgeNorse, 1);
-        if (majorGod == cAPMajorOdin) { trTechSetStatus(1, cTechHeroicAgeNjord, 1);  trTechSetStatus(1, cTechHeroicAgeSkadi, 1); }
-        if (majorGod == cAPMajorThor) { trTechSetStatus(1, cTechHeroicAgeBragi, 1);  trTechSetStatus(1, cTechHeroicAgeSkadi, 1); }
-        if (majorGod == cAPMajorLoki) { trTechSetStatus(1, cTechHeroicAgeBragi, 1);  trTechSetStatus(1, cTechHeroicAgeNjord, 1); }
-    }
-    if (ageCount >= 3 && startingFloor < 3)
-    {
-        trTechSetStatus(1, cTechMythicAgeNorse, 1);
-        if (majorGod == cAPMajorOdin) { trTechSetStatus(1, cTechMythicAgeBaldr, 1); trTechSetStatus(1, cTechMythicAgeTyr, 1); }
-        if (majorGod == cAPMajorThor) { trTechSetStatus(1, cTechMythicAgeBaldr, 1); trTechSetStatus(1, cTechMythicAgeTyr, 1); }
-        if (majorGod == cAPMajorLoki) { trTechSetStatus(1, cTechMythicAgeTyr, 1);   trTechSetStatus(1, cTechMythicAgeHel, 1); }
-    }
+    if (ageCount >= 1 && startingFloor < 1) { trTechSetStatus(1, cTechClassicalAgeNorse, 1); }
+    if (ageCount >= 2 && startingFloor < 2) { trTechSetStatus(1, cTechHeroicAgeNorse,    1); }
+    if (ageCount >= 3 && startingFloor < 3) { trTechSetStatus(1, cTechMythicAgeNorse,    1); }
 }
 
 void APDisableAllAtlanteanAgeTechs()
@@ -2423,33 +2372,16 @@ void APDisableAllAtlanteanAgeTechs()
 
 void APApplyAtlanteanMinorGods(int majorGod = 0, int ageCount = 0, int startingFloor = 0)
 {
+    // Base age techs only — minor-god selection handled by APApplyMinorGodSelection().
     APForceDisableAllAtlanteanAgeTechs();
 
     if (startingFloor >= 1) { trTechSetStatus(1, cTechClassicalAgeAtlantean, 2); }
-    if (startingFloor >= 2) { trTechSetStatus(1, cTechHeroicAgeAtlantean,  2); }
-    if (startingFloor >= 3) { trTechSetStatus(1, cTechMythicAgeAtlantean,  2); }
+    if (startingFloor >= 2) { trTechSetStatus(1, cTechHeroicAgeAtlantean,    2); }
+    if (startingFloor >= 3) { trTechSetStatus(1, cTechMythicAgeAtlantean,    2); }
 
-    if (ageCount >= 1 && startingFloor < 1)
-    {
-        trTechSetStatus(1, cTechClassicalAgeAtlantean, 1);
-        if (majorGod == cAPMajorKronos) { trTechSetStatus(1, cTechClassicalAgePrometheus, 1); trTechSetStatus(1, cTechClassicalAgeLeto, 1);    }
-        if (majorGod == cAPMajorOranos) { trTechSetStatus(1, cTechClassicalAgePrometheus, 1); trTechSetStatus(1, cTechClassicalAgeOceanus, 1);  }
-        if (majorGod == cAPMajorGaia)   { trTechSetStatus(1, cTechClassicalAgeLeto, 1);        trTechSetStatus(1, cTechClassicalAgeOceanus, 1);  }
-    }
-    if (ageCount >= 2 && startingFloor < 2)
-    {
-        trTechSetStatus(1, cTechHeroicAgeAtlantean, 1);
-        if (majorGod == cAPMajorKronos) { trTechSetStatus(1, cTechHeroicAgeHyperion, 1); trTechSetStatus(1, cTechHeroicAgeRheia, 1);  }
-        if (majorGod == cAPMajorOranos) { trTechSetStatus(1, cTechHeroicAgeHyperion, 1); trTechSetStatus(1, cTechHeroicAgeTheia, 1);  }
-        if (majorGod == cAPMajorGaia)   { trTechSetStatus(1, cTechHeroicAgeRheia, 1);    trTechSetStatus(1, cTechHeroicAgeTheia, 1);  }
-    }
-    if (ageCount >= 3 && startingFloor < 3)
-    {
-        trTechSetStatus(1, cTechMythicAgeAtlantean, 1);
-        if (majorGod == cAPMajorKronos) { trTechSetStatus(1, cTechMythicAgeHelios, 1); trTechSetStatus(1, cTechMythicAgeAtlas, 1);   }
-        if (majorGod == cAPMajorOranos) { trTechSetStatus(1, cTechMythicAgeHelios, 1); trTechSetStatus(1, cTechMythicAgeHekate, 1);  }
-        if (majorGod == cAPMajorGaia)   { trTechSetStatus(1, cTechMythicAgeAtlas, 1);  trTechSetStatus(1, cTechMythicAgeHekate, 1);  }
-    }
+    if (ageCount >= 1 && startingFloor < 1) { trTechSetStatus(1, cTechClassicalAgeAtlantean, 1); }
+    if (ageCount >= 2 && startingFloor < 2) { trTechSetStatus(1, cTechHeroicAgeAtlantean,    1); }
+    if (ageCount >= 3 && startingFloor < 3) { trTechSetStatus(1, cTechMythicAgeAtlantean,    1); }
 }
 
 int APGetStartingAgeCount(int scenarioId = 0)
@@ -2566,6 +2498,14 @@ void APApplyAgeUnlocks()
         APForceDisableAllNorseAgeTechs();
         civCount = atlanteanCount;
     }
+
+    // Apply the seed-determined minor-god selection for every tier.
+    // This sets exactly one minor-god tech per tier to status 2 (floor tiers)
+    // or status 1 (above-floor tiers, when civCount allows), and forces the
+    // rejected option to status 0.  Must run AFTER APApply*MinorGods() so it
+    // overrides any auto-enable the engine applies when the base age tech is
+    // force-set to status 2.
+    APApplyMinorGodSelection(civCount);
 
     // Cache cap for the watcher rule (APEnforceAgeLocks). AOM auto-enables
     // next-tier age techs when prereqs are researched, so we re-disable
@@ -3448,11 +3388,12 @@ inactive
     int k = 0;
     int undoCount = 0;
 
-    // Additive: LOS +4 per relic. Field 2 = LOS.
+    // Additive: LOS +4/relic for Buildings, +2/relic for Units. Field 2 = LOS.
     apRelicDelta = targLOS - gAPRelicEffAppliedLOS;
     if (apRelicDelta != 0)
     {
-        trModifyProtounitData("All", 1, 2, 4.0 * apRelicDelta, 0);
+        trModifyProtounitData("Building", 1, 2, 4.0 * apRelicDelta, 0);
+        trModifyProtounitData("Unit",     1, 2, 2.0 * apRelicDelta, 0);
         gAPRelicEffAppliedLOS = targLOS;
     }
 
@@ -3489,14 +3430,14 @@ inactive
         gAPRelicEffAppliedSpeed = targSpeed;
     }
 
-    // Multiplicative: Max HP x1.10 per relic. Field 0 = max hitpoints.
+    // Multiplicative: Max HP x1.05 per relic. Field 0 = max hitpoints.
     apRelicDelta = targHP - gAPRelicEffAppliedHP;
     if (apRelicDelta > 0)
     {
         k = 0;
         while (k < apRelicDelta)
         {
-            trModifyProtounitData("All", 1, 0, 1.10, 2);
+            trModifyProtounitData("All", 1, 0, 1.05, 2);
             k = k + 1;
         }
         gAPRelicEffAppliedHP = targHP;
@@ -3507,20 +3448,18 @@ inactive
         undoCount = 0 - apRelicDelta;
         while (k < undoCount)
         {
-            trModifyProtounitData("All", 1, 0, 1.0 / 1.10, 2);
+            trModifyProtounitData("All", 1, 0, 1.0 / 1.05, 2);
             k = k + 1;
         }
         gAPRelicEffAppliedHP = targHP;
     }
 
-    // Additive: Population -1 per relic. Two related fields (6 and 7) per the
-    // requested triggers — apply both each tick so the population display and
-    // cap accounting stay in sync.
+    // Additive: House and Manor pop cap +1 per relic. Field 7 = population capacity.
     apRelicDelta = targPop - gAPRelicEffAppliedPop;
     if (apRelicDelta != 0)
     {
-        trModifyProtounitData("Unit", 1, 7, 0.0 - (1.0 * apRelicDelta), 0);
-        trModifyProtounitData("Unit", 1, 6, 0.0 - (1.0 * apRelicDelta), 0);
+        trModifyProtounitData("House",  1, 7, 1.0 * apRelicDelta, 0);
+        trModifyProtounitData("Manor",  1, 7, 1.0 * apRelicDelta, 0);
         gAPRelicEffAppliedPop = targPop;
     }
 
@@ -3697,7 +3636,7 @@ inactive
             }
             if (countLOS > 0)
             {
-                _line = "granting " + _cY + "+" + (relicCount * 4 * countLOS) + _cE + " " + _cG + "Line of Sight" + _cE + " to everything";
+                _line = "granting " + _cG + "Buildings" + _cE + " " + _cY + "+" + (relicCount * 4 * countLOS) + _cE + " and " + _cG + "Units" + _cE + " " + _cY + "+" + (relicCount * 2 * countLOS) + _cE + " " + _cG + "Line of Sight" + _cE;
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
             if (countRegen > 0)
@@ -3712,12 +3651,12 @@ inactive
             }
             if (countHP > 0)
             {
-                _line = "granting everything " + _cY + "+" + (relicCount * 10 * countHP) + "%" + _cE + " " + _cG + "Max HP" + _cE;
+                _line = "granting everything " + _cY + "+" + (relicCount * 5 * countHP) + "%" + _cE + " " + _cG + "Max HP" + _cE;
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
             if (hasPop)
             {
-                _line = "reducing all unit " + _cG + "population slots" + _cE + " by " + _cY + relicCount + _cE;
+                _line = "granting " + _cY + "+" + relicCount + _cE + " " + _cG + "population capacity" + _cE + " to " + _cG + "Houses" + _cE + " and " + _cG + "Manors" + _cE;
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
             if (hasGoldCost)

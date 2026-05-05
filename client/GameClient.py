@@ -93,7 +93,8 @@ class AoMGameContext:
     random_major_gods: bool = False
     update_buildings_for_random_god: bool = True
     god_assignments: dict = None         # scenario_id (int) → major_god int
-    minor_god_assignments: dict = None   # scenario_id (int) → [tech_name, ...]\n
+    minor_god_assignments: dict = None   # scenario_id (int) → [tech_name, ...]
+    minor_god_full: dict = None          # scenario_id (int) → {tier (int) → [chosen, rejected, is_floor]}
     archaic_forbids: dict = None         # scenario_id (int) → [unit_name, ...]
     god_power_assignments: dict = None   # scenario_id (int) → [tier1, tier2, tier3, tier4]
     # Cache identity — set on connect, used to build cache_folder path
@@ -362,9 +363,14 @@ _HEROIC_BLDGS = {
     "Norse":     ["HillFort"],
     "Atlantean": ["Palace"],
 }
-# Scenarios 7 and 26 use player 3 instead of player 1 for building transforms.
-# Scenario 26 also transforms players 4 and 5.
-_BLDG_PLAYER_OVERRIDE = {7: [3], 26: [3, 4, 5]}
+# Scenarios where ally players also need building transforms to match P1's random god.
+# Key = scenario global_number, value = player IDs to transform.
+# Default (not listed) = [1] (player 1 only).
+# Scenario 7:  player 1 is absent; player 3 is the allied human player.
+# Scenario 16: player 4 mirrors player 1's god (fott 16b).
+# Scenario 26: players 3-5 are allied and share player 1's god.
+# Scenario 511 (NA 11): players 2-5 are allied and share player 1's god.
+_BLDG_PLAYER_OVERRIDE = {7: [3], 16: [4], 26: [3, 4, 5], 511: [2, 3, 4, 5]}
 
 def write_aom_state(ctx: AoMGameContext) -> None:
 
@@ -457,6 +463,36 @@ def write_aom_state(ctx: AoMGameContext) -> None:
             lines.append("    {")
             for tech in techs:
                 lines.append(f"        trTechSetStatus(1, {tech}, 2);")
+            lines.append("    }")
+    lines.append("}")
+
+    # APApplyMinorGodSelection — called from APApplyAgeUnlocks() every time items
+    # are processed.  Sets exactly ONE minor-god tech per age tier to the correct
+    # status (2 for floor tiers, 1 for above-floor tiers when ageCount allows,
+    # 0 otherwise) and forces the rejected option to 0.  This replaces the old
+    # "both options at status 1" logic in APApplyGreekMinorGods etc.
+    lines.append("")
+    lines.append("void APApplyMinorGodSelection(int ageCount = 0)")
+    lines.append("{")
+    if ctx.minor_god_full:
+        for scenario_id in sorted(ctx.minor_god_full.keys()):
+            tier_data = ctx.minor_god_full.get(scenario_id) or {}
+            if not tier_data:
+                continue
+            lines.append(f"    if (gAPScenarioId == {scenario_id})")
+            lines.append("    {")
+            for tier in sorted(tier_data.keys()):
+                entry   = tier_data[tier]
+                chosen   = entry[0]
+                rejected = entry[1]
+                is_floor = entry[2]
+                if is_floor:
+                    lines.append(f"        trTechSetStatus(1, {chosen}, 2);")
+                    lines.append(f"        trTechSetStatus(1, {rejected}, 0);")
+                else:
+                    lines.append(f"        if (ageCount >= {tier}) {{ trTechSetStatus(1, {chosen}, 1); }}")
+                    lines.append(f"        else {{ trTechSetStatus(1, {chosen}, 0); }}")
+                    lines.append(f"        trTechSetStatus(1, {rejected}, 0);")
             lines.append("    }")
     lines.append("}")
 

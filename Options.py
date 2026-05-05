@@ -140,15 +140,6 @@ class ForceDifferentGod(Toggle):
     default = 1
 
 
-class MythUnitSanity(Toggle):
-    """Include myth unit tier unlock items in the pool.
-When enabled, all myth units are forbidden at the start and must be unlocked by finding the corresponding tier item.
-Turn this off for an easier time, but there will be very little variety in playstyle."""
-    internal_name = "myth_unit_sanity"
-    display_name = "Shuffle Myth Unit Unlocks"
-    default = 1
-
-
 class HeroAbilities(Toggle):
     """Include custom hero special ability items in the item pool?
 
@@ -324,7 +315,6 @@ class AomOptions(PerGameCommonOptions):
     wins_to_open_shop:               WinsToOpenShop
     random_major_gods:                       Random_Major_Gods
     force_different_god:                ForceDifferentGod
-    myth_unit_sanity:                MythUnitSanity
     hero_abilities:                  HeroAbilities
     trap_percentage:                 TrapPercentage
     update_buildings_for_random_god: UpdateBuildingsForRandomGod

@@ -980,6 +980,11 @@ class AoMContext(CommonContext):
         self.game_ctx.minor_god_assignments = (
             {int(k): v for k, v in raw_minor.items()} if raw_minor else {}
         )
+        raw_full = slot_data.get("minor_god_full", {})
+        self.game_ctx.minor_god_full = (
+            {int(k): {int(t): v for t, v in tiers.items()} for k, tiers in raw_full.items()}
+            if raw_full else {}
+        )
         raw_forbids = slot_data.get("archaic_forbids", {})
         self.game_ctx.archaic_forbids = (
             {int(k): v for k, v in raw_forbids.items()} if raw_forbids else {}
@@ -1072,7 +1077,7 @@ class AoMContext(CommonContext):
                 self.game_ctx.trap_queue.extend(new_traps)
                 save_trap_state(self.game_ctx)
                 write_aom_state(self.game_ctx)
-                logger.info(f"Traps queued: {new_traps} (total: {len(self.game_ctx.trap_queue)})")
+                logger.debug(f"Traps queued: {new_traps} (total: {len(self.game_ctx.trap_queue)})")
 
         _update_atlantis_ui(self)
 

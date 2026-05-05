@@ -477,10 +477,10 @@ class aomItemData(enum.IntEnum):
     # Relic Trickle — Useful
     # Each garrisoned relic in any player 1 temple grants the listed trickle.
     # -----------------------------------------------------------------------
-    RELIC_TRICKLE_FOOD    = 25, "Each Owned Relic Grants 2 Food Trickle",   RelicTrickle(Resource.FOOD, 2.0)
-    RELIC_TRICKLE_WOOD    = 26, "Each Owned Relic Grants 2 Wood Trickle",   RelicTrickle(Resource.WOOD, 2.0)
-    RELIC_TRICKLE_GOLD    = 27, "Each Owned Relic Grants 2 Gold Trickle",   RelicTrickle(Resource.GOLD, 2.0)
-    RELIC_TRICKLE_FAVOR   = 28, "Each Owned Relic Grants 1 Favor Trickle",  RelicTrickle(Resource.FAVOR, 1.0)
+    RELIC_TRICKLE_FOOD    = 25, "Each Owned Relic Grants 1 Food Trickle",   RelicTrickle(Resource.FOOD, 1.0)
+    RELIC_TRICKLE_WOOD    = 26, "Each Owned Relic Grants 1 Wood Trickle",   RelicTrickle(Resource.WOOD, 1.0)
+    RELIC_TRICKLE_GOLD    = 27, "Each Owned Relic Grants 1 Gold Trickle",   RelicTrickle(Resource.GOLD, 1.0)
+    RELIC_TRICKLE_FAVOR   = 28, "Each Owned Relic Grants 0.25 Favor Trickle",  RelicTrickle(Resource.FAVOR, 0.25)
 
     # -----------------------------------------------------------------------
     # Relic Effects — Useful
@@ -489,11 +489,11 @@ class aomItemData(enum.IntEnum):
     # underlying tr* call once per relic delta (or once with delta-multiplied
     # value for additive effects).
     # -----------------------------------------------------------------------
-    RELIC_EFFECT_LOS          = 29, "Each Owned Relic Grants Everything +4 Line of Sight",         RelicEffect("los")
+    RELIC_EFFECT_LOS          = 29, "Each Owned Relic Grants Buildings +4 and Units +2 Line of Sight", RelicEffect("los")
     RELIC_EFFECT_REGEN        = 30, "Each Owned Relic Grants Everything +1 Regeneration",          RelicEffect("regen")
     RELIC_EFFECT_SPEED        = 31, "Each Owned Relic Grants All Units +5% Speed",                  RelicEffect("speed")
-    RELIC_EFFECT_HP           = 32, "Each Owned Relic Grants Everything +10% Max Hitpoints",        RelicEffect("hp")
-    RELIC_EFFECT_POP          = 33, "Each Owned Relic Reduces the Population Count of All Units by 1", RelicEffect("pop")
+    RELIC_EFFECT_HP           = 32, "Each Owned Relic Grants Everything +5% Max Hitpoints",         RelicEffect("hp")
+    RELIC_EFFECT_POP          = 33, "Each Owned Relic Increases House and Manor Population Capacity by 1", RelicEffect("pop")
     RELIC_EFFECT_GOLD_COST    = 34, "Each Owned Relic Reduces the Gold Cost of Everything 5%",      RelicEffect("gold_cost")
     RELIC_EFFECT_WOOD_COST    = 35, "Each Owned Relic Reduces the Wood Cost of Everything 5%",      RelicEffect("wood_cost")
     RELIC_EFFECT_FAVOR_COST   = 36, "Each Owned Relic Reduces the Favor Cost of Units and Buildings 5%", RelicEffect("favor_cost")

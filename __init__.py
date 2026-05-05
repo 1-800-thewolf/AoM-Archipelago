@@ -16,7 +16,7 @@ from worlds.AutoWorld import WebWorld, World
 from worlds.LauncherComponents import Component, Type, components, launch as launch_subprocess
 import worlds.LauncherComponents as components_module
 
-from .Options import (Random_Major_Gods, ForceDifferentGod, MythUnitSanity, ExtraFinalMissionAgeUnlocks,
+from .Options import (Random_Major_Gods, ForceDifferentGod, ExtraFinalMissionAgeUnlocks,
     AomOptions,
     FinalScenarios,
     HeroAbilities,
@@ -29,6 +29,12 @@ from .Options import (Random_Major_Gods, ForceDifferentGod, MythUnitSanity, Extr
     NewAtlantis,
     GoldenGift,
     Relicsanity,
+    GemShop,
+    WinsToOpenShop,
+    FottGreekCampaign,
+    FottEgyptianCampaign,
+    FottNorseCampaign,
+    UpdateBuildingsForRandomGod,
 )
 from .items import Items
 from .locations import Campaigns, Locations
@@ -52,6 +58,27 @@ class aomWebWorld(WebWorld):
     """Web settings and YAML template configuration for Age of Mythology Retold."""
     icon = "worlds/aom/aom_icon.png"
     option_groups = [
+        OptionGroup("Shop", [
+            GemShop,
+            WinsToOpenShop,
+        ]),
+        OptionGroup("Campaigns", [
+            FottGreekCampaign,
+            FottEgyptianCampaign,
+            FottNorseCampaign,
+            NewAtlantis,
+            GoldenGift,
+            Relicsanity,
+        ]),
+        OptionGroup("Random Major Gods", [
+            Random_Major_Gods,
+            ForceDifferentGod,
+            GreekMajorGods,
+            EgyptianMajorGods,
+            NorseMajorGods,
+            AtlanteanMajorGods,
+            UpdateBuildingsForRandomGod,
+        ]),
         OptionGroup("Starting Setup", [
             StartingScenarios,
         ]),
@@ -361,7 +388,11 @@ class aomWorld(World):
         )
 
     def get_filler_item_name(self) -> str:
-        return self.random.choice([item.item_name for item in Items.filler_items])
+        # Exclude Gem: gems are locked to Victory locations by place_gems() and
+        # should never appear as padding filler at objective/relic locations.
+        non_gem = [item.item_name for item in Items.filler_items
+                   if not isinstance(item.type, Items.Gem)]
+        return self.random.choice(non_gem)
 
     def generate_early(self) -> None:
         _rmg_on = bool(self.options.random_major_gods.value)
@@ -397,6 +428,7 @@ class aomWorld(World):
         else:
             self.god_assignments = {}
         self.minor_god_assignments: dict[int, list] = self._generate_minor_god_assignments()
+        self.minor_god_full: dict[int, dict]        = self._generate_minor_god_full()
         self.archaic_forbids: dict[int, list]       = self._generate_archaic_forbids()
         # Shop generation (only when gem_shop is enabled)
         self.gem_shop_enabled: bool = bool(self.options.gem_shop.value)
@@ -562,6 +594,48 @@ class aomWorld(World):
                 result[scenario_id] = techs
         return result
 
+    def _generate_minor_god_full(self) -> dict[int, dict]:
+        """
+        Returns {scenario_id: {tier: [chosen_tech, rejected_tech, is_floor]}}
+        for ALL tiers (1-3) of every scenario.
+
+        Floor-tier choices (tier <= starting_age) are extracted from the already-
+        generated minor_god_assignments so the RNG sequence for those tiers is not
+        disturbed.  Above-floor tiers use self.random (random_major_gods mode) or
+        always option-A (vanilla mode) so no existing item-placement seeds are
+        broken when random_major_gods is off.
+        """
+        result: dict[int, dict] = {}
+        for scenario_id in sorted(_VANILLA_GODS.keys()):
+            god_id       = self.god_assignments.get(scenario_id, _VANILLA_GODS[scenario_id])
+            starting_age = _SCENARIO_STARTING_AGE.get(scenario_id, 0)
+            floor_techs  = self.minor_god_assignments.get(scenario_id, [])
+            tier_data: dict[int, list] = {}
+            for tier in range(1, 4):
+                options = _MINOR_GOD_TECHS.get((god_id, tier), [])
+                if len(options) < 2:
+                    continue
+                if tier <= starting_age:
+                    # Floor tier: extract the pre-made choice from minor_god_assignments.
+                    # Format is [base_tech, minor_god_tech, base_tech, minor_god_tech, ...]
+                    # so minor god for tier T is at odd index (T-1)*2 + 1.
+                    idx = (tier - 1) * 2 + 1
+                    if idx < len(floor_techs):
+                        chosen   = floor_techs[idx]
+                        rejected = options[1] if options[0] == chosen else options[0]
+                        tier_data[tier] = [chosen, rejected, True]
+                else:
+                    # Above-floor tier: new seeded choice (or deterministic option-A).
+                    if self.options.random_major_gods:
+                        chosen = self.random.choice(options)
+                    else:
+                        chosen = options[0]
+                    rejected = options[1] if options[0] == chosen else options[0]
+                    tier_data[tier] = [chosen, rejected, False]
+            if tier_data:
+                result[scenario_id] = tier_data
+        return result
+
     def _generate_god_power_assignments(self) -> dict[int, list[str]]:
         """
         Pre-determine 4 random god powers, one per tier, for every scenario in
@@ -619,7 +693,6 @@ class aomWorld(World):
                                Items.MythUnitUnlockFiller, Items.AtlanteanMythUnitUnlock)
         atlantean_types    = (Items.AtlanteanUnitUnlockProgression, Items.AtlanteanUnitUnlockUseful,
                                Items.AtlanteanMythUnitUnlock)
-        myth_unit_sanity_on = bool(self.options.myth_unit_sanity.value)
         random_major_gods_on        = bool(self.options.random_major_gods.value)
 
         # Age unlocks are never precollected — players use start_inventory or
@@ -741,14 +814,6 @@ class aomWorld(World):
                 if _all_fott_disabled:
                     continue
 
-            # Myth unit items — when myth_unit_sanity is off, precollect them all
-            # so the player starts with the full set of myth unit unlocks.
-            if isinstance(item.type, myth_unit_types) and not myth_unit_sanity_on:
-                if isinstance(item.type, Items.AtlanteanMythUnitUnlock) and not random_major_gods_on:
-                    continue
-                self.multiworld.push_precollected(self.create_item(item.item_name))
-                continue
-
             # Atlantean items — skip if random_major_gods is off (Atlantis not in the pool)
             if isinstance(item.type, atlantean_types) and not random_major_gods_on:
                 continue
@@ -807,10 +872,16 @@ class aomWorld(World):
             age_unlock_config.append(
                 (Items.aomItemData.ATLANTEAN_AGE_UNLOCK, "Atlantean", 3 + atlantean_extra)
             )
+        _new_atlantis_disabled = Campaigns.aomCampaignData.NEW_ATLANTIS in self.disabled_campaigns
         for item_data, culture, count in age_unlock_config:
-            # Skip age unlocks for civs excluded from the random major god pool
+            # Skip age unlocks for civs excluded from the random major god pool,
+            # EXCEPT Atlantean: NA scenarios always use Atlantean mechanics even
+            # when shuffle_atlantean_major_gods is off, so Atlantean age unlocks
+            # are always needed for age-gating NA scenarios (e.g. NA 2 requires
+            # Classical Age). Skip only if New Atlantis campaign is fully disabled.
             if culture in self.excluded_civs:
-                continue
+                if culture != "Atlantean" or _new_atlantis_disabled:
+                    continue
             precollect_n = starting_age_unlocks[culture]
             for i in range(count):
                 ap_item = self.create_item(item_data.item_name)
@@ -1036,6 +1107,7 @@ class aomWorld(World):
         if self.options.random_major_gods:
             data["god_assignments"] = self.god_assignments
         data["minor_god_assignments"] = self.minor_god_assignments
+        data["minor_god_full"]        = self.minor_god_full
         data["archaic_forbids"]       = self.archaic_forbids
         data["god_power_assignments"] = self.god_power_assignments
 
