@@ -548,17 +548,14 @@ def write_aom_state(ctx: AoMGameContext) -> None:
                 lines.append(f"    trForbidProtounit(1, \"{unit}\");")
     lines.append("}")
 
-    # APUnforbidUnlockedUnits — un-forbids every unit whose unlock item HAS been
-    # received. Called by APReapplyUnitUnlocks every 5 seconds so that save/load
-    # resets (which clear the forbid state) are recovered quickly.
-    lines.append("")
-    lines.append("void APUnforbidUnlockedUnits()")
-    lines.append("{")
-    for item_id, units in _ITEM_TO_UNITS.items():
-        if item_id in received_set:
-            for unit in units:
-                lines.append(f"    trUnforbidProtounit(1, \"{unit}\");")
-    lines.append("}")
+    # NOTE: Previously emitted APUnforbidUnlockedUnits() here, which called
+    # trUnforbidProtounit for every unit whose item HAD been received. That
+    # bypassed the game's natural civ / age / minor-god prerequisites — e.g.
+    # Thor with the "Greek Heroic Myth Units" item could train Nemean Lions
+    # without Aphrodite, and "Norse Mythic Myth Units" let any Norse god
+    # train Fire Giants without Hel. APReapplyUnitUnlocks now calls
+    # APForbidItemGatedUnits instead, which forbids only un-received units
+    # and leaves received-item units to the engine's natural gating.
 
     # ----------------------------------------------------------------
     # APShopStateInit — sets shop globals and per-obelisk labels.

@@ -3922,14 +3922,18 @@ inactive
 }
 
 // -----------------------------------------------------------------------
-// APReapplyUnitUnlocks — re-asserts trUnforbidProtounit for every unit
-// whose unlock item has been received. Runs every 5 seconds so that
-// save/load resets (which clear the forbid state) are recovered quickly.
-// APUnforbidUnlockedUnits() is generated into aom_state.xs by the client.
+// APReapplyUnitUnlocks — re-asserts trForbidProtounit for every unit whose
+// unlock item has NOT been received. Runs every 5 seconds so that save/load
+// resets (which clear the forbid state) are recovered quickly. Units whose
+// items HAVE been received are left untouched so the game's natural civ /
+// age / minor-god prerequisites still gate them — using trUnforbidProtounit
+// here would bypass those prereqs (e.g. let Thor train Fire Giants without
+// Hel, or train Nemean Lions without Aphrodite).
+// APForbidItemGatedUnits() is generated into aom_state.xs by the client.
 // -----------------------------------------------------------------------
 rule APReapplyUnitUnlocks
 minInterval 5
 inactive
 {
-    APUnforbidUnlockedUnits();
+    APForbidItemGatedUnits();
 }

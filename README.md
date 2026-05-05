@@ -140,6 +140,10 @@ Key options to consider:
 
 ---
 
+## How to play again:
+> https://youtu.be/3vlax2LfKq8
+---
+
 ## Notes
 
 - The mod must be **enabled** in the AoM Retold mod manager before launching a scenario. Game updates may disable mods — re-enable after any update.
