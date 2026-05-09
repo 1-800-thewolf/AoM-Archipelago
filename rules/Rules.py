@@ -1068,12 +1068,17 @@ def set_shop_rules(world) -> None:
     prog_slots   = getattr(world, "shop_progression_slots", {})
     filler_only  = getattr(world, "shop_filler_only", set())
 
+    # Flatten the per-tier set of progression-allowed slot ids for membership checks.
+    all_prog_slot_ids: set[int] = set()
+    for _ids in prog_slots.values():
+        all_prog_slot_ids.update(_ids)
+
     # Randomly exclude 8-11 shop item locations per shop so AP fills them with
-    # lowest-priority items (filler or trap). Don't exclude the progression slot.
+    # lowest-priority items (filler or trap). Don't exclude progression slots.
     n_exclude = world.random.randint(8, 11)
     excludable = [
         loc_id for loc_id in ALL_SHOP_ITEM_IDS
-        if not any(loc_id == prog_slots.get(tier) for tier, *_ in SHOP_TIER_CONFIGS)
+        if loc_id not in all_prog_slot_ids
     ]
     world.random.shuffle(excludable)
     excluded_ids = set(excludable[:n_exclude])
@@ -1085,7 +1090,7 @@ def set_shop_rules(world) -> None:
         loc = multiworld.get_location(name, player)
         is_marsh = loc_id in marsh_item_ids
         # Marsh shop slots are never progression — skip the prog_slot exception
-        is_prog_slot = (not is_marsh) and any(loc_id == prog_slots.get(tier) for tier, *_ in SHOP_TIER_CONFIGS)
+        is_prog_slot = (not is_marsh) and (loc_id in all_prog_slot_ids)
         if is_prog_slot:
             pass  # no restriction on non-Marsh progression slots
         elif loc_id in excluded_ids:

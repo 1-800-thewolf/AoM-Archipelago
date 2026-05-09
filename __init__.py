@@ -164,6 +164,8 @@ from .Options import (Random_Major_Gods, ForceDifferentGod, ExtraFinalMissionAge
     Relicsanity,
     GemShop,
     WinsToOpenShop,
+    MaxAdvancementItemsInEachShop,
+    ForceLocalFiller,
     FottGreekCampaign,
     FottEgyptianCampaign,
     FottNorseCampaign,
@@ -194,6 +196,7 @@ class aomWebWorld(WebWorld):
         OptionGroup("Shop", [
             GemShop,
             WinsToOpenShop,
+            MaxAdvancementItemsInEachShop,
         ]),
         OptionGroup("Campaigns", [
             FottGreekCampaign,
@@ -222,6 +225,7 @@ class aomWebWorld(WebWorld):
         OptionGroup("Item Pool", [
             ExtraFinalMissionAgeUnlocks,
             HeroAbilities,
+            ForceLocalFiller,
         ]),
     ] if OptionGroup is not None else []
 
@@ -619,6 +623,11 @@ class aomWorld(World):
         # Relicsanity flag — read once so Regions/Rules/create_items can branch on it.
         self.relicsanity_enabled: bool = bool(self.options.relicsanity.value)
 
+        # Force all filler items to be placed locally (this player's own world only).
+        if bool(self.options.force_local_filler.value):
+            filler_names = {item.item_name for item in Items.filler_items}
+            self.multiworld.local_items[self.player].value |= filler_names
+
         # Disabled-campaign set: campaigns can be opted out via YAML.
         # FOTT_FINAL is always enabled (its scenarios are the goal).
         from .locations.Campaigns import aomCampaignData
@@ -659,20 +668,25 @@ class aomWorld(World):
         """
         from .locations.Locations import SHOP_TIER_CONFIGS, TIER_ITEM_IDS, ITEMS_PER_SHOP
         assignments: dict[str, list[int]] = {}
-        progression_slots: dict[str, int] = {}
+        progression_slots: dict[str, set[int]] = {}
         filler_only_locs: set[int] = set()
+
+        max_adv = int(self.options.max_advancement_items_in_each_shop.value)
+        max_adv = max(0, min(ITEMS_PER_SHOP, max_adv))
 
         for tier_name, _display, item_obs, _hint_obs in SHOP_TIER_CONFIGS:
             locs = list(TIER_ITEM_IDS[tier_name])  # 15 location IDs for this tier
             self.random.shuffle(locs)
 
-            # locs[0] is the one progression-allowed slot (after shuffle = random)
-            progression_slots[tier_name] = locs[0]
+            # Marsh (tier A) never allows progression regardless of the option.
+            n_prog = 0 if tier_name == "A" else max_adv
+            progression_slots[tier_name] = set(locs[:n_prog])
 
-            # Of the remaining 14, randomly pick ~half to be filler-only
-            non_prog = locs[1:]
-            n_filler_only = round(len(non_prog) * 0.8)  # ~11 of 14
-            filler_only_locs.update(self.random.sample(non_prog, n_filler_only))
+            # Of the remaining slots, randomly pick ~80% to be filler-only.
+            non_prog = locs[n_prog:]
+            n_filler_only = round(len(non_prog) * 0.8)
+            if n_filler_only > 0:
+                filler_only_locs.update(self.random.sample(non_prog, n_filler_only))
 
             # Distribute 15 items across item_obs obelisks, min 1 each
             counts = self._random_distribute(ITEMS_PER_SHOP, item_obs)

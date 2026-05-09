@@ -157,7 +157,7 @@ class GemShop(Toggle):
 class WinsToOpenShop(Range):
     """
     Number of scenario victories required to open each additional shop tier (only used when Gem Shop is enabled).
-    Shop A (Marsh) is always open. Shop B (Desert) opens after this many wins. Shop C (Grass) opens after 2x wins. Shop D (Hades) opens after 3x wins.
+    Marsh shop is always open. Desert shop opens after this many wins. Grass shop opens after 2x wins. Hades shop opens after 3x wins.
     Set to 0 to open all shops immediately.
     """
     internal_name = "wins_to_open_shop"
@@ -165,6 +165,21 @@ class WinsToOpenShop(Range):
     range_start   = 0
     range_end     = 10
     default       = 4
+
+
+class MaxAdvancementItemsInEachShop(Range):
+    """
+    Maximum number of advancement items allowed in each non-Marsh shop (Desert, Grass, Hades).
+
+    The Marsh shop never contains advancement items regardless of this setting. Its 15 slots are always restricted to trap/filler/useful. This option only affects how many slots in each of the other 3 shops are *unrestricted* and may receive an advancement item.
+
+    Set to 0 to forbid advancement items in shops entirely. Set to 15 to allow every slot in those 3 shops to hold any item.
+    """
+    internal_name = "max_advancement_items_in_each_shop"
+    display_name  = "Max Advancement Items In Each Shop"
+    range_start   = 0
+    range_end     = 15
+    default       = 1
 
 
 #############
@@ -252,6 +267,17 @@ class TrapPercentage(Range):
     range_start   = 0
     range_end     = 100
     default       = 20
+
+class ForceLocalFiller(Toggle):
+    """
+    When enabled, all filler items are forced to stay in your own game (they will only appear at your own locations).
+    This means filler slots in other players' worlds will never receive your filler items.
+    Useful if you prefer not to send filler to others and want your filler pool concentrated locally.
+    """
+    internal_name = "force_local_filler"
+    display_name  = "Force Local Filler"
+    default = 0
+
 
 class UpdateBuildingsForRandomGod(Toggle):
     """
@@ -359,10 +385,12 @@ class AomOptions(PerGameCommonOptions):
     extra_final_mission_age_unlocks: ExtraFinalMissionAgeUnlocks
     gem_shop:                        GemShop
     wins_to_open_shop:               WinsToOpenShop
+    max_advancement_items_in_each_shop: MaxAdvancementItemsInEachShop
     random_major_gods:                       Random_Major_Gods
     force_different_god:                ForceDifferentGod
     hero_abilities:                  HeroAbilities
     trap_percentage:                 TrapPercentage
+    force_local_filler:              ForceLocalFiller
     update_buildings_for_random_god: UpdateBuildingsForRandomGod
     shuffle_greek_major_gods:        GreekMajorGods
     shuffle_egyptian_major_gods:     EgyptianMajorGods

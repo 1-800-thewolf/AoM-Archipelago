@@ -102,6 +102,20 @@ Age Of Mythology Retold:
     random-high: 0 # random value weighted towards higher values
     random-range-0-10: 0 # random value between 0 and 10
 
+  max_advancement_items_in_each_shop:
+    # Maximum number of advancement (progression) items allowed in each non-Marsh shop
+    # (Desert, Grass, Hades). Marsh (Shop A) never receives advancement items regardless.
+    # This sets the cap per shop; it does NOT force advancement items into shops.
+    # Set to 0 to forbid advancement items in shops entirely.
+    #
+    # Minimum value is 0
+    # Maximum value is 15
+    1: 50
+    0: 0
+    random: 0
+    random-low: 0
+    random-high: 0
+
   #############
   # Campaigns #
   #############
@@ -376,6 +390,12 @@ Age Of Mythology Retold:
     random-low: 0 # random value weighted towards lower values
     random-high: 0 # random value weighted towards higher values
     random-range-0-100: 0 # random value between 0 and 100
+
+  force_local_filler:
+    # When enabled, all filler items are forced to stay in your own game (placed only at your own locations).
+    # Useful if you prefer not to send filler to other players.
+    'false': 50
+    'true': 0
 
   ###########################
   # Item & Location Options #

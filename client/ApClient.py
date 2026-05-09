@@ -175,7 +175,12 @@ def _ensure_user_cfg(user_folder: str) -> None:
     except Exception as e:
         logger.error(
             f"Could not update user.cfg: {e}. "
-            f"Please add these lines manually to {cfg_path}: {missing}"
+            f"This usually means the wrong AoMR folder was selected at first-time setup. "
+            f"Run /fix_aom_folder to clear the saved path and pick the correct folder. "
+            f"The folder we need is likely here: "
+            f"C:\\Users\\[YourName]\\Games\\Age of Mythology Retold\\[SteamID] "
+            f"(not the Steam install directory). "
+            f"If the path above is correct, add these lines manually to {cfg_path}: {missing}"
         )
 
 
@@ -712,6 +717,37 @@ class AoMCommandProcessor(ClientCommandProcessor):
             self.output(f"Cache purged: {deleted} item(s) removed.")
         else:
             self.output(f"Cache partially purged: {deleted} removed, {errors} failed.")
+
+
+    def _cmd_fix_aom_folder(self) -> None:
+        """Clear the saved AoMR user folder and prompt for a new one.
+        Use this if the wrong directory was selected during first-time setup
+        (for example, the Steam install folder instead of the AoMR user folder).
+        The correct folder is typically here:
+        C:\\Users\\[YourName]\\Games\\Age of Mythology Retold\\[SteamID]
+        """
+        try:
+            config_path = Utils.user_path(AOMR_CONFIG_FILE)
+            if os.path.exists(config_path):
+                os.remove(config_path)
+                self.output(f"Removed saved config: {config_path}")
+            else:
+                self.output(f"No saved config to remove at: {config_path}")
+        except Exception as e:
+            self.output(f"Could not remove saved config: {e}")
+            return
+
+        self.output(
+            "Pick your AoMR user folder. The correct folder is typically here: "
+            "C:\\Users\\[YourName]\\Games\\Age of Mythology Retold\\[SteamID]"
+        )
+        folder = AoMContext._prompt_for_folder()
+        if not folder:
+            self.output("No folder selected. Run /fix_aom_folder again to retry.")
+            return
+        self.ctx.game_ctx.user_folder = folder
+        self.output(f"Saved new AoMR user folder: {folder}")
+        self.output("Reconnect (or restart the client) to apply the new folder.")
 
 
     def _cmd_gods(self) -> None:
