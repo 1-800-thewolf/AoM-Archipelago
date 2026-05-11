@@ -174,12 +174,14 @@ class MaxAdvancementItemsInEachShop(Range):
     The Marsh shop never contains advancement items regardless of this setting. Its 15 slots are always restricted to trap/filler/useful. This option only affects how many slots in each of the other 3 shops are *unrestricted* and may receive an advancement item.
 
     Set to 0 to forbid advancement items in shops entirely. Set to 15 to allow every slot in those 3 shops to hold any item.
+
+    Careful setting this too high as you can't grind gems. If you spend your gems unwisely, you could softlock the seed.
     """
     internal_name = "max_advancement_items_in_each_shop"
     display_name  = "Max Advancement Items In Each Shop"
     range_start   = 0
     range_end     = 15
-    default       = 1
+    default       = 0
 
 
 #############

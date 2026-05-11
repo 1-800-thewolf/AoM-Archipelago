@@ -698,51 +698,54 @@ class aomItemData(enum.IntEnum):
     # value for additive effects).
     # -----------------------------------------------------------------------
     RELIC_EFFECT_LOS          = 29, "Each Owned Relic Grants Buildings +4 and Units +2 Line of Sight", RelicEffect("los")
-    RELIC_EFFECT_REGEN        = 30, "Each Owned Relic Grants Everything +1 Regeneration",          RelicEffect("regen")
+    RELIC_EFFECT_REGEN        = 30, "Each Owned Relic Grants Everything +0.5 Regeneration",        RelicEffect("regen")
     RELIC_EFFECT_SPEED        = 31, "Each Owned Relic Grants All Units +5% Speed",                  RelicEffect("speed")
-    RELIC_EFFECT_HP           = 32, "Each Owned Relic Grants Everything +5% Max Hitpoints",         RelicEffect("hp")
+    RELIC_EFFECT_HP           = 32, "Each Owned Relic Grants Everything +3% Max Hitpoints",         RelicEffect("hp")
     RELIC_EFFECT_POP          = 33, "Each Owned Relic Increases House and Manor Population Capacity by 1", RelicEffect("pop")
-    RELIC_EFFECT_GOLD_COST    = 34, "Each Owned Relic Reduces the Gold Cost of Everything 5%",      RelicEffect("gold_cost")
-    RELIC_EFFECT_WOOD_COST    = 35, "Each Owned Relic Reduces the Wood Cost of Everything 5%",      RelicEffect("wood_cost")
-    RELIC_EFFECT_FAVOR_COST   = 36, "Each Owned Relic Reduces the Favor Cost of Units and Buildings 5%", RelicEffect("favor_cost")
-    RELIC_EFFECT_FOOD_COST    = 37, "Each Owned Relic Reduces the Food Cost of Everything 5%",      RelicEffect("food_cost")
+    RELIC_EFFECT_GOLD_COST    = 34, "Each Owned Relic Reduces the Gold Cost of Everything 4%",      RelicEffect("gold_cost")
+    RELIC_EFFECT_WOOD_COST    = 35, "Each Owned Relic Reduces the Wood Cost of Everything 4%",      RelicEffect("wood_cost")
+    RELIC_EFFECT_FAVOR_COST   = 36, "Each Owned Relic Reduces the Favor Cost of Units and Buildings 4%", RelicEffect("favor_cost")
+    RELIC_EFFECT_FOOD_COST    = 37, "Each Owned Relic Reduces the Food Cost of Everything 4%",      RelicEffect("food_cost")
     RELIC_EFFECT_BUILD_SPEED  = 38, "Each Owned Relic Makes Buildings Build 10% faster",            RelicEffect("build_speed")
 
     # -----------------------------------------------------------------------
     # Reinforcements — Filler
     # Each item spawns REINFORCEMENT_AMOUNT (2) units near the spawn point.
     # -----------------------------------------------------------------------
-    REINFORCEMENT_ANUBITES        = 4000, f"{REINFORCEMENT_AMOUNT} Anubites",          Reinforcement("Anubite",          REINFORCEMENT_AMOUNT)
+    REINFORCEMENT_ANUBITES        = 4000, "1 Anubite",                                 Reinforcement("Anubite",          1)
     REINFORCEMENT_HOPLITE         = 4001, f"{REINFORCEMENT_AMOUNT} Hoplites",          Reinforcement("Hoplite",          REINFORCEMENT_AMOUNT)
     REINFORCEMENT_DWARF           = 4002, f"{REINFORCEMENT_AMOUNT} Dwarves",           Reinforcement("Dwarf",            REINFORCEMENT_AMOUNT)
     REINFORCEMENT_MERCENARY       = 4003, f"{REINFORCEMENT_AMOUNT} Mercenaries",       Reinforcement("Mercenary",        REINFORCEMENT_AMOUNT)
     REINFORCEMENT_MERCENARY_CAV   = 4004, f"{REINFORCEMENT_AMOUNT} Mercenary Cavalry", Reinforcement("MercenaryCavalry", REINFORCEMENT_AMOUNT)
     REINFORCEMENT_AUTOMATON       = 4006, f"{REINFORCEMENT_AMOUNT} Automatons",        Reinforcement("Automaton",        REINFORCEMENT_AMOUNT)
-    REINFORCEMENT_WADJET          = 4007, f"{REINFORCEMENT_AMOUNT} Wadjets",           Reinforcement("Wadjet",           REINFORCEMENT_AMOUNT)
+    REINFORCEMENT_WADJET          = 4007, "1 Wadjet",                                  Reinforcement("Wadjet",           1)
     REINFORCEMENT_ULFSARK         = 4008, f"{REINFORCEMENT_AMOUNT} Berserks",          Reinforcement("Berserk",          REINFORCEMENT_AMOUNT)
     REINFORCEMENT_SLINGER         = 4009, f"{REINFORCEMENT_AMOUNT} Slingers",          Reinforcement("Slinger",          REINFORCEMENT_AMOUNT)
     REINFORCEMENT_TURMA           = 4010, f"{REINFORCEMENT_AMOUNT} Turmas",            Reinforcement("Turma",            REINFORCEMENT_AMOUNT)
     REINFORCEMENT_KATASKOPOS      = 4011, f"{REINFORCEMENT_AMOUNT} Kataskopos",        Reinforcement("Kataskopos",       REINFORCEMENT_AMOUNT)
     REINFORCEMENT_VILLAGER        = 4013, f"{REINFORCEMENT_AMOUNT} Greek Villagers",   Reinforcement("VillagerGreek",    REINFORCEMENT_AMOUNT)
-    REINFORCEMENT_BATTLE_BOAR     = 4015, f"{REINFORCEMENT_AMOUNT} Battle Boars",      Reinforcement("BattleBoar",       REINFORCEMENT_AMOUNT)
+    REINFORCEMENT_BATTLE_BOAR     = 4015, "1 Battle Boar",                             Reinforcement("BattleBoar",       1)
     REINFORCEMENT_RAIDING_CAVALRY = 4020, f"{REINFORCEMENT_AMOUNT} Raiding Cavalry",   Reinforcement("RaidingCavalry",   REINFORCEMENT_AMOUNT)
     REINFORCEMENT_ORACLE          = 4021, f"{REINFORCEMENT_AMOUNT} Oracles",           Reinforcement("Oracle",           REINFORCEMENT_AMOUNT)
-    REINFORCEMENT_CYCLOPS         = 4022, f"{REINFORCEMENT_AMOUNT} Cyclopes",          Reinforcement("Cyclops",          REINFORCEMENT_AMOUNT)
-    REINFORCEMENT_TROLL           = 4023, f"{REINFORCEMENT_AMOUNT} Trolls",            Reinforcement("Troll",            REINFORCEMENT_AMOUNT)
-    REINFORCEMENT_BEHEMOTH        = 4024, f"{REINFORCEMENT_AMOUNT} Behemoths",         Reinforcement("Behemoth",         REINFORCEMENT_AMOUNT)
+    REINFORCEMENT_CYCLOPS         = 4022, "1 Cyclops",                                 Reinforcement("Cyclops",          1)
+    REINFORCEMENT_TROLL           = 4023, "1 Troll",                                   Reinforcement("Troll",            1)
+    REINFORCEMENT_BEHEMOTH        = 4024, "1 Behemoth",                                Reinforcement("Behemoth",         1)
+    REINFORCEMENT_HAMADRYAD       = 4037, "1 Hamadryad",                               Reinforcement("Hamadryad",        1)
+    REINFORCEMENT_DRAUGR          = 4038, "1 Draugr",                                  Reinforcement("Draugr",           1)
 
     # -----------------------------------------------------------------------
     # Reinforcements — Useful
     # Strong units or workers that provide meaningful advantage.
     # -----------------------------------------------------------------------
-    REINFORCEMENT_FIRE_GIANT      = 4012, f"{REINFORCEMENT_AMOUNT} Fire Giants",       ReinforcementUseful("FireGiant",         REINFORCEMENT_AMOUNT)
+    REINFORCEMENT_FIRE_GIANT      = 4012, "1 Fire Giant",                              ReinforcementUseful("FireGiant",         1)
     REINFORCEMENT_CITIZEN         = 4014, f"{REINFORCEMENT_AMOUNT} Citizens",          Reinforcement("VillagerAtlantean", REINFORCEMENT_AMOUNT)
-    REINFORCEMENT_ROC             = 4017, f"{REINFORCEMENT_AMOUNT} Rocs",              ReinforcementUseful("Roc",               REINFORCEMENT_AMOUNT)
+    REINFORCEMENT_ROC             = 4017, "1 Roc",                                     ReinforcementUseful("Roc",               1)
     REINFORCEMENT_PRIEST          = 4018, f"{REINFORCEMENT_AMOUNT} Priests",           Reinforcement("Priest",            REINFORCEMENT_AMOUNT)
-    REINFORCEMENT_CALADRIA        = 4019, f"{REINFORCEMENT_AMOUNT} Caladrias",         Reinforcement("Caladria",          REINFORCEMENT_AMOUNT)
-    REINFORCEMENT_LAMPADES        = 4025, f"{REINFORCEMENT_AMOUNT} Lampades",          ReinforcementUseful("Lampades",          REINFORCEMENT_AMOUNT)
-    REINFORCEMENT_PHOENIX         = 4026, f"{REINFORCEMENT_AMOUNT} Phoenixes",         ReinforcementUseful("Phoenix",           REINFORCEMENT_AMOUNT)
-    REINFORCEMENT_COLOSSUS        = 4027, f"{REINFORCEMENT_AMOUNT} Colossi",           ReinforcementUseful("Colossus",          REINFORCEMENT_AMOUNT)
+    REINFORCEMENT_CALADRIA        = 4019, "1 Caladria",                                Reinforcement("Caladria",          1)
+    REINFORCEMENT_SIREN           = 4039, "1 Siren",                                   ReinforcementUseful("Siren",             1)
+    REINFORCEMENT_LAMPADES        = 4025, "1 Lampades",                                ReinforcementUseful("Lampades",          1)
+    REINFORCEMENT_PHOENIX         = 4026, "1 Phoenix",                                 ReinforcementUseful("Phoenix",           1)
+    REINFORCEMENT_COLOSSUS        = 4027, "1 Colossus",                                ReinforcementUseful("Colossus",          1)
 
     # Special: spawns exactly 1 Reginleif (not REINFORCEMENT_AMOUNT)
     REGINLEIF_JOINS               = 4028, "Reginleif Joins the Campaign",              ReinforcementUseful("Reginleif", 1)

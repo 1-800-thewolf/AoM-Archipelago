@@ -275,6 +275,9 @@ const int cREINFORCEMENT_HYENA           = 4031;
 const int cREINFORCEMENT_HIPPO           = 4032;
 const int cREINFORCEMENT_GOLDEN_LION     = 4033;
 const int cREINFORCEMENT_NORSE_GATHERER  = 4034;
+const int cREINFORCEMENT_HAMADRYAD       = 4037;
+const int cREINFORCEMENT_DRAUGR          = 4038;
+const int cREINFORCEMENT_SIREN           = 4039;
 
 // cXSPUResourceEffectCost=0, cXSPUResourceEffectCarryCapacity=1
 const int cGREEK_CARRY_FOOD              = 5000;
@@ -3233,10 +3236,7 @@ runImmediately
 
         if (itemId == cREINFORCEMENT_ANUBITES)
         {
-            for (j = 0; j < 2; j++)
-            {
-                trUnitCreateFromSource("Anubite", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-            }
+            trUnitCreateFromSource("Anubite", gReinforcementSpawnID, gReinforcementSpawnID, 1);
         }
         if (itemId == cREINFORCEMENT_HOPLITE)
         {
@@ -3275,10 +3275,7 @@ runImmediately
         }
         if (itemId == cREINFORCEMENT_WADJET)
         {
-            for (j = 0; j < 2; j++)
-            {
-                trUnitCreateFromSource("Wadjet", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-            }
+            trUnitCreateFromSource("Wadjet", gReinforcementSpawnID, gReinforcementSpawnID, 1);
         }
         if (itemId == cREINFORCEMENT_BERSERK)
         {
@@ -3310,10 +3307,7 @@ runImmediately
         }
         if (itemId == cREINFORCEMENT_FIRE_GIANT)
         {
-            for (j = 0; j < 2; j++)
-            {
-                trUnitCreateFromSource("FireGiant", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-            }
+            trUnitCreateFromSource("FireGiant", gReinforcementSpawnID, gReinforcementSpawnID, 1);
         }
         if (itemId == cREINFORCEMENT_VILLAGER)
         {
@@ -3331,19 +3325,13 @@ runImmediately
         }
         if (itemId == cREINFORCEMENT_BATTLE_BOAR)
         {
-            for (j = 0; j < 2; j++)
-            {
-                trUnitCreateFromSource("BattleBoar", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-            }
+            trUnitCreateFromSource("BattleBoar", gReinforcementSpawnID, gReinforcementSpawnID, 1);
         }
         if (itemId == cREINFORCEMENT_ROC)
         {
             if (gAPScenarioId != 12)
             {
-                for (j = 0; j < 2; j++)
-                {
-                    trUnitCreateFromSource("Roc", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-                }
+                trUnitCreateFromSource("Roc", gReinforcementSpawnID, gReinforcementSpawnID, 1);
             }
         }
         if (itemId == cREINFORCEMENT_PRIEST)
@@ -3355,10 +3343,7 @@ runImmediately
         }
         if (itemId == cREINFORCEMENT_CALADRIA)
         {
-            for (j = 0; j < 2; j++)
-            {
-                trUnitCreateFromSource("Caladria", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-            }
+            trUnitCreateFromSource("Caladria", gReinforcementSpawnID, gReinforcementSpawnID, 1);
         }
         if (itemId == cREINFORCEMENT_RAIDING_CAVALRY)
         {
@@ -3376,45 +3361,39 @@ runImmediately
         }
         if (itemId == cREINFORCEMENT_CYCLOPS)
         {
-            for (j = 0; j < 2; j++)
-            {
-                trUnitCreateFromSource("Cyclops", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-            }
+            trUnitCreateFromSource("Cyclops", gReinforcementSpawnID, gReinforcementSpawnID, 1);
         }
         if (itemId == cREINFORCEMENT_TROLL)
         {
-            for (j = 0; j < 2; j++)
-            {
-                trUnitCreateFromSource("Troll", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-            }
+            trUnitCreateFromSource("Troll", gReinforcementSpawnID, gReinforcementSpawnID, 1);
         }
         if (itemId == cREINFORCEMENT_BEHEMOTH)
         {
-            for (j = 0; j < 2; j++)
-            {
-                trUnitCreateFromSource("Behemoth", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-            }
+            trUnitCreateFromSource("Behemoth", gReinforcementSpawnID, gReinforcementSpawnID, 1);
+        }
+        if (itemId == cREINFORCEMENT_HAMADRYAD)
+        {
+            trUnitCreateFromSource("Hamadryad", gReinforcementSpawnID, gReinforcementSpawnID, 1);
+        }
+        if (itemId == cREINFORCEMENT_DRAUGR)
+        {
+            trUnitCreateFromSource("Draugr", gReinforcementSpawnID, gReinforcementSpawnID, 1);
+        }
+        if (itemId == cREINFORCEMENT_SIREN)
+        {
+            trUnitCreateFromSource("Siren", gReinforcementSpawnID, gReinforcementSpawnID, 1);
         }
         if (itemId == cREINFORCEMENT_LAMPADES)
         {
-            for (j = 0; j < 2; j++)
-            {
-                trUnitCreateFromSource("Lampades", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-            }
+            trUnitCreateFromSource("Lampades", gReinforcementSpawnID, gReinforcementSpawnID, 1);
         }
         if (itemId == cREINFORCEMENT_PHOENIX)
         {
-            for (j = 0; j < 2; j++)
-            {
-                trUnitCreateFromSource("Phoenix", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-            }
+            trUnitCreateFromSource("Phoenix", gReinforcementSpawnID, gReinforcementSpawnID, 1);
         }
         if (itemId == cREINFORCEMENT_COLOSSUS)
         {
-            for (j = 0; j < 2; j++)
-            {
-                trUnitCreateFromSource("Colossus", gReinforcementSpawnID, gReinforcementSpawnID, 1);
-            }
+            trUnitCreateFromSource("Colossus", gReinforcementSpawnID, gReinforcementSpawnID, 1);
         }
         if (itemId == cREGINLEIF_JOINS)
         {
@@ -3722,11 +3701,11 @@ inactive
         gAPRelicEffAppliedLOS = targLOS;
     }
 
-    // Additive: Regen +1 per relic. Field 17 = regen rate.
+    // Additive: Regen +0.5 per relic. Field 17 = regen rate.
     apRelicDelta = targRegen - gAPRelicEffAppliedRegen;
     if (apRelicDelta != 0)
     {
-        trModifyProtounitData("All", 1, 17, 1.0 * apRelicDelta, 0);
+        trModifyProtounitData("All", 1, 17, 0.5 * apRelicDelta, 0);
         gAPRelicEffAppliedRegen = targRegen;
     }
 
@@ -3755,14 +3734,14 @@ inactive
         gAPRelicEffAppliedSpeed = targSpeed;
     }
 
-    // Multiplicative: Max HP x1.05 per relic. Field 0 = max hitpoints.
+    // Multiplicative: Max HP x1.03 per relic. Field 0 = max hitpoints.
     apRelicDelta = targHP - gAPRelicEffAppliedHP;
     if (apRelicDelta > 0)
     {
         k = 0;
         while (k < apRelicDelta)
         {
-            trModifyProtounitData("All", 1, 0, 1.05, 2);
+            trModifyProtounitData("All", 1, 0, 1.03, 2);
             k = k + 1;
         }
         gAPRelicEffAppliedHP = targHP;
@@ -3773,7 +3752,7 @@ inactive
         undoCount = 0 - apRelicDelta;
         while (k < undoCount)
         {
-            trModifyProtounitData("All", 1, 0, 1.0 / 1.05, 2);
+            trModifyProtounitData("All", 1, 0, 1.0 / 1.03, 2);
             k = k + 1;
         }
         gAPRelicEffAppliedHP = targHP;
@@ -3788,7 +3767,7 @@ inactive
         gAPRelicEffAppliedPop = targPop;
     }
 
-    // Multiplicative cost reductions: x0.95 per relic on Gold / Wood / Favor /
+    // Multiplicative cost reductions: x0.96 per relic on Gold / Wood / Favor /
     // Food; field index 0 on resource means "cost".
     apRelicDelta = targGoldCost - gAPRelicEffAppliedGoldCost;
     if (apRelicDelta > 0)
@@ -3796,7 +3775,7 @@ inactive
         k = 0;
         while (k < apRelicDelta)
         {
-            trModifyProtounitResource("All", "Gold", 1, 0, 0.95, 2);
+            trModifyProtounitResource("All", "Gold", 1, 0, 0.96, 2);
             k = k + 1;
         }
         gAPRelicEffAppliedGoldCost = targGoldCost;
@@ -3807,7 +3786,7 @@ inactive
         undoCount = 0 - apRelicDelta;
         while (k < undoCount)
         {
-            trModifyProtounitResource("All", "Gold", 1, 0, 1.0 / 0.95, 2);
+            trModifyProtounitResource("All", "Gold", 1, 0, 1.0 / 0.96, 2);
             k = k + 1;
         }
         gAPRelicEffAppliedGoldCost = targGoldCost;
@@ -3819,7 +3798,7 @@ inactive
         k = 0;
         while (k < apRelicDelta)
         {
-            trModifyProtounitResource("All", "Wood", 1, 0, 0.95, 2);
+            trModifyProtounitResource("All", "Wood", 1, 0, 0.96, 2);
             k = k + 1;
         }
         gAPRelicEffAppliedWoodCost = targWoodCost;
@@ -3830,7 +3809,7 @@ inactive
         undoCount = 0 - apRelicDelta;
         while (k < undoCount)
         {
-            trModifyProtounitResource("All", "Wood", 1, 0, 1.0 / 0.95, 2);
+            trModifyProtounitResource("All", "Wood", 1, 0, 1.0 / 0.96, 2);
             k = k + 1;
         }
         gAPRelicEffAppliedWoodCost = targWoodCost;
@@ -3842,7 +3821,7 @@ inactive
         k = 0;
         while (k < apRelicDelta)
         {
-            trModifyProtounitResource("All", "Favor", 1, 0, 0.95, 2);
+            trModifyProtounitResource("All", "Favor", 1, 0, 0.96, 2);
             k = k + 1;
         }
         gAPRelicEffAppliedFavorCost = targFavorCost;
@@ -3853,7 +3832,7 @@ inactive
         undoCount = 0 - apRelicDelta;
         while (k < undoCount)
         {
-            trModifyProtounitResource("All", "Favor", 1, 0, 1.0 / 0.95, 2);
+            trModifyProtounitResource("All", "Favor", 1, 0, 1.0 / 0.96, 2);
             k = k + 1;
         }
         gAPRelicEffAppliedFavorCost = targFavorCost;
@@ -3865,7 +3844,7 @@ inactive
         k = 0;
         while (k < apRelicDelta)
         {
-            trModifyProtounitResource("All", "Food", 1, 0, 0.95, 2);
+            trModifyProtounitResource("All", "Food", 1, 0, 0.96, 2);
             k = k + 1;
         }
         gAPRelicEffAppliedFoodCost = targFoodCost;
@@ -3876,7 +3855,7 @@ inactive
         undoCount = 0 - apRelicDelta;
         while (k < undoCount)
         {
-            trModifyProtounitResource("All", "Food", 1, 0, 1.0 / 0.95, 2);
+            trModifyProtounitResource("All", "Food", 1, 0, 1.0 / 0.96, 2);
             k = k + 1;
         }
         gAPRelicEffAppliedFoodCost = targFoodCost;
@@ -3966,7 +3945,7 @@ inactive
             }
             if (countRegen > 0)
             {
-                _line = "granting " + _cY + "+" + (relicCount * countRegen) + _cE + " " + _cG + "Regeneration" + _cE + " to everything";
+                _line = "granting " + _cY + "+" + APFormatFloat(relicCount * countRegen * 0.5) + _cE + " " + _cG + "Regeneration" + _cE + " to everything";
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
             if (countSpeed > 0)
@@ -3976,7 +3955,7 @@ inactive
             }
             if (countHP > 0)
             {
-                _line = "granting everything " + _cY + "+" + (relicCount * 5 * countHP) + "%" + _cE + " " + _cG + "Max HP" + _cE;
+                _line = "granting everything " + _cY + "+" + (relicCount * 3 * countHP) + "%" + _cE + " " + _cG + "Max HP" + _cE;
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
             if (hasPop)
@@ -3986,22 +3965,22 @@ inactive
             }
             if (hasGoldCost)
             {
-                _line = "reducing all " + _cG + "Gold" + _cE + " costs by " + _cY + (relicCount * 5) + "%" + _cE;
+                _line = "reducing all " + _cG + "Gold" + _cE + " costs by " + _cY + (relicCount * 4) + "%" + _cE;
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
             if (hasWoodCost)
             {
-                _line = "reducing all " + _cG + "Wood" + _cE + " costs by " + _cY + (relicCount * 5) + "%" + _cE;
+                _line = "reducing all " + _cG + "Wood" + _cE + " costs by " + _cY + (relicCount * 4) + "%" + _cE;
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
             if (hasFavorCost)
             {
-                _line = "reducing all " + _cG + "Favor" + _cE + " costs by " + _cY + (relicCount * 5) + "%" + _cE;
+                _line = "reducing all " + _cG + "Favor" + _cE + " costs by " + _cY + (relicCount * 4) + "%" + _cE;
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
             if (hasFoodCost)
             {
-                _line = "reducing all " + _cG + "Food" + _cE + " costs by " + _cY + (relicCount * 5) + "%" + _cE;
+                _line = "reducing all " + _cG + "Food" + _cE + " costs by " + _cY + (relicCount * 4) + "%" + _cE;
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
             if (hasBuildSpeed)
