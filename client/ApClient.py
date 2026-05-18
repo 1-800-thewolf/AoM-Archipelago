@@ -297,7 +297,8 @@ def _update_atlantis_ui(ctx: "AoMContext") -> None:
             gems_spent  = len(ctx.game_ctx.purchased_slots)
             gems_avail  = max(0, gems_earned - gems_spent)
             threshold   = ctx.game_ctx.wins_to_open_shop
-            beaten      = len(ctx.game_ctx.sent_checks & VICTORY_LOCATION_IDS)
+            beaten      = len((ctx.game_ctx.sent_checks | ctx.game_ctx.server_known_checks)
+                              & VICTORY_LOCATION_IDS)
             if threshold == 0:
                 shops_open = 4
             else:
@@ -318,6 +319,95 @@ def _update_atlantis_ui(ctx: "AoMContext") -> None:
         queue = ctx.game_ctx.trap_queue
         next_name = _TRAP_NAMES.get(queue[0], f"Trap {queue[0]}") if queue else ""
         ctx.ui.update_trap_status(len(queue), next_name)
+
+    if hasattr(ctx.ui, "update_scenarios_view"):
+        scenario_to_key_id = getattr(ctx.game_ctx, "scenario_to_key_id", {}) or {}
+        bundle_display_names = getattr(ctx.game_ctx, "bundle_display_names", {}) or {}
+        usos = int(getattr(ctx.game_ctx, "unlock_sets_of_scenarios", 0))
+        received = set(ctx.game_ctx.received_items)
+        held_keys = {iid for iid in scenario_to_key_id.values() if iid in received}
+        from ..items.Items import aomItemData as _IData
+        threshold_val = getattr(ctx, "_x_scenarios_threshold", None)
+        beaten = _count_beaten_scenarios(ctx)
+        has_atlantis_now = (_IData.ATLANTIS_KEY.id in received) or (
+            threshold_val is not None and beaten >= threshold_val
+        )
+        campaign_unlocked_by_id = {
+            1: _IData.GREEK_SCENARIOS.id    in received,
+            2: _IData.EGYPTIAN_SCENARIOS.id in received,
+            3: _IData.NORSE_SCENARIOS.id    in received,
+            4: has_atlantis_now,
+            5: _IData.UNLOCK_NEW_ATLANTIS.id in received,
+            6: _IData.UNLOCK_GOLDEN_GIFT.id  in received,
+        }
+        disabled_ids = set(getattr(ctx, "_disabled_campaign_ids", set()))
+        
+        # Build scenario_to_god mapping
+        scenario_to_god = {}
+        god_names = {
+            1: "Zeus",   2: "Poseidon", 3: "Hades",
+            4: "Isis",   5: "Ra",       6: "Set",
+            7: "Odin",   8: "Thor",     9: "Loki",
+            10: "Kronos", 11: "Oranos", 12: "Gaia",
+        }
+        god_assignments = getattr(ctx.game_ctx, "god_assignments", {}) or {}
+        for scenario_id, god_id in god_assignments.items():
+            if god_id in god_names:
+                scenario_to_god[scenario_id] = god_names[god_id]
+        
+        # Build scenario_check_counts mapping.
+        # _display_checks  = locally sent + server-confirmed (covers released/force-checked locs)
+        # _pool_loc_ids     = every location ID the server actually placed in the pool for this
+        #                     slot.  Using this as the "total" source means any location removed
+        #                     at generation time (relicsanity off, excluded objectives, etc.) is
+        #                     automatically excluded from the count without needing to mirror
+        #                     every generation-side option in the client.
+        _display_checks = ctx.game_ctx.sent_checks | ctx.game_ctx.server_known_checks
+        _pool_loc_ids   = ctx.missing_locations | ctx.checked_locations
+        scenario_check_counts = {}
+        from ..locations.Locations import SCENARIO_TO_LOCATIONS, aomLocationType
+        from ..locations.Scenarios import aomScenarioData
+        # Only count check-worthy location types (OBJECTIVE, VICTORY, RELIC).
+        # COMPLETION locations are never checks; filtering by type keeps the count
+        # consistent with what the player sees in-game.
+        _check_types = (aomLocationType.OBJECTIVE, aomLocationType.VICTORY, aomLocationType.RELIC)
+        for scenario in aomScenarioData:
+            locations = SCENARIO_TO_LOCATIONS.get(scenario, [])
+            # Intersect with the server pool so only locations that were actually
+            # generated for this slot contribute to found and total.
+            pool_locs  = [l for l in locations if l.type in _check_types
+                          and l.id in _pool_loc_ids]
+            total_checks = len(pool_locs)
+            found_checks = len([l for l in pool_locs if l.id in _display_checks])
+            if total_checks > 0:
+                scenario_check_counts[scenario.global_number] = (found_checks, total_checks)
+        
+        ctx.ui.update_scenarios_view(
+            usos, scenario_to_key_id, bundle_display_names,
+            held_keys, campaign_unlocked_by_id, disabled_ids,
+            scenario_to_god, scenario_check_counts,
+        )
+
+    if hasattr(ctx.ui, "update_civs_view"):
+        excluded_civs = getattr(ctx, "_excluded_civs", frozenset())
+        random_major_gods = getattr(ctx.game_ctx, "random_major_gods", False)
+        received_ids = list(ctx.game_ctx.received_items)
+        ctx.ui.update_civs_view(
+            received_ids=received_ids,
+            excluded_civs=excluded_civs,
+            random_major_gods=random_major_gods,
+        )
+
+    if hasattr(ctx.ui, "update_relics_view"):
+        relicsanity = getattr(ctx.game_ctx, "relicsanity_enabled", False)
+        checked_locs = (getattr(ctx.game_ctx, "sent_checks", set())
+                        | getattr(ctx.game_ctx, "server_known_checks", set()))
+        disabled_ids = set(getattr(ctx, "_disabled_campaign_ids", set()))
+        ctx.ui.update_relics_view(
+            relicsanity=relicsanity,
+            checked_locs=checked_locs,
+            disabled_campaign_ids=disabled_ids,
+        )
 
 
 def _format_progress(ctx: "AoMContext") -> str:
@@ -358,7 +448,8 @@ class AoMCommandProcessor(ClientCommandProcessor):
         from ..items.Items import aomItemData
 
         ctx = self.ctx
-        sent     = ctx.game_ctx.sent_checks
+        # Union of locally-sent and server-confirmed covers force-released locations.
+        sent     = ctx.game_ctx.sent_checks | ctx.game_ctx.server_known_checks
         received = set(ctx.game_ctx.received_items)
 
         # Build per-scenario stats
@@ -452,6 +543,54 @@ class AoMCommandProcessor(ClientCommandProcessor):
         self.output(f"=== Not Started ({len(untouched_list)}) ===")
         for name in untouched_list:
             self.output(f"  {name}")
+
+        # Per-scenario key status — only meaningful when unlock_sets_of_scenarios > 0.
+        usos = int(getattr(ctx.game_ctx, "unlock_sets_of_scenarios", 0))
+        if usos > 0:
+            scenario_to_key_id   = getattr(ctx.game_ctx, "scenario_to_key_id", {}) or {}
+            bundle_display_names = getattr(ctx.game_ctx, "bundle_display_names", {}) or {}
+            all_key_ids          = sorted({iid for iid in scenario_to_key_id.values()})
+            held_keys            = {iid for iid in all_key_ids if iid in received}
+
+            campaign_unlocked_by_id = {
+                1: has_greek, 2: has_egyptian, 3: has_norse,
+                4: has_atlantis, 5: has_na, 6: has_gg,
+            }
+
+            # Campaign prefix shown before the scenario display_name.
+            # FOTT campaigns (1-4) get no prefix; NA and GG use their short codes.
+            # Scenarios whose campaign item is not yet received are prefixed "NA".
+            _camp_prefix = {1: "", 2: "", 3: "", 4: "", 5: "NA", 6: "GG"}
+
+            max_bundle = max(
+                (sum(1 for s in aomScenarioData
+                     if scenario_to_key_id.get(s.global_number) == kid)
+                 for kid in all_key_ids),
+                default=usos,
+            )
+            held_count = len(held_keys)
+            total_keys = len(all_key_ids)
+            self.output(f"=== Scenario Keys (max bundle size is {max_bundle}) ===")
+            self.output(f"  Scenario Bundles Found: {held_count}/{total_keys}")
+            self.output(f"  You Have Keys For:")
+            self.output("")
+
+            # Collect every unlocked scenario in aomScenarioData order (which is
+            # already sorted by campaign then chapter), then print as a flat list.
+            for scenario in aomScenarioData:
+                if scenario.campaign.id in disabled_ids:
+                    continue
+                kid = scenario_to_key_id.get(scenario.global_number)
+                if kid is None or kid not in held_keys:
+                    continue
+                campaign_open = bool(campaign_unlocked_by_id.get(scenario.campaign.id, False))
+                if not campaign_open:
+                    # Campaign item not yet received — always use "NA" regardless of civ
+                    prefix = "NA "
+                else:
+                    prefix = _camp_prefix.get(scenario.campaign.id, "")
+                    prefix = (prefix + " ") if prefix else ""
+                self.output(f"  {prefix}{scenario.display_name}")
 
     # ---------------------------------------------------------------------------
     # Civilization item commands — unit/myth unlocks and age unlocks only
@@ -1112,10 +1251,26 @@ class AoMContext(CommonContext):
         self.game_ctx.gem_shop_enabled      = bool(slot_data.get("gem_shop", True))
         self.game_ctx.relicsanity_enabled   = bool(slot_data.get("relicsanity", False))
         self.game_ctx.wins_to_open_shop     = int(slot_data.get("wins_to_open_shop", 4))
+        self._excluded_civs: frozenset[str] = frozenset(slot_data.get("excluded_civs", []))
         self._disabled_campaign_ids: set[int] = set(slot_data.get("disabled_campaigns", []))
         self.game_ctx.shop_obelisk_assignments = slot_data.get("shop_obelisk_assignments", {})
         self.game_ctx.shop_item_details     = {int(k): v for k, v in slot_data.get("shop_item_details", {}).items()}
         self.game_ctx.shop_hint_config      = slot_data.get("shop_hint_config", {})
+
+        # Scenario-key bundling
+        self.game_ctx.unlock_sets_of_scenarios = int(slot_data.get("unlock_sets_of_scenarios", 0))
+        raw_s2k = slot_data.get("scenario_to_key_id", {})
+        self.game_ctx.scenario_to_key_id = (
+            {int(k): int(v) for k, v in raw_s2k.items()} if raw_s2k else {}
+        )
+        raw_bdn = slot_data.get("bundle_display_names", {})
+        self.game_ctx.bundle_display_names = (
+            {int(k): str(v) for k, v in raw_bdn.items()} if raw_bdn else {}
+        )
+        self.game_ctx.starter_bundle_key_id = slot_data.get("starter_bundle_key_id")
+        self._unlock_sets_of_scenarios = self.game_ctx.unlock_sets_of_scenarios
+        self._scenario_to_key_id = self.game_ctx.scenario_to_key_id
+        self._bundle_display_names = self.game_ctx.bundle_display_names
         from ..locations.Locations import SHOP_SLOT_ORDER
         self.game_ctx.shop_slot_order       = list(SHOP_SLOT_ORDER)
         _update_atlantis_ui(self)

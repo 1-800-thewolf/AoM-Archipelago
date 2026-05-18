@@ -1555,6 +1555,22 @@ void APCheckLocation(string objectiveText = "")
 
 void APShowQueuedCheckMessage(int id = 0)
 {
+    // Relicsanity relic locations have local_id >= 10, encoded as id % 100 >= 10.
+    // When relicsanity is off (gAPHasRelicCounter == 0) these IDs are still
+    // queued by the relic-garrison trigger, but no message should be shown.
+    if ((id % 100 >= 10) && (gAPHasRelicCounter == 0))
+    {
+        return;
+    }
+
+    // Suppress message if this location was already checked before this
+    // play session (e.g. replaying a completed mission, or locations
+    // force-released by another player completing their game).
+    if (APIsAlreadyChecked(id))
+    {
+        return;
+    }
+
     string objectiveText = APGetCheckText(id);
 
     if (objectiveText == "Scenario Victory")
@@ -2379,6 +2395,7 @@ runImmediately
         APTrapScheduleNext(true);
     }
     APRelicCounterInit();
+    APInitSentChecks();
     trMusicPlayCurrent();
     xsDisableSelf();
 }
@@ -2422,6 +2439,12 @@ runImmediately
 // APCheckCampaignLock — if the player tried to enter a campaign section
 // they don't have the unlock item for, fire AP_LOCKED:<campaign> and bail
 // the scenario out.  Caller: APApplyItems.
+//
+// When the unlock_sets_of_scenarios option is on (APScenarioKeysActive==1),
+// also enforces a per-scenario "Scenario Key" item.  Three message variants:
+//   1. campaign locked, key held    → "<Campaign> is locked. You have the <Scenario> Key, though"
+//   2. campaign unlocked, key missing → "<Campaign> Campaign is unlocked. <Scenario> Key is missing"
+//   3. campaign locked, key missing → existing "You need <unlock> to play this"
 void APCheckCampaignLock()
 {
     // Campaign ID 0 means not yet derived — don't lock
@@ -2435,8 +2458,41 @@ void APCheckCampaignLock()
     if (gAPCampaignId == 5 && gHasNewAtlantis == true) { hasUnlock = true; }
     if (gAPCampaignId == 6 && gHasGoldenGift  == true) { hasUnlock = true; }
 
-    if (hasUnlock == false)
+    // Resolve campaign display name once (used by all three message variants).
+    string campaignName = "Campaign";
+    if (gAPCampaignId == 1) { campaignName = "Greek Scenarios"; }
+    if (gAPCampaignId == 2) { campaignName = "Egyptian Scenarios"; }
+    if (gAPCampaignId == 3) { campaignName = "Norse Scenarios"; }
+    if (gAPCampaignId == 4) { campaignName = "Final Scenarios"; }
+    if (gAPCampaignId == 5) { campaignName = "New Atlantis"; }
+    if (gAPCampaignId == 6) { campaignName = "Golden Gift"; }
+
+    bool keysActive = (trQuestVarGet("APScenarioKeysActive") > 0.5);
+    bool keyHeld    = true;
+    string scenLabel = "Scenario";
+    if (keysActive == true)
     {
+        // Per-scenario key flag is APHasKey<scenarioId>; default 0 if not set.
+        keyHeld   = (trQuestVarGet("APHasKey" + gAPScenarioId) > 0.5);
+        scenLabel = "Scenario " + gAPScenarioId;
+    }
+
+    if (hasUnlock == true && keyHeld == true) { return; }  // both good
+
+    string msg = "";
+    if (hasUnlock == false && keyHeld == true)
+    {
+        // Variant 3: "<Campaign> Campaign is locked. You have the <Scenario> Key, though"
+        msg = campaignName + " Campaign is locked.\nYou have the " + scenLabel + " Key, though";
+    }
+    else if (hasUnlock == true && keyHeld == false)
+    {
+        // Variant 2: "<Campaign> Campaign is unlocked. <Scenario> Key is missing"
+        msg = campaignName + " Campaign is unlocked.\n" + scenLabel + " Key is missing";
+    }
+    else
+    {
+        // Variant 1 (existing): missing the campaign-unlock item.
         string neededItem = "UNKNOWN ITEM";
         if (gAPCampaignId == 1) { neededItem = "Greek Scenarios"; }
         if (gAPCampaignId == 2) { neededItem = "Egyptian Scenarios"; }
@@ -2444,19 +2500,19 @@ void APCheckCampaignLock()
         if (gAPCampaignId == 4) { neededItem = "Atlantis Key"; }
         if (gAPCampaignId == 5) { neededItem = "Unlock New Atlantis Campaign"; }
         if (gAPCampaignId == 6) { neededItem = "Unlock The Golden Gift Campaign"; }
-
-        string msg = "You need " + neededItem + " to play this";
-        trShowWinPopup(msg, "taunts\037 not a wise decision but a decision nonetheless.mp3", true);
-
-        if (gAPCampaignId == 1) { trExecuteOnAI(12, "APLocked_Greek"); }
-        if (gAPCampaignId == 2) { trExecuteOnAI(12, "APLocked_Egyptian"); }
-        if (gAPCampaignId == 3) { trExecuteOnAI(12, "APLocked_Norse"); }
-        if (gAPCampaignId == 4) { trExecuteOnAI(12, "APLocked_Final"); }
-        if (gAPCampaignId == 5) { trExecuteOnAI(12, "APLocked_NewAtlantis"); }
-        if (gAPCampaignId == 6) { trExecuteOnAI(12, "APLocked_GoldenGift"); }
-
-        xsEnableRule("APLockedDelay");
+        msg = "You need " + neededItem + " to play this";
     }
+
+    trShowWinPopup(msg, "taunts\037 not a wise decision but a decision nonetheless.mp3", true);
+
+    if (gAPCampaignId == 1) { trExecuteOnAI(12, "APLocked_Greek"); }
+    if (gAPCampaignId == 2) { trExecuteOnAI(12, "APLocked_Egyptian"); }
+    if (gAPCampaignId == 3) { trExecuteOnAI(12, "APLocked_Norse"); }
+    if (gAPCampaignId == 4) { trExecuteOnAI(12, "APLocked_Final"); }
+    if (gAPCampaignId == 5) { trExecuteOnAI(12, "APLocked_NewAtlantis"); }
+    if (gAPCampaignId == 6) { trExecuteOnAI(12, "APLocked_GoldenGift"); }
+
+    xsEnableRule("APLockedDelay");
 }
 
 // -----------------------------------------------------------------------
@@ -3186,6 +3242,7 @@ runImmediately
         if (gAPItems[8] == 9006) { gHasGoldenGift  = true; }
     }
 
+    APInitScenarioKeys();
     APCheckCampaignLock();
     APAnnounceGod();
     APFindReinforcementSpawn();

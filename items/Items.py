@@ -138,6 +138,22 @@ class FinalUnlock:
 
 
 @dataclass
+class ScenarioKey:
+    """Per-bundle scenario unlock used when the unlock_sets_of_scenarios option is
+    set above 0.  Each Scenario Key unlocks a bundle of one or more scenarios
+    determined per-seed in `aomWorld.generate_early()`.  The mapping from key
+    item-id to the scenarios it unlocks lives in `world.scenario_to_key_id`
+    (and is shipped via slot_data as `scenario_to_key_id` and `bundle_display_names`).
+
+    Items are pre-registered with stable generic names ("Scenario Key 01" etc.)
+    so AP's static item registries are populated at module load.  The friendly
+    bundle display ("Key to 10. Strangers, NA 8. Cerberus") lives only in
+    slot_data and is rendered by the client/UI.
+    """
+    bundle_index: int
+
+
+@dataclass
 class Gem:
     """Currency earned by beating scenarios, spent in the gem shop.  Locked to
     Victory locations by Rules.place_gems() when `gem_shop` option is on."""
@@ -442,6 +458,7 @@ item_type_to_classification: dict[type, ItemClassification] = {
     Campaign:               ItemClassification.progression,
     AgeUnlock:              ItemClassification.progression,
     FinalUnlock:            ItemClassification.progression,
+    ScenarioKey:            ItemClassification.progression,
     Gem:                    ItemClassification.filler,
     ProgressiveShopInfo:    ItemClassification.useful,
     Trap:                   ItemClassification.trap,
@@ -1030,3 +1047,40 @@ for item in aomItemData:
     item_id_to_name[item.id] = item.item_name
     item_name_to_id[item.item_name] = item.id
     # CATEGORY_TO_ITEMS.setdefault(item.type_data, []).append(item)  # disabled with CATEGORY_TO_ITEMS above
+
+
+# -----------------------------------------------------------------------
+# Scenario Keys — bulk dynamic registration (IDs 3600-3999)
+# -----------------------------------------------------------------------
+# Eight per-slot banks of 50 keys each (max 8 simultaneous AoM slots).
+# Bank index = (player_number - 1) % 8 effectively, computed in
+# `aomWorld._generate_scenario_bundles`.  Each key is duck-typed (not an
+# enum member) because adding 400 enum entries is unwieldy and we never
+# need them to be members — only the dict lookups and `.id` / `.item_name`
+# / `.type_data` attributes are read by the rest of the codebase.
+# Default names are generic ("Scenario Key 001"); per-seed bundle names
+# replace them at generate_early time.
+# -----------------------------------------------------------------------
+SCENARIO_KEY_BASE_ID    = 3600
+SCENARIO_KEY_BANK_SIZE  = 50
+SCENARIO_KEY_MAX_SLOTS  = 8
+
+class _ScenarioKeyItem:
+    """Lightweight stand-in for an `aomItemData` enum member.  Has the same
+    duck-typed surface (`id`, `item_name`, `type`, `type_data`) so existing
+    code paths (`create_item`, fill, classification) work unchanged."""
+    __slots__ = ("id", "item_name", "type", "type_data")
+    def __init__(self, id: int, item_name: str, bundle_index: int) -> None:
+        self.id        = id
+        self.item_name = item_name
+        self.type      = ScenarioKey(bundle_index)
+        self.type_data = ScenarioKey
+
+for _i in range(SCENARIO_KEY_BANK_SIZE * SCENARIO_KEY_MAX_SLOTS):
+    _kid  = SCENARIO_KEY_BASE_ID + _i
+    _name = f"Scenario Key {_i + 1:03d}"
+    _obj  = _ScenarioKeyItem(_kid, _name, _i + 1)
+    NAME_TO_ITEM[_name]      = _obj
+    ID_TO_ITEM[_kid]         = _obj
+    item_id_to_name[_kid]    = _name
+    item_name_to_id[_name]   = _kid

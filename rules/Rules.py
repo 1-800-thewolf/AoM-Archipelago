@@ -1131,6 +1131,56 @@ def set_rules(world) -> None:
     place_progressive_shop_info(world)
     set_section_rules(world)
     set_scenario_age_and_point_rules(world, point_table)
+    set_scenario_key_rules(world)
     set_item_placement_restrictions(world)
     set_shop_rules(world)
     set_completion_rule(world)
+
+
+# --------------------------------------------------
+# Scenario key rules (unlock_sets_of_scenarios)
+# --------------------------------------------------
+
+def set_scenario_key_rules(world) -> None:
+    """When `unlock_sets_of_scenarios > 0`, layer a per-scenario key requirement
+    on top of the existing section→scenario entrance rules.
+
+    Each active scenario is bundled with 0+ others under one Scenario Key item;
+    `world.scenario_to_key_id` maps scenario global_number → AP item id.  The
+    key item name is looked up from the item id once per scenario.
+    """
+    if int(getattr(world, "unlock_sets_of_scenarios", 0)) <= 0:
+        return
+
+    from ..items.Items import ID_TO_ITEM
+    player    = world.player
+    multiworld = world.multiworld
+    disabled_campaigns = getattr(world, "disabled_campaigns", set())
+
+    section_names = {
+        "FOTT_GREEK":    "Fall of the Trident: Greek",
+        "FOTT_EGYPTIAN": "Fall of the Trident: Egyptian",
+        "FOTT_NORSE":    "Fall of the Trident: Norse",
+        "FOTT_FINAL":    "Fall of the Trident: Final",
+        "NEW_ATLANTIS":  "The New Atlantis",
+        "GOLDEN_GIFT":   "The Golden Gift",
+    }
+
+    scenario_to_key_id: dict[int, int] = getattr(world, "scenario_to_key_id", {}) or {}
+
+    for scenario in aomScenarioData:
+        if scenario.campaign in disabled_campaigns:
+            continue
+        n   = scenario.global_number
+        kid = scenario_to_key_id.get(n)
+        if kid is None:
+            continue
+        key_item = ID_TO_ITEM.get(kid)
+        if key_item is None:
+            continue
+        key_name = key_item.item_name
+        section  = section_names.get(scenario.campaign.name)
+        if section is None:
+            continue
+        ent = multiworld.get_entrance(entrance_name(section, scenario.region_name), player)
+        add_rule(ent, lambda state, name=key_name: state.has(name, player))

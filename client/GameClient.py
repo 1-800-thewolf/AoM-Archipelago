@@ -197,6 +197,11 @@ class AoMGameContext:
     server_known_checks: set[int] = field(default_factory=set)
     # Locked-scenario warnings already shown this connection.
     locked_warning_campaigns: set[str] = field(default_factory=set)
+    # Scenario-key bundling (unlock_sets_of_scenarios option)
+    unlock_sets_of_scenarios: int = 0
+    scenario_to_key_id: dict = field(default_factory=dict)     # scenario_global_number → AP item id
+    bundle_display_names: dict = field(default_factory=dict)   # AP item id → friendly bundle name
+    starter_bundle_key_id: int | None = None
     # Reserved for compatibility with older logic. The runtime log parser now
     # scans from byte 0 on every poll after the connect-time log purge.
     log_start_offset: int = 0
@@ -641,6 +646,21 @@ def write_aom_state(ctx: AoMGameContext) -> None:
     lines.append("    if (gAPScenarioId == 507) { trUnforbidProtounit(1, \"Roc\"); }")
     lines.append("}")
 
+    # APInitScenarioKeys — sets quest vars APHasKey<scenarioId> = 1 if the
+    # player holds the Scenario Key for that scenario.  When the
+    # unlock_sets_of_scenarios option is 0 this emits a sentinel
+    # APScenarioKeysActive=0 so XS can short-circuit.
+    lines.append("")
+    lines.append("void APInitScenarioKeys()")
+    lines.append("{")
+    usos = int(getattr(ctx, "unlock_sets_of_scenarios", 0))
+    lines.append(f'    trQuestVarSet("APScenarioKeysActive", {1 if usos > 0 else 0});')
+    if usos > 0 and ctx.scenario_to_key_id:
+        for sid, kid in sorted(ctx.scenario_to_key_id.items()):
+            held = 1 if kid in received_set else 0
+            lines.append(f'    trQuestVarSet("APHasKey{sid}", {held});')
+    lines.append("}")
+
     # NOTE: Previously emitted APUnforbidUnlockedUnits() here, which called
     # trUnforbidProtounit for every unit whose item HAD been received. That
     # bypassed the game's natural civ / age / minor-god prerequisites — e.g.
@@ -663,6 +683,11 @@ def write_aom_state(ctx: AoMGameContext) -> None:
     def _xs(s): lines.append(s)
     def _cls_rank(c): return {"trap":-1,"filler":0,"useful":1,"progression":2}.get(c,-1)
     def _cls_disp(c): return {"trap":"Trap","filler":"Filler","useful":"Useful","progression":"Advancement"}.get(c,"?")
+    def _sanitize_xs_str(s):
+        """Transliterate non-ASCII characters to their closest ASCII equivalent.
+        XS string literals only support ASCII; accented/special chars cause token errors."""
+        import unicodedata
+        return unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
 
     _xs("")
     _xs("void APShopStateInit()")
@@ -698,14 +723,14 @@ def write_aom_state(ctx: AoMGameContext) -> None:
             _lbl = str(_n) + " items\\n" + _top + " is rarest\\n?: main recipient"
         elif info_level == 3:
             _top = _cls_disp(max((_d.get("classification","filler") for _d in _det), key=_cls_rank))
-            _pl  = _main_recipient(_det)
+            _pl  = _sanitize_xs_str(_main_recipient(_det))
             _lbl = str(_n) + " items\\n" + _top + " is rarest\\n" + _pl + ": main recipient"
         else:
             # Level 4: show count of rarest item type
             _top     = max((_d.get("classification","filler") for _d in _det), key=_cls_rank)
             _top_disp = _cls_disp(_top)
             _top_cnt = sum(1 for _d in _det if _d.get("classification","filler") == _top)
-            _pl      = _main_recipient(_det)
+            _pl      = _sanitize_xs_str(_main_recipient(_det))
             _lbl = (str(_n) + " items\\n" + _top_disp + " is rarest\\n\\n"
                     + str(_top_cnt) + " " + _top_disp + " items\\n" + _pl + ": main recipient")
         _lbl = _lbl.replace('"', '\\\\"'  )
@@ -861,6 +886,38 @@ def write_aom_state(ctx: AoMGameContext) -> None:
             _xs( "    {")
             _xs( "        trCounterIncrementManual(\"Archipelago Relics Checked\", 1);")
             _xs( "    }")
+    _xs("}")
+
+    # ----------------------------------------------------------------
+    # APInitSentChecks / APIsAlreadyChecked
+    # Writes the union of sent_checks | server_known_checks into XS so
+    # APShowQueuedCheckMessage can suppress messages for already-checked
+    # locations (e.g. replaying a mission, or force-released checks).
+    # ----------------------------------------------------------------
+    _already_checked = sorted(ctx.sent_checks | ctx.server_known_checks)
+    _ac_count = len(_already_checked)
+    _ac_size  = max(_ac_count, 1)
+    _xs("")
+    _xs(f"extern int   gAPSentCheckCount = 0;")
+    _xs(f"extern int[] gAPSentChecks     = default;")
+    _xs("")
+    _xs("void APInitSentChecks()")
+    _xs("{")
+    _xs(f"    gAPSentCheckCount = {_ac_count};")
+    _xs(f"    gAPSentChecks = new int({_ac_size}, 0);")
+    for _aci, _acid in enumerate(_already_checked):
+        _xs(f"    gAPSentChecks[{_aci}] = {_acid};")
+    _xs("}")
+    _xs("")
+    _xs("bool APIsAlreadyChecked(int id = 0)")
+    _xs("{")
+    _xs("    int _i = 0;")
+    _xs("    while (_i < gAPSentCheckCount)")
+    _xs("    {")
+    _xs("        if (gAPSentChecks[_i] == id) { return (true); }")
+    _xs("        _i++;")
+    _xs("    }")
+    _xs("    return (false);")
     _xs("}")
 
     content = "\n".join(lines) + "\n"

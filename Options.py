@@ -270,13 +270,18 @@ class TrapPercentage(Range):
     range_end     = 100
     default       = 20
 
-class ForceLocalFiller(Toggle):
+class LocalFillerFrequency(Range):
     """
-    When enabled, all of your filler items stay in your own game.
+    Percentage of filler items that will be placed locally in your own world instead of the shared multiworld pool.
+    0 = all filler goes into the shared pool (default, fully multiworld).
+    75 = up to 75% of filler items are guaranteed to stay in your own game.
+    Has no effect in single-player games (all items are local anyway).
     """
-    internal_name = "force_local_filler"
-    display_name  = "Force Local Filler"
-    default = 0
+    internal_name = "local_filler_frequency"
+    display_name  = "Local Filler Frequency"
+    range_start   = 0
+    range_end     = 75
+    default       = 0
 
 
 class UpdateBuildingsForRandomGod(Toggle):
@@ -363,6 +368,21 @@ When disabled, all 4 Golden Gift scenarios are removed from the pool."""
     default = 0
 
 
+class UnlockSetsOfScenarios(Range):
+    """If you set this to more than 0, individual scenarios are locked behind Scenario Key items in addition to the campaign unlock items. Each Scenario Key unlocks a randomly-sized BUNDLE of scenarios (possibly across multiple active campaigns).
+
+The maximum bundle size equals this value but can be smaller too.
+Set to 1 for exactly one key per scenario; set higher for fewer-but-larger bundles.
+
+You'll start with 1 bundle of scenarios from your starting campaign. You'll always be able to complete at least 1 scenario in your starting bundle immediately.
+0 disables the feature entirely."""
+    internal_name = "unlock_sets_of_scenarios"
+    display_name  = "Unlock Sets of Scenarios"
+    range_start   = 0
+    range_end     = 12
+    default       = 0
+
+
 class Relicsanity(Toggle):
     """Include Relicsanity locations in the pool.
 
@@ -390,7 +410,7 @@ class AomOptions(PerGameCommonOptions):
     force_different_god:                ForceDifferentGod
     hero_abilities:                  HeroAbilities
     trap_percentage:                 TrapPercentage
-    force_local_filler:              ForceLocalFiller
+    local_filler_frequency:          LocalFillerFrequency
     update_buildings_for_random_god: UpdateBuildingsForRandomGod
     shuffle_greek_major_gods:        GreekMajorGods
     shuffle_egyptian_major_gods:     EgyptianMajorGods
@@ -402,3 +422,4 @@ class AomOptions(PerGameCommonOptions):
     new_atlantis_campaign:           NewAtlantis
     golden_gift_campaign:            GoldenGift
     relicsanity:                     Relicsanity
+    unlock_sets_of_scenarios:        UnlockSetsOfScenarios
