@@ -357,6 +357,34 @@ def _get_atlantis_status(ctx: "AoMContext") -> tuple[str, bool]:
     return ("", False)
 
 
+def _ap_client_buy_shop_slot(ctx: "AoMContext", slot_id: str) -> None:
+    """Process an AP-client gem-shop purchase.
+
+    Replaces the in-game XS shop's AP_SHOP aiEcho path.  Routes through the
+    same `_resolve_shop_signal` so dedup + persistence + hint broadcast all
+    behave identically.  Loc-id checks are sent in a single batch.
+    """
+    from .GameClient import _resolve_shop_signal
+    gc = ctx.game_ctx
+    if not gc.gem_shop_enabled:
+        return
+    if slot_id in gc.purchased_slots:
+        return
+    loc_ids = _resolve_shop_signal(gc, slot_id)
+    # ITEM slots return real location ids; HINT slots return [] and broadcast
+    # internally via _send_shop_hints.
+    new_locs = [lid for lid in loc_ids
+                if lid not in gc.sent_checks and lid not in gc.server_known_checks]
+    for lid in new_locs:
+        gc.sent_checks.add(lid)
+    if new_locs:
+        from .GameClient import save_sent_checks
+        save_sent_checks(gc)
+        asyncio.ensure_future(ctx.on_locations_received_batch(new_locs))
+    # _resolve_shop_signal already calls _update_atlantis_ui to refresh gems
+    # display; that path also refreshes the gem-shop tab buttons.
+
+
 def _update_atlantis_ui(ctx: "AoMContext") -> None:
     """Push the current Atlantis and shop status to the UI labels if the UI is ready."""
     if not (hasattr(ctx, "ui") and ctx.ui and hasattr(ctx.ui, "update_atlantis_status")):
@@ -484,6 +512,40 @@ def _update_atlantis_ui(ctx: "AoMContext") -> None:
             excluded_civs=excluded_civs,
             random_major_gods=random_major_gods,
         )
+
+    if hasattr(ctx.ui, "update_gem_shop_view"):
+        from .GameClient import GEM_ITEM_ID, VICTORY_LOCATION_IDS
+        gc = ctx.game_ctx
+        if not gc.gem_shop_enabled:
+            ctx.ui.update_gem_shop_view(
+                gem_shop_enabled=False,
+                gems_available=0, threshold=0, beaten_count=0,
+                shop_item_details={}, shop_hint_config={},
+                shop_slot_order=[], shop_obelisk_assignments={},
+                purchased_slots=set(), info_level=0,
+            )
+        else:
+            from ..items.Items import aomItemData as _ID
+            PROG_INFO_ID = _ID.PROGRESSIVE_SHOP_INFO.id
+            gems_earned = sum(1 for i in gc.received_items if i == GEM_ITEM_ID)
+            gems_spent  = len(gc.purchased_slots)
+            gems_avail  = max(0, gems_earned - gems_spent)
+            threshold   = gc.wins_to_open_shop
+            beaten      = len((gc.sent_checks | gc.server_known_checks) & VICTORY_LOCATION_IDS)
+            info_level  = min(4, sum(1 for i in gc.received_items if i == PROG_INFO_ID))
+            ctx.ui.update_gem_shop_view(
+                gem_shop_enabled=True,
+                gems_available=gems_avail,
+                threshold=threshold,
+                beaten_count=beaten,
+                shop_item_details=gc.shop_item_details,
+                shop_hint_config=gc.shop_hint_config,
+                shop_slot_order=gc.shop_slot_order,
+                shop_obelisk_assignments=gc.shop_obelisk_assignments,
+                purchased_slots=set(gc.purchased_slots),
+                info_level=info_level,
+                on_buy_clicked=lambda sid: _ap_client_buy_shop_slot(ctx, sid),
+            )
 
     if hasattr(ctx.ui, "update_relics_view"):
         relicsanity = getattr(ctx.game_ctx, "relicsanity_enabled", False)

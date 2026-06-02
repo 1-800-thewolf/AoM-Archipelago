@@ -1726,6 +1726,320 @@ class AoMManager(GameManager):
 
         Clock.schedule_once(_update)
 
+    # -------------------------------------------------------------------------
+    # Gem Shop Tab
+    # -------------------------------------------------------------------------
+    # Mirrors Scenarios/Civilizations/Relics layout: one sub-tab per shop tier
+    # (A-D, plus E when present in slot_data).  Each sub-tab is a grid of
+    # buttons, one per shop slot.  Buttons show:
+    #   - Slot id (e.g. "A_ITEM_3")
+    #   - Item / hint label (obfuscated until enough Progressive Shop Info
+    #     items have been received for that tier)
+    #   - Gem cost (currently 1 per slot)
+    #   - State: Purchased / Locked / Available
+    # In-game shop UI has been removed; all purchases happen here.
+    # -------------------------------------------------------------------------
+
+    _SHOP_TIER_HEX = {
+        "A": "4DBF4D",   # Marsh — green
+        "B": "BFA94D",   # Desert — sand
+        "C": "4D8CBF",   # Grass — blue (avoid clashing with A)
+        "D": "8C4DBF",   # Hades — purple
+        "E": "BF4D4D",   # Sink   — red (Phase 5)
+    }
+
+    def build_gem_shop_tab(self) -> None:
+        """Lazy-build 'Gem Shop' tab. Sub-tabs are added on first update_gem_shop_view
+        call once slot_data is known.  Placeholder shown until then or when gem_shop
+        is disabled for the seed."""
+        if getattr(self, "_gem_shop_tab", None) is not None:
+            return
+        root_box = BoxLayout(
+            orientation="vertical",
+            padding=(dp(6), dp(100), dp(6), dp(4)),
+            spacing=dp(4),
+        )
+        placeholder = Label(
+            text="[color=666666]Gem Shop is not enabled for this seed.[/color]",
+            markup=True, halign="left", valign="top",
+            size_hint_y=None, height=dp(40), font_size=dp(18),
+        )
+        placeholder.bind(size=placeholder.setter("text_size"))
+        root_box.add_widget(placeholder)
+
+        tabbar = _WrapTabBar(cols=5, btn_height=dp(44))
+        root_box.add_widget(tabbar)
+
+        try:
+            self.add_client_tab("Gem Shop", root_box)
+        except Exception as ex:
+            logging.getLogger(__name__).warning(f"Could not add Gem Shop tab: {ex}")
+            return
+        self._gem_shop_tab         = root_box
+        self._gem_shop_tabbar      = tabbar
+        self._gem_shop_placeholder = placeholder
+        self._gem_shop_built       = False
+        self._gem_shop_tier_subtabs: dict = {}   # tier -> (tab_idx, content_box)
+        self._gem_shop_slot_buttons: dict = {}   # slot_id -> button widget
+
+    def update_gem_shop_view(
+        self,
+        gem_shop_enabled: bool,
+        gems_available: int,
+        threshold: int,
+        beaten_count: int,
+        shop_item_details: dict,
+        shop_hint_config: dict,
+        shop_slot_order: list,
+        shop_obelisk_assignments: dict,
+        purchased_slots: set,
+        info_level: int,
+        on_buy_clicked=None,
+    ) -> None:
+        """Refresh the Gem Shop tab.
+
+        Args:
+            gem_shop_enabled:        seed option.
+            gems_available:          current gem balance (earned minus spent).
+            threshold:               wins_to_open_shop value.  0 = all open.
+            beaten_count:            victories already cleared this run.
+            shop_item_details:       loc_id -> {player, name, cls}.
+            shop_hint_config:        slot_id -> {type:"progressive_info"|"mission_hints", ...}.
+            shop_slot_order:         ordered list of slot id strings, e.g. ["A_ITEM_1", ..., "A_HINT_1", ...].
+            shop_obelisk_assignments: slot_id -> [loc_id, ...]  (one ITEM slot = an obelisk bundling
+                                     multiple locations).
+            purchased_slots:         set of slot_id strings the player has already bought.
+            info_level:              global Progressive Shop Info reveal level 0..4.
+                                     0 — nothing; 1 — count; 2 — +rarest class; 3 — +main recipient;
+                                     4 — +rarest count.  Applied to every tier.
+            on_buy_clicked:          callable(slot_id, tier_unlocked, gems_avail) invoked on click.
+                                     Implementations may show lock-message dialog or do the buy.
+        """
+        def _update(dt):
+            if not gem_shop_enabled:
+                return
+            self.build_gem_shop_tab()
+            if not hasattr(self, "_gem_shop_tabbar"):
+                return
+            if hasattr(self, "_gem_shop_placeholder") and self._gem_shop_placeholder.parent:
+                self._gem_shop_tab.remove_widget(self._gem_shop_placeholder)
+
+            from collections import defaultdict
+            from ..locations.Locations import TIER_ITEM_IDS
+
+            # Skeleton build — once per session, tiers A-D only (E added in Phase 5).
+            if not self._gem_shop_built:
+                self._gem_shop_built          = True
+                self._gem_shop_tabbar.clear_tabs()
+                self._gem_shop_tier_subtabs   = {}
+                self._gem_shop_slot_buttons   = {}
+
+                tier_slots: dict = defaultdict(list)
+                for sid in shop_slot_order:
+                    tier_slots[sid.split("_", 1)[0]].append(sid)
+
+                for tier in ("A", "B", "C", "D"):
+                    if not tier_slots.get(tier):
+                        continue
+                    hex_col = self._SHOP_TIER_HEX.get(tier, "AAAAAA")
+                    scroll  = ScrollView(size_hint=(1, 1), do_scroll_x=False, do_scroll_y=True)
+                    content = BoxLayout(
+                        orientation="vertical", size_hint_y=None,
+                        spacing=dp(6), padding=(dp(8), dp(8), dp(8), dp(8)),
+                    )
+                    content.bind(minimum_height=content.setter("height"))
+                    scroll.add_widget(content)
+                    idx = self._gem_shop_tabbar.add_tab(
+                        f"Shop {tier}", _hex_rgba(hex_col, 0.7), scroll,
+                    )
+
+                    grid = GridLayout(cols=3, size_hint_y=None, spacing=dp(6))
+                    grid.bind(minimum_height=grid.setter("height"))
+                    content.add_widget(grid)
+
+                    for sid in tier_slots[tier]:
+                        btn = _BeveledToggleButton(
+                            text="", markup=True,
+                            size_hint_y=None, height=dp(96),
+                            background_color=_hex_rgba(hex_col, 0.35),
+                        )
+                        grid.add_widget(btn)
+                        self._gem_shop_slot_buttons[sid] = btn
+
+                    self._gem_shop_tier_subtabs[tier] = (idx, content)
+
+                if self._gem_shop_tabbar._buttons:
+                    self._gem_shop_tabbar.select(0)
+
+            # ---- Compute per-tier unlock state -----------------------------
+            def _tier_unlocked(t: str) -> bool:
+                # A always open.  B/C/D require beaten >= threshold * (tier-index).
+                # threshold == 0 means everything opens immediately.
+                if t == "A":
+                    return True
+                tier_idx = "ABCD".index(t)   # 0..3
+                if threshold == 0:
+                    return True
+                return beaten_count >= threshold * tier_idx
+
+            # ---- Refresh sub-tab titles + lock state -----------------------
+            for tier, (idx, _content) in self._gem_shop_tier_subtabs.items():
+                unlocked = _tier_unlocked(tier)
+                base_label = f"Shop {tier}"
+                self._gem_shop_tabbar.set_button_text(
+                    idx, base_label if unlocked else f"{base_label} (locked)"
+                )
+                self._gem_shop_tabbar.set_tab_locked(idx, not unlocked)
+
+            # ---- Per-obelisk summary helpers (mirror archipelago.xs labels)
+            from collections import Counter
+            _CLS_RANK = {"trap": -1, "filler": 0, "useful": 1, "progression": 2}
+            _CLS_DISP = {"trap": "Trap", "filler": "Filler",
+                         "useful": "Useful", "progression": "Advancement"}
+
+            def _obelisk_summary(det_list: list, level: int) -> str:
+                if not det_list or level <= 0:
+                    return "? items\n? is rarest\n?: main recipient"
+                n = len(det_list)
+                rarest_cls = max(
+                    (d.get("classification", "filler") for d in det_list),
+                    key=lambda c: _CLS_RANK.get(c, -1),
+                )
+                rarest_disp = _CLS_DISP.get(rarest_cls, "?")
+                rarest_n    = sum(1 for d in det_list
+                                  if d.get("classification", "filler") == rarest_cls)
+                main_player = Counter(
+                    d.get("player_name", "?") for d in det_list
+                ).most_common(1)[0][0]
+                if level == 1:
+                    return f"{n} items\n? is rarest\n?: main recipient"
+                if level == 2:
+                    return f"{n} items\n{rarest_disp} is rarest\n?: main recipient"
+                if level == 3:
+                    return f"{n} items\n{rarest_disp} is rarest\n{main_player}: main recipient"
+                return (f"{n} items\n{rarest_disp} is rarest\n"
+                        f"{rarest_n} {rarest_disp} items\n{main_player}: main recipient")
+
+            # ---- Refresh each button face ----------------------------------
+            for sid, btn in self._gem_shop_slot_buttons.items():
+                tier      = sid.split("_", 1)[0]
+                unlocked  = _tier_unlocked(tier)
+                purchased = sid in purchased_slots
+
+                if "_ITEM_" in sid:
+                    loc_ids = shop_obelisk_assignments.get(sid, []) or []
+                    det     = [shop_item_details.get(int(l), {}) for l in loc_ids]
+                    det     = [d for d in det if d]
+                    summary = _obelisk_summary(det, int(info_level or 0))
+                    face    = f"[b]{sid}[/b]\n{summary}\n[color=44FF44]1 gem[/color]"
+                else:
+                    hcfg  = shop_hint_config.get(sid, {}) or {}
+                    htype = hcfg.get("type", "")
+                    if htype == "progressive_info":
+                        face = (f"[b]{sid}[/b]\nBetter Shop Information\n"
+                                f"[color=44FF44]1 gem[/color]")
+                    else:
+                        rng = hcfg.get("missions_range")
+                        rng_str = f" ({rng[0]}-{rng[1]} missions)" if rng else ""
+                        face = (f"[b]{sid}[/b]\nMission Hints{rng_str}\n"
+                                f"[color=44FF44]1 gem[/color]")
+
+                if purchased:
+                    face = f"[s]{face}[/s]\n[color=AAAAAA]Purchased[/color]"
+                elif not unlocked:
+                    face = f"{face}\n[color=AA4444]Shop locked[/color]"
+                elif gems_available <= 0:
+                    face = f"{face}\n[color=C9695F]Need gems[/color]"
+
+                btn.text = face
+                btn.set_locked(purchased or not unlocked)
+
+                # Re-bind click handler each refresh so it captures the *latest*
+                # tier-unlock / gems-available / purchased state by closure.  Cheap
+                # rebind avoids stale-context bugs at the cost of one fbind per slot.
+                btn.unbind(on_release=getattr(btn, "_aom_buy_handler", lambda *a: None))
+                def _make_handler(s=sid, t=tier, _unl=unlocked, _av=gems_available,
+                                  _pur=purchased):
+                    def _h(_b):
+                        self._on_gem_shop_slot_clicked(
+                            slot_id=s, tier=t,
+                            tier_unlocked=_unl,
+                            gems_available=_av,
+                            purchased=_pur,
+                            threshold=threshold,
+                            beaten_count=beaten_count,
+                            on_buy_clicked=on_buy_clicked,
+                        )
+                    return _h
+                _h = _make_handler()
+                btn._aom_buy_handler = _h
+                btn.bind(on_release=_h)
+
+        Clock.schedule_once(_update)
+
+    def _on_gem_shop_slot_clicked(
+        self, slot_id: str, tier: str, tier_unlocked: bool,
+        gems_available: int, purchased: bool,
+        threshold: int, beaten_count: int,
+        on_buy_clicked,
+    ) -> None:
+        """Dispatch a click on a gem-shop button.
+
+          * purchased         → toast: already bought
+          * tier locked       → popup: "Beat N more scenarios to unlock this shop"
+          * no gems           → toast: need gems
+          * otherwise         → invoke on_buy_clicked(slot_id) (ApClient does the buy)
+        """
+        logger = logging.getLogger(__name__)
+        if purchased:
+            self._show_shop_message(f"{slot_id} already purchased.")
+            return
+        if not tier_unlocked:
+            tier_idx = "ABCD".index(tier) if tier in "ABCD" else 0
+            need_total = threshold * tier_idx
+            remaining  = max(0, need_total - beaten_count)
+            msg = (f"Beat {remaining} more scenario{'s' if remaining != 1 else ''} "
+                   f"to unlock Shop {tier}.")
+            self._show_shop_message(msg, title=f"Shop {tier} locked")
+            return
+        if gems_available <= 0:
+            self._show_shop_message("Not enough gems.", title="Gem Shop")
+            return
+        if on_buy_clicked is None:
+            logger.info(f"Gem Shop clicked (no-op): {slot_id}")
+            return
+        try:
+            on_buy_clicked(slot_id)
+        except Exception as ex:
+            logger.warning(f"Gem Shop buy callback failed for {slot_id}: {ex}")
+
+    def _show_shop_message(self, message: str, title: str = "Gem Shop") -> None:
+        """Modal popup for shop notices (locked tier, already bought, etc.).
+        Auto-dismisses on Close-button click; click outside also closes."""
+        from kivy.uix.popup import Popup
+        from kivy.uix.button import Button
+        body = BoxLayout(
+            orientation="vertical",
+            spacing=dp(8), padding=(dp(10), dp(10), dp(10), dp(10)),
+        )
+        lbl = Label(
+            text=message, markup=True, halign="center", valign="middle",
+            font_size=dp(16),
+        )
+        lbl.bind(size=lbl.setter("text_size"))
+        body.add_widget(lbl)
+        close_btn = Button(
+            text="OK", size_hint_y=None, height=dp(40),
+        )
+        body.add_widget(close_btn)
+        popup = Popup(
+            title=title, content=body,
+            size_hint=(None, None), size=(dp(380), dp(180)),
+            auto_dismiss=True,
+        )
+        close_btn.bind(on_release=lambda _b: popup.dismiss())
+        popup.open()
+
     def on_start(self) -> None:
         logging.getLogger(__name__).addHandler(LogtoUI(self.log_panels["All"].on_log))
         logger = logging.getLogger("Client")
@@ -1741,6 +2055,7 @@ class AoMManager(GameManager):
         self.build_scenarios_tab()
         self.build_civs_tab()
         self.build_relics_tab()
+        self.build_gem_shop_tab()
 
     @staticmethod
     def start_ap_ui(ctx: "AoMContext") -> None:

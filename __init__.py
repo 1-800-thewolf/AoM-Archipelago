@@ -1069,7 +1069,7 @@ class aomWorld(World):
         TIER_POOLS = [
             ["Bolt", "Deconstruction", "LocustSwarm", "GreatHunt", "Shockwave", "GaiaForest",
              "Creation", "SolarShield", "BloodPact", "Tailwind"],
-            ["Restoration", "Carnivora", "SpiderLair", "Pestilence", "Eclipse",
+            ["Restoration", "Carnivora", "SpiderLair", "Eclipse",
             "ShiftingSands", "PlagueOfSerpents", "Undermine", "HealingSpring",
             "AsgardianBastion", "Vanish", "LightningWeapons", "EarthWall",
             "Swampland", "Goshinboku", "Infestation", "AgaveBloom", "Lullaby"],
@@ -1378,6 +1378,22 @@ class aomWorld(World):
                 from .locations.Campaigns import aomCampaignData as _C
                 _norse_disabled = _C.FOTT_NORSE in self.disabled_campaigns
                 if _norse_disabled:
+                    continue
+
+            # Amanra items — removed when BOTH FotT Egyptian and FotT Norse
+            # campaigns are disabled (Amanra is the Egyptian campaign hero and
+            # also features in Norse scenarios; without either campaign she
+            # never appears in active gameplay, so her ability items are dead
+            # weight in the pool).
+            _is_amanra_item = (
+                getattr(item.type, "hero", "") == "Amanra"
+                or item.item_name.startswith("Amanra ")
+            )
+            if _is_amanra_item:
+                from .locations.Campaigns import aomCampaignData as _C
+                _egypt_disabled = _C.FOTT_EGYPTIAN in self.disabled_campaigns
+                _norse_disabled = _C.FOTT_NORSE in self.disabled_campaigns
+                if _egypt_disabled and _norse_disabled:
                     continue
 
             # Arkantos/Chiron items — removed when ALL FotT campaigns (Greek,
