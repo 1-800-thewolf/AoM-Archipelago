@@ -76,6 +76,7 @@ from ..items.Items import (
     StartingArmyUseful,
     StartingResources,
     StartingResourcesLarge,
+    TitanAgeUnlock,
     UnitUnlockProgression,
     UnitUnlockUseful,
     ChineseUnitUnlockProgression,
@@ -257,71 +258,75 @@ _CIV_UNLOCK_NAMES: dict[str, list[str]] = {
 #
 # start_age_num: 1=Archaic, 2=Classical, 3=Heroic, 4=Mythic
 # min_required_unlocks: minimum age unlock ITEMS the player must have to enter
-#   this scenario in logic. Matches the vanilla game's maximum reachable age.
-#   This is a FLOOR — with more unlocks the player can advance further.
-#   1 = must reach Classical, 2 = must reach Heroic, 3 = must reach Mythic.
-#   0 = no age advancement needed (scenario is in logic with starting-age units).
+#   this scenario in logic (absolute age tier to reach: 1=Classical, 2=Heroic,
+#   3=Mythic; 0=no advancement needed).  This is a FLOOR — more unlocks let the
+#   player advance further.
+#
+# AGE-FLOOR POLICY: logic expects at most ONE age advancement above the
+#   scenario's starting age (e.g. Classical start -> reach Heroic; Heroic start
+#   -> reach Mythic).  EXCEPTION: scenarios that start in Archaic AND can reach
+#   Mythic in vanilla expect TWO advancements (reach Heroic) — fott 12 is the
+#   only such scenario.  Several scenarios further override the floor and/or
+#   point threshold to custom values below.
 _SCENARIO_DATA: dict[int, tuple[int, int, float, bool, bool]] = {
     1:  (1, 0,  0.0,  True,  False),  # no TC; always accessible
-    2:  (1, 1,  4.0,  False, False),  # must reach Classical ("Advance to Classical" objective)
-    3:  (1, 2,  9.0,  False, False),  # must reach Heroic
-    4:  (2, 3, 16.0,  False, False),  # must reach Mythic
-    5:  (3, 3, 16.0,  False, False),  # must reach Mythic
-    6:  (3, 2,  9.0,  False, False),  # must reach Heroic
-    7:  (3, 0,  1.0,  False, False),  # special: no TC, no age req, 1pt required
-    8:  (2, 3, 16.0,  False, False),  # must reach Mythic
+    2:  (1, 1,  4.0,  False, False),  # reach Classical (1 advancement)
+    3:  (1, 1,  4.0,  False, False),  # reach Classical (1 advancement); custom points
+    4:  (2, 2, 16.0,  False, False),  # reach Heroic (1 advancement)
+    5:  (3, 3, 16.0,  False, False),  # reach Mythic (1 advancement)
+    6:  (3, 0,  9.0,  False, False),  # custom: no age floor
+    7:  (3, 0,  1.0,  False, False),  # special: no TC, no age req, points only
+    8:  (2, 2, 22.0,  False, False),  # reach Heroic (1 advancement); custom points
     9:  (4, 0,  0.0,  True,  False),  # always accessible
     10: (1, 0,  0.0,  True,  False),  # always accessible
     11: (1, 0,  0.0,  True,  False),  # always accessible
-    12: (1, 3, 16.0,  False, False),  # must reach Mythic
-    13: (3, 3, 16.0,  False, False),  # must reach Mythic
-    14: (3, 2,  9.0,  False, True),   # myth-only, must reach Heroic
-    15: (2, 3, 16.0,  False, False),  # must reach Mythic
+    12: (1, 2,  9.0,  False, False),  # Archaic+Mythic -> reach Heroic (2 advancements); custom points
+    13: (3, 0,  6.0,  False, False),  # custom: no age floor + points
+    14: (3, 0,  9.0,  False, True),   # myth-only; custom: no age floor
+    15: (2, 2, 16.0,  False, False),  # reach Heroic (1 advancement)
     16: (4, 0,  0.0,  True,  False),  # always accessible
-    17: (3, 3, 16.0,  False, False),  # must reach Mythic
-    18: (2, 3, 16.0,  False, False),  # must reach Mythic
-    19: (3, 3, 16.0,  False, False),  # must reach Mythic
-    20: (3, 3, 16.0,  False, False),  # must reach Mythic
-    21: (2, 3, 16.0,  False, False),  # must reach Mythic
-    22: (1, 2,  9.0,  False, False),  # must reach Heroic
-    23: (2, 3, 16.0,  False, False),  # must reach Mythic
-    24: (2, 2,  9.0,  False, False),  # must reach Heroic ("Advance to Heroic" objective)
+    17: (3, 3, 16.0,  False, False),  # reach Mythic (1 advancement)
+    18: (2, 2, 16.0,  False, False),  # reach Heroic (1 advancement)
+    19: (3, 0, 16.0,  False, False),  # custom: no age floor
+    20: (3, 3, 22.0,  False, False),  # reach Mythic (1 advancement); custom points
+    21: (2, 2,  9.0,  False, False),  # reach Heroic (1 advancement); custom points
+    22: (1, 1,  4.0,  False, False),  # reach Classical (1 advancement); custom points
+    23: (2, 2, 20.0,  False, False),  # reach Heroic (1 advancement); custom points
+    24: (2, 2,  2.0,  False, False),  # reach Heroic (1 advancement); custom points
     25: (1, 0,  0.0,  True,  False),  # no TC; always accessible
-    26: (2, 3, 16.0,  False, False),  # must reach Mythic
-    27: (2, 3, 16.0,  False, False),  # must reach Mythic
-    28: (3, 3, 16.0,  False, False),  # must reach Mythic
+    26: (2, 2,  6.0,  False, False),  # reach Heroic (1 advancement); custom points
+    27: (2, 2, 20.0,  False, False),  # reach Heroic (1 advancement); custom points
+    28: (3, 0,  6.0,  False, False),  # custom: no age floor + points
     29: (2, 0,  0.0,  True,  False),  # always accessible
-    30: (2, 3, 16.0,  False, False),  # must reach Mythic
-    31: (3, 3, 16.0,  False, False),  # must reach Mythic
-    32: (3, 3, 16.0,  False, False),  # must reach Mythic
+    30: (2, 2, 24.0,  False, False),  # reach Heroic (1 advancement); custom points
+    31: (3, 3, 21.0,  False, False),  # reach Mythic (1 advancement); custom points
+    32: (3, 3, 25.0,  False, False),  # reach Mythic (1 advancement); custom points
     # ---------------------------------------------------------------------------
-    # New Atlantis (APScenarioIDs 501-512) — starting ages TBD
-    # is_exempt=True for no-TC scenarios (503, 506, 512).
-    # Update start_age_num and min_required_unlocks once starting ages are confirmed.
+    # New Atlantis (APScenarioIDs 501-512)
+    # Age-capped (501,503,504,505,511,512) and exempt (506,507) scenarios ignore
+    # min_required_unlocks; only points_needed gates them.
     # ---------------------------------------------------------------------------
-    # start_age_num: 1=Archaic,2=Classical,3=Heroic,4=Mythic
-    # min_required_unlocks: 0=no advancement needed (exempt/no-TC), 3=must reach Mythic
-    501: (3, 0, 16.0, False, False),  # Heroic start, max Heroic — no age unlock needed
-    502: (1, 1,  4.0, False, False),  # Archaic start; must reach Classical (Advance objective)
-    503: (3, 0,  0.0, False, False),  # Heroic start, NO TC — military unit required, capped at Heroic
-    504: (3, 0, 16.0, False, False),  # Heroic start, Heroic max — capped, no age unlock needed
-    505: (3, 0, 16.0, False, False),  # Heroic start, Heroic max — point gate + military
+    501: (3, 0,  9.0, False, False),  # age-capped @Heroic; custom points
+    502: (1, 1,  4.0, False, False),  # reach Classical (1 advancement)
+    503: (3, 0,  0.0, False, False),  # age-capped @Heroic, NO TC
+    504: (3, 0, 20.0, False, False),  # age-capped @Heroic; custom points
+    505: (3, 0, 16.0, False, False),  # age-capped @Heroic
     506: (4, 0,  0.0, True,  False),  # Mythic start, NO TC — always accessible
     507: (3, 0,  0.0, True,  False),  # always accessible — sphere 1
-    508: (3, 3, 16.0, False, False),  # Heroic start, Mythic max — 3 unlocks to reach Mythic
-    509: (3, 3, 16.0, False, False),  # Heroic start, Mythic max — 3 unlocks to reach Mythic
-    510: (3, 3, 16.0, False, False),  # Heroic start, Mythic max — 3 unlocks to reach Mythic
-    511: (4, 0, 16.0, False, False),  # Mythic start, Mythic max — point gate + military
-    512: (4, 0, 16.0, False, False),  # Mythic start, Mythic max — point gate + military
+    508: (3, 0, 16.0, False, False),  # custom: no age floor
+    509: (3, 0,  2.0, False, False),  # custom: no age floor + points
+    510: (3, 3, 16.0, False, False),  # reach Mythic (1 advancement)
+    511: (4, 0, 21.0, False, False),  # age-capped @Mythic; custom points
+    512: (4, 0,  9.0, False, False),  # age-capped @Mythic; custom points
     # ---------------------------------------------------------------------------
     # The Golden Gift (APScenarioIDs 601-604)
-    # All start Heroic (start_age_num=3). min_required_unlocks=0 for all:
-    # Heroic start means no unlock items needed to enter any of these scenarios.
+    # 601,602 age-capped @Heroic; 603 heroic-floor (Mythic via 3 unlocks);
+    # 604 points-only gate (was always-accessible).
     # ---------------------------------------------------------------------------
-    601: (3, 0,  4.0,  False, False),  # Heroic start, Heroic max
-    602: (3, 0,  4.0,  False, False),  # Heroic start, Heroic max
-    603: (3, 0,  9.0,  False, False),  # Heroic start, Mythic max
-    604: (4, 0,  0.0,  True,  False),  # Mythic start, no further advancement — always accessible
+    601: (3, 0,  9.0,  False, False),  # age-capped @Heroic; custom points
+    602: (3, 0,  4.0,  False, False),  # age-capped @Heroic
+    603: (3, 0, 16.0,  False, False),  # heroic-floor; custom points
+    604: (4, 0,  2.0,  False, False),  # points-only gate (custom; no longer exempt)
 }
 
 _VANILLA_CIV: dict[int, str] = {
@@ -452,6 +457,81 @@ _MYTH_ITEMS_BY_UNLOCK: dict[str, dict[int, str]] = {
 
 
 # --------------------------------------------------
+# Titan access  (civ → "Unlock <Civ> Titan Age" item name)
+# --------------------------------------------------
+# Building a Titan Gate counts as a trainable military unit (and toward the
+# points gate) when ALL of the following hold:
+#   1. the scenario has a town center (the player can age up / build the gate),
+#   2. the player can reach the Mythic age in that scenario, and
+#   3. the player holds the Titan Age item matching the scenario's civ.
+_TITAN_ITEM_BY_CIV: dict[str, str] = {
+    item.type.culture: item.item_name
+    for item in aomItemData
+    if isinstance(item.type, TitanAgeUnlock)
+}
+
+# Scenarios with no town center.  Without a town center the player can neither
+# advance ages nor place a Titan Gate, so a Titan never counts as a trainable
+# unit or toward the points gate here.  (Exempt / scenario-7 no-TC scenarios
+# don't run the unit machinery anyway; they're listed for documentation and
+# defence-in-depth.)
+_SCENARIO_NO_TC: frozenset = frozenset({1, 7, 25, 503, 506})
+
+# Point value of a buildable Titan toward the per-scenario points threshold.
+_TITAN_POINTS: float = 10.0
+
+
+def _titan_buildable(
+    state: CollectionState,
+    player: int,
+    god_civ: str,
+    can_reach_mythic: bool,
+    has_town_center: bool,
+) -> bool:
+    """True when the player could build a Titan in this scenario: a town centre
+    is present, the Mythic age is reachable, and the civ's Titan Age item is
+    held."""
+    if not (has_town_center and can_reach_mythic):
+        return False
+    titan_item = _TITAN_ITEM_BY_CIV.get(god_civ)
+    return bool(titan_item) and state.has(titan_item, player)
+
+
+# --------------------------------------------------
+# Non-combative myth units
+# --------------------------------------------------
+# Some minor gods grant only a non-combative myth unit (e.g. the Atlantean
+# Oceanus grants the Caladria, a healing unit).  When such a god is a scenario's
+# FORCED floor minor god, the matching "Can train <Civ> <Tier> Myth Units" item
+# only ever produces that non-combat unit, so it must NOT satisfy the trainable-
+# military-unit requirement on its own.  Above-floor tiers are excluded because
+# the player picks the minor god freely there and can choose a combat one.
+#   tech const name -> (civ, tier) of the myth-unit item it would otherwise gate.
+_NONCOMBAT_MINOR_GOD_TECHS: dict[str, tuple] = {
+    "cTechClassicalAgeOceanus": ("Atlantean", 1),  # Oceanus -> Caladria (healer)
+}
+
+
+def _excluded_myth_items(floor_minor_god_techs) -> frozenset:
+    """Myth-unit item names that do NOT count as a trainable military unit for a
+    scenario, because its forced floor minor god grants only a non-combative
+    myth unit (currently only Oceanus -> Caladria).
+
+    `floor_minor_god_techs` is the scenario's `minor_god_assignments` entry — a
+    flat list of floor age-tech const names (base + minor interleaved)."""
+    out = set()
+    for tech in (floor_minor_god_techs or []):
+        info = _NONCOMBAT_MINOR_GOD_TECHS.get(tech)
+        if info is None:
+            continue
+        civ, tier = info
+        item = _MYTH_ITEMS_BY_UNLOCK.get(civ, {}).get(tier)
+        if item:
+            out.add(item)
+    return frozenset(out)
+
+
+# --------------------------------------------------
 # Point scoring system
 # --------------------------------------------------
 
@@ -579,25 +659,38 @@ def _make_age_capped_scenario_rule(
     max_tier: int,
     point_table: dict[str, float],
     points_needed: float,
+    scenario_n: int = 0,
+    excluded_myth: frozenset = frozenset(),
 ):
     """Rule for scenarios whose max accessible age is fixed at scenario start.
 
     The starting age is already granted, so no age unlock items are needed.
     Any human or myth unit at tier <= max_tier puts the scenario in logic.
     Tiers above max_tier (e.g. Mythic on a Heroic-capped scenario) never count.
+
+    A Titan also counts as a trainable unit when the cap reaches Mythic
+    (max_tier >= 3), the scenario has a town centre, and the civ's Titan Age
+    item is held.
     """
     god_civ = _GOD_TO_CIV.get(god_id, "Greek")
+    has_tc  = scenario_n not in _SCENARIO_NO_TC
 
     def rule(state: CollectionState) -> bool:
-        if count_points(state, player, point_table) < points_needed:
+        can_titan = _titan_buildable(state, player, god_civ, max_tier >= 3, has_tc)
+        points = count_points(state, player, point_table)
+        if can_titan:
+            points += _TITAN_POINTS
+        if points < points_needed:
             return False
+        if can_titan:
+            return True
         for tier in range(0, max_tier + 1):
             for unit_name in _HUMAN_UNITS.get(god_civ, {}).get(tier, []):
                 if state.has(unit_name, player):
                     return True
         for tier in range(1, max_tier + 1):
             myth_name = _MYTH_ITEMS_BY_UNLOCK.get(god_civ, {}).get(tier)
-            if myth_name and state.has(myth_name, player):
+            if myth_name and myth_name not in excluded_myth and state.has(myth_name, player):
                 return True
         return False
 
@@ -609,19 +702,32 @@ def _make_heroic_floor_scenario_rule(
     god_id: int,
     point_table: dict[str, float],
     points_needed: float,
+    scenario_n: int = 0,
+    excluded_myth: frozenset = frozenset(),
 ):
     """Rule for Heroic-start, Mythic-max scenarios where the starting age floor
     grants free access to tiers 0-2, but Mythic (tier 3) still requires 3 unlocks.
 
     Used for scenarios like GG 3 where Classical and Heroic human/myth units are
     immediately trainable, but advancing to Mythic requires age unlock items.
+
+    A Titan counts as a trainable unit once Mythic is reachable (3 unlocks), the
+    scenario has a town centre, and the civ's Titan Age item is held.
     """
     god_civ = _GOD_TO_CIV.get(god_id, "Greek")
     unlock_names = _CIV_UNLOCK_NAMES[god_civ]
+    has_tc  = scenario_n not in _SCENARIO_NO_TC
 
     def rule(state: CollectionState) -> bool:
-        if count_points(state, player, point_table) < points_needed:
+        unlock_count = min(sum(state.count(n, player) for n in unlock_names), 3)
+        can_titan = _titan_buildable(state, player, god_civ, unlock_count >= 3, has_tc)
+        points = count_points(state, player, point_table)
+        if can_titan:
+            points += _TITAN_POINTS
+        if points < points_needed:
             return False
+        if can_titan:
+            return True
         # Tiers 0-2: freely accessible at Heroic start
         for tier in range(0, 3):
             for unit_name in _HUMAN_UNITS.get(god_civ, {}).get(tier, []):
@@ -629,16 +735,15 @@ def _make_heroic_floor_scenario_rule(
                     return True
         for tier in range(1, 3):
             myth_name = _MYTH_ITEMS_BY_UNLOCK.get(god_civ, {}).get(tier)
-            if myth_name and state.has(myth_name, player):
+            if myth_name and myth_name not in excluded_myth and state.has(myth_name, player):
                 return True
         # Tier 3 (Mythic): needs 3 age unlock items
-        unlock_count = min(sum(state.count(n, player) for n in unlock_names), 3)
         if unlock_count >= 3:
             for unit_name in _HUMAN_UNITS.get(god_civ, {}).get(3, []):
                 if state.has(unit_name, player):
                     return True
             myth_name = _MYTH_ITEMS_BY_UNLOCK.get(god_civ, {}).get(3)
-            if myth_name and state.has(myth_name, player):
+            if myth_name and myth_name not in excluded_myth and state.has(myth_name, player):
                 return True
             if god_id in _GREEK_FREE_MYTHIC_GODS:
                 return True
@@ -660,6 +765,8 @@ def _make_scenario_rule(
     is_myth_only: bool,
     point_table: dict[str, float],
     points_needed: float,
+    scenario_n: int = 0,
+    excluded_myth: frozenset = frozenset(),
 ):
     """Build the access rule for a scenario.
 
@@ -686,6 +793,7 @@ def _make_scenario_rule(
     MAX_AGE_TIERS = 3
     god_civ      = _GOD_TO_CIV.get(god_id, "Greek")
     unlock_names = _CIV_UNLOCK_NAMES[god_civ]
+    has_tc       = scenario_n not in _SCENARIO_NO_TC
 
     # Myth units whose techs are pre-researched at scenario start.
     # These are accessible without spending unlock items on their age tier,
@@ -694,13 +802,21 @@ def _make_scenario_rule(
         _MYTH_ITEMS_BY_UNLOCK[god_civ][tier]
         for tier in range(1, start_age_num)
         if tier in _MYTH_ITEMS_BY_UNLOCK.get(god_civ, {})
+        and _MYTH_ITEMS_BY_UNLOCK[god_civ][tier] not in excluded_myth
     ]
 
     def rule(state: CollectionState) -> bool:
-        if count_points(state, player, point_table) < points_needed:
-            return False
-
         unlock_count = min(sum(state.count(n, player) for n in unlock_names), MAX_AGE_TIERS)
+
+        # A buildable Titan (town centre + Mythic reachable + civ Titan item)
+        # counts as a trainable unit and adds _TITAN_POINTS to the points gate.
+        can_titan = _titan_buildable(state, player, god_civ, unlock_count >= 3, has_tc)
+
+        points = count_points(state, player, point_table)
+        if can_titan:
+            points += _TITAN_POINTS
+        if points < points_needed:
+            return False
 
         # ── Requirement 1: age floor ──────────────────────────────────────
         # Player must be able to reach at least the vanilla max age.
@@ -708,6 +824,11 @@ def _make_scenario_rule(
         # 0 unlocks cannot enter a Heroic-floor scenario like scenario 24.
         if unlock_count < min_required_unlocks:
             return False
+
+        # A Titan satisfies the military-unit requirement (myth-only too — it
+        # requires Mythic, the strictest tier).
+        if can_titan:
+            return True
 
         # ── Requirement 2: military unit ──────────────────────────────────
         # is_myth_only: only myth units count; must have a starting-age one.
@@ -732,7 +853,7 @@ def _make_scenario_rule(
                     return True
             if needed >= 1:
                 myth_name = _MYTH_ITEMS_BY_UNLOCK.get(god_civ, {}).get(needed)
-                if myth_name and state.has(myth_name, player):
+                if myth_name and myth_name not in excluded_myth and state.has(myth_name, player):
                     return True
             # Note: Norse Berserks (tier 0) are handled by the human unit loop above.
             # No special shortcut — Norse tier 1+ units require their items like any civ.
@@ -819,6 +940,7 @@ def compute_scenarios_in_logic(
     max_keys_on_keyrings: int,
     disabled_campaign_ids: set = frozenset(),
     player: int = 1,
+    minor_god_assignments: dict = None,
 ) -> dict[int, bool]:
     """Replay gates 1-5 for every scenario without a multiworld and return
     `{global_number: in_logic}`.
@@ -843,6 +965,7 @@ def compute_scenarios_in_logic(
     state       = _DictState(received_counts)
     point_table = build_point_table()
     eff7        = _scenario7_effective_table(point_table)
+    minor_god_assignments = minor_god_assignments or {}
     result: dict[int, bool] = {}
 
     for scenario in aomScenarioData:
@@ -874,10 +997,12 @@ def compute_scenarios_in_logic(
         god_id       = god_assignments.get(n) or _VANILLA_GODS[n]
         god_civ      = _GOD_TO_CIV.get(god_id, "Greek")
         unlock_names = _CIV_UNLOCK_NAMES[god_civ]
+        excl         = _excluded_myth_items(minor_god_assignments.get(n, []))
 
         if n in _SCENARIO_AGE_CAP:
             rule = _make_age_capped_scenario_rule(
                 player, god_id, _SCENARIO_AGE_CAP[n], point_table, points_needed,
+                scenario_n=n, excluded_myth=excl,
             )
             result[n] = rule(state)
             continue
@@ -885,8 +1010,13 @@ def compute_scenarios_in_logic(
         if n in _SCENARIO_HEROIC_FLOOR:
             rule = _make_heroic_floor_scenario_rule(
                 player, god_id, point_table, points_needed,
+                scenario_n=n, excluded_myth=excl,
             )
             result[n] = rule(state)
+            continue
+
+        if n == 604:
+            result[n] = count_points(state, player, point_table) >= points_needed
             continue
 
         if n == 7:
@@ -897,6 +1027,7 @@ def compute_scenarios_in_logic(
             player, god_id, _VANILLA_CIV[n],
             start_age_num, min_required_unlocks, is_myth_only,
             point_table, points_needed,
+            scenario_n=n, excluded_myth=excl,
         )
         ok = rule(state)
         if ok and n == 2:
@@ -1057,6 +1188,9 @@ def set_scenario_age_and_point_rules(world, point_table: dict[str, float]) -> No
         vanilla_civ = _VANILLA_CIV[n]
         god_civ     = _GOD_TO_CIV.get(god_id, "Greek")
         unlock_names = _CIV_UNLOCK_NAMES[god_civ]
+        excl = _excluded_myth_items(
+            getattr(world, "minor_god_assignments", {}).get(n, [])
+        )
 
         ent_name = entrance_name(section_for(n), scenario.region_name)
         entrance = multiworld.get_entrance(ent_name, player)
@@ -1066,6 +1200,7 @@ def set_scenario_age_and_point_rules(world, point_table: dict[str, float]) -> No
         if n in _SCENARIO_AGE_CAP:
             add_rule(entrance, _make_age_capped_scenario_rule(
                 player, god_id, _SCENARIO_AGE_CAP[n], point_table, points_needed,
+                scenario_n=n, excluded_myth=excl,
             ))
             continue
 
@@ -1074,7 +1209,17 @@ def set_scenario_age_and_point_rules(world, point_table: dict[str, float]) -> No
         if n in _SCENARIO_HEROIC_FLOOR:
             add_rule(entrance, _make_heroic_floor_scenario_rule(
                 player, god_id, point_table, points_needed,
+                scenario_n=n, excluded_myth=excl,
             ))
+            continue
+
+        # Scenario 604: points-only gate (no age/military requirement) using the
+        # full point table.  Formerly exempt (always accessible).
+        if n == 604:
+            add_rule(entrance,
+                lambda state, p=points_needed:
+                    count_points(state, player, point_table) >= p
+            )
             continue
 
         # Scenario 7: human unit unlocks don't count toward points,
@@ -1096,6 +1241,7 @@ def set_scenario_age_and_point_rules(world, point_table: dict[str, float]) -> No
             player, god_id, vanilla_civ,
             start_age_num, min_required_unlocks, is_myth_only,
             effective_table, points_needed,
+            scenario_n=n, excluded_myth=excl,
         ))
 
         # Hard requirement: scenario 2 needs at least 1 age unlock

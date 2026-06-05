@@ -748,6 +748,14 @@ class AoMManager(GameManager):
                     r = g = b = 0.18; a = 1.0
                 color.rgba = (r, g, b, a)
 
+                # All checks obtained → gray the tile out (overriding the civ
+                # color) so it stops drawing attention; there's nothing left to
+                # do there.
+                ci = scenario_check_counts.get(sid)
+                all_checks_done = bool(ci) and ci[1] > 0 and ci[0] >= ci[1]
+                if all_checks_done:
+                    color.rgba = (0.30, 0.30, 0.30, 1.0)
+
                 # Slashes: hidden on fully-unlocked tiles; black + high alpha when the
                 # player holds the key but the campaign branch is still locked (making
                 # it obvious something is blocking access); grey otherwise.
@@ -772,7 +780,7 @@ class AoMManager(GameManager):
                 # FotT Final / New Atlantis), swap text to black so it stays
                 # legible.  Only applies once fully unlocked — locked tiles
                 # are darkened enough that white text reads fine.
-                if fully_unlocked and camp_name in ("NEW_ATLANTIS", "FOTT_EGYPTIAN", "FOTT_FINAL"):
+                if fully_unlocked and not all_checks_done and camp_name in ("NEW_ATLANTIS", "FOTT_EGYPTIAN", "FOTT_FINAL"):
                     _c0, _c1 = "[color=000000]", "[/color]"
                     god_markup = lambda g: f"[i][color=000000]{g}[/color][/i]"
                     checks_markup = lambda s: f"[color=000000]{s}[/color]"

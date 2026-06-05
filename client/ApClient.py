@@ -557,6 +557,9 @@ def _update_atlantis_ui(ctx: "AoMContext") -> None:
                 held_gates,
                 mk,
                 disabled_ids,
+                minor_god_assignments=getattr(
+                    ctx.game_ctx, "minor_god_assignments", {}
+                ),
             )
         except Exception as _ex:
             import logging

@@ -94,8 +94,10 @@ logger = logging.getLogger("Client")
 # Minor god tech (XS const name) -> primary myth unit proto.  Used to hard-
 # forbid wrong-minor-god myth units per scenario when the assigned major god
 # can't access that minor god, OR when the player rejected it at floor tier.
-# Some units gate on multiple minor gods (e.g. RockGiant on Njord OR Aegir);
+# Some units gate on multiple minor gods (e.g. FireGiant on Baldr OR Hel);
 # the forbid logic only fires when ALL gating techs are disallowed.
+# Tech->unit pairings mirror techtree.xml's per-minor-god Enable/CreateUnit
+# effects (Greek/Egyptian/Norse/Atlantean verified against techtree.xml).
 _MINOR_GOD_MYTH_UNITS: dict[str, str] = {
     "cTechClassicalAgeAthena":     "Minotaur",
     "cTechClassicalAgeHermes":     "Centaur",
@@ -110,31 +112,31 @@ _MINOR_GOD_MYTH_UNITS: dict[str, str] = {
     "cTechMythicAgeArtemis":       "Chimera",
     "cTechMythicAgePersephone":    "Siren",
     "cTechClassicalAgeAnubis":     "Anubite",
-    "cTechClassicalAgeBast":       "Wadjet",
-    "cTechClassicalAgePtah":       "Sphinx",
+    "cTechClassicalAgeBast":       "Sphinx",
+    "cTechClassicalAgePtah":       "Wadjet",
     "cTechHeroicAgeSobek":         "Petsuchos",
-    "cTechHeroicAgeNephthys":      "Scarab",
-    "cTechHeroicAgeSekhmet":       "ScorpionMan",
+    "cTechHeroicAgeNephthys":      "ScorpionMan",
+    "cTechHeroicAgeSekhmet":       "Scarab",
     "cTechMythicAgeOsiris":        "Mummy",
-    "cTechMythicAgeHorus":         "Phoenix",
-    "cTechMythicAgeThoth":         "Avenger",
+    "cTechMythicAgeHorus":         "Avenger",
+    "cTechMythicAgeThoth":         "Phoenix",
     "cTechClassicalAgeFreyja":     "Valkyrie",
-    "cTechClassicalAgeForseti":    "Einheri",
-    "cTechClassicalAgeHeimdall":   "Troll",
+    "cTechClassicalAgeForseti":    "Troll",
+    "cTechClassicalAgeHeimdall":   "Einheri",
     "cTechClassicalAgeUllr":       "Draugr",
     "cTechHeroicAgeBragi":         "BattleBoar",
-    "cTechHeroicAgeNjord":         "RockGiant",
+    "cTechHeroicAgeNjord":         "MountainGiant",
     "cTechHeroicAgeSkadi":         "FrostGiant",
     "cTechHeroicAgeAegir":         "RockGiant",
-    "cTechMythicAgeBaldr":         "MountainGiant",
-    "cTechMythicAgeTyr":           "FireGiant",
-    "cTechMythicAgeHel":           "FenrisWolfBrood",
+    "cTechMythicAgeBaldr":         "FireGiant",
+    "cTechMythicAgeTyr":           "FenrisWolfBrood",
+    "cTechMythicAgeHel":           "FireGiant",   # Hel also enables FrostGiant + MountainGiant (registered below)
     "cTechMythicAgeVidar":         "Fafnir",
     "cTechClassicalAgePrometheus": "Promethean",
-    "cTechClassicalAgeLeto":       "Caladria",
-    "cTechClassicalAgeOceanus":    "Automaton",
-    "cTechHeroicAgeHyperion":      "Behemoth",
-    "cTechHeroicAgeRheia":         "Satyr",
+    "cTechClassicalAgeLeto":       "Automaton",
+    "cTechClassicalAgeOceanus":    "Caladria",
+    "cTechHeroicAgeHyperion":      "Satyr",
+    "cTechHeroicAgeRheia":         "Behemoth",
     "cTechHeroicAgeTheia":         "StymphalianBird",
     "cTechMythicAgeHelios":        "Centimanus",
     "cTechMythicAgeAtlas":         "Argus",
@@ -183,6 +185,10 @@ for _tech, _unit in _MINOR_GOD_MYTH_UNITS.items():
 # Chinese Rushou unlocks both BaiHu and PiXiu — register the second unit here
 # since the forward dict only supports one unit per tech key.
 _MYTH_UNIT_GATING.setdefault("PiXiu", set()).add("cTechHeroicAgeRushou")
+# Norse Hel unlocks all three of the heroic-age giants (FireGiant is the
+# primary in the forward dict; FrostGiant + MountainGiant registered here).
+_MYTH_UNIT_GATING.setdefault("FrostGiant", set()).add("cTechMythicAgeHel")
+_MYTH_UNIT_GATING.setdefault("MountainGiant", set()).add("cTechMythicAgeHel")
 
 _ITEM_TO_UNITS: dict[int, list[str]] = {}
 for _item in aomItemData:
