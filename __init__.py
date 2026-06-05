@@ -1494,6 +1494,13 @@ class aomWorld(World):
             if item_type == Items.AgeUnlock:
                 continue  # handled explicitly below after the item loop
 
+            # Titan Age unlocks — added explicitly below (one per activated civ,
+            # gated by random_major_gods + civ exclusion).  Skip here so they
+            # aren't also bucketed by the generic useful path (which would
+            # duplicate every civ's Titan Age item in the pool).
+            if item_type == Items.TitanAgeUnlock:
+                continue
+
             # Hero ability items — skip if disabled; filler padding covers the gap
             if isinstance(item.type, hero_ability_types) and not hero_abilities_on:
                 continue
@@ -1987,29 +1994,13 @@ class aomWorld(World):
         # Flatten useful and filler into shuffled lists
         all_useful  = [n for names in useful_groups.values() for n in names]
         all_filler  = [n for names in filler_groups.values() for n in names]
-        # Infinite padding pool: non-starting-army filler items plus a curated
-        # set of stackable useful items (relic trickle and LOS/Regen/Speed/HP
-        # effects) whose XS handlers correctly accumulate multiple copies.
-        # "Joins the Campaign" items are intentionally excluded — they must
-        # appear at most once and are not present in either list below.
-        _repeatable_useful_names = [
-            Items.aomItemData.RELIC_TRICKLE_FOOD.item_name,
-            Items.aomItemData.RELIC_TRICKLE_WOOD.item_name,
-            Items.aomItemData.RELIC_TRICKLE_GOLD.item_name,
-            Items.aomItemData.RELIC_TRICKLE_FAVOR.item_name,
-            Items.aomItemData.RELIC_EFFECT_LOS.item_name,
-            Items.aomItemData.RELIC_EFFECT_REGEN.item_name,
-            Items.aomItemData.RELIC_EFFECT_SPEED.item_name,
-            Items.aomItemData.RELIC_EFFECT_HP.item_name,
-        ]
+        # Infinite padding pool: filler items only (never useful — useful
+        # classification can't land in filler-only shop slots, which are
+        # typically the last slots standing when fill reaches the padding phase).
         # Build from filler_groups (already filtered by campaign/civ/hero-ability
         # exclusions in the main item loop) rather than iterating Items.aomItemData
         # directly — otherwise Chiron/Arkantos/Kastor/etc. filler items would leak
         # into the infinite padding pool even when their campaigns are disabled.
-        # NOTE: `_repeatable_useful_names` is intentionally NOT included here.
-        # Those items are `useful` classification, so they cannot land in
-        # filler-only shop slots; mixing them into the padding cycle caused
-        # Fill failures when filler-only slots were the last ones standing.
         all_nonreinf_filler_inf = [
             name
             for type_, names in filler_groups.items()
