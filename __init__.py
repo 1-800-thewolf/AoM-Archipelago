@@ -1072,7 +1072,8 @@ class aomWorld(World):
         When more_frequent_dlc_gods is enabled, biases each Greek pick toward
         Demeter (id 13) and each Norse pick toward Freyr (id 14) at 50%."""
         force    = bool(self.options.force_different_god.value)
-        dlc_bias = bool(self.options.more_frequent_dlc_gods.value)
+        # more_frequent_dlc_gods is hidden from players; treat as always off.
+        dlc_bias = False
         allowed = frozenset(self._allowed_god_ids)
         assignments: dict[int, int] = {}
         # Iterate all scenario IDs that have vanilla god assignments:
