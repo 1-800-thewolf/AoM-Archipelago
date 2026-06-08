@@ -581,14 +581,16 @@ _HEROIC_BLDGS = {
     "Japanese":  ["Castle"],
     "Aztec":     ["GreatTemple"],
 }
-# Scenarios where ally players also need building transforms to match P1's random god.
-# Key = scenario global_number, value = player IDs to transform.
-# Default (not listed) = [1] (player 1 only).
-# Scenario 7:  player 1 is absent; player 3 is the allied human player.
-# Scenario 16: player 4 mirrors player 1's god (fott 16b).
-# Scenario 26: players 3-5 are allied and share player 1's god.
-# Scenario 511 (NA 11): players 2-5 are allied and share player 1's god.
-_BLDG_PLAYER_OVERRIDE = {7: [3], 16: [4], 26: [3, 4, 5], 511: [2, 3, 4, 5]}
+# EXACT list of players whose buildings get transformed to match P1's random
+# god, per scenario.  This is the COMPLETE set for the scenario — only these
+# players are ever converted, never any others (e.g. enemy player 2).  Player 1
+# (the human / civ-swap + items target) must be listed explicitly where wanted.
+# Scenarios not listed default to [1] (player 1 only).
+# Scenario 7:  player 1 (human) + player 3 (allied fakified base).
+# Scenario 16: player 1 (human) + player 4 (fott 16b mirror).
+# Scenario 26: player 1 (human) + players 3-5 (allied fakified bases).
+# Scenario 511 (NA 11): player 1 (human) + players 2-5 (allied fakified bases).
+_BLDG_PLAYER_OVERRIDE = {7: [1, 3], 16: [1, 4], 26: [1, 3, 4, 5], 511: [1, 2, 3, 4, 5]}
 
 def write_aom_state(ctx: AoMGameContext) -> None:
     """Generate `<trigger_folder>/aom_state.xs` from the current game context.
@@ -1362,9 +1364,40 @@ def read_new_checks(ctx: AoMGameContext) -> list[int]:
                 m = re.search(r"AP_LOCKED:(\S+)", line)
                 campaign = m.group(1) if m else "unknown"
                 if campaign not in ctx.locked_warning_campaigns:
-                    logger.warning(
-                        f"Archipelago: You need the {campaign} Scenarios item to play this campaign."
-                    )
+                    from ..items.Items import aomItemData as _IData
+                    _received = set(ctx.received_items)
+                    _CAMP_UNLOCK = {
+                        "Greek":       _IData.GREEK_SCENARIOS,
+                        "Egyptian":    _IData.EGYPTIAN_SCENARIOS,
+                        "Norse":       _IData.NORSE_SCENARIOS,
+                        "NewAtlantis": _IData.UNLOCK_NEW_ATLANTIS,
+                        "GoldenGift":  _IData.UNLOCK_GOLDEN_GIFT,
+                    }
+                    # Determine, from the CLIENT's authoritative received_items,
+                    # whether the player actually has the unlock for this section.
+                    # The running game reads aom_state.xs, which AoM caches at
+                    # launch — so a player who received the unlock mid-session
+                    # gets a false "locked" until they restart AoM.  Detect that
+                    # case (have-item but game says locked) and advise a restart;
+                    # otherwise the lock is correct (they really need the item).
+                    if campaign == "Final":
+                        _has  = _get_has_atlantis(ctx, _received) == 9004
+                        _need = "the Atlantis Key (or to beat enough scenarios)"
+                    else:
+                        _unlock = _CAMP_UNLOCK.get(campaign)
+                        _has  = _unlock is not None and _unlock.id in _received
+                        _need = f"'{_unlock.item_name}'" if _unlock is not None else f"the {campaign} Scenarios item"
+                    if _has:
+                        logger.warning(
+                            f"Archipelago: the game says the {campaign} section is locked, but you "
+                            f"already have what unlocks it. The running game is using cached data — "
+                            f"fully RESTART Age of Mythology (quit to desktop and relaunch), then "
+                            f"start the scenario again."
+                        )
+                    else:
+                        logger.warning(
+                            f"Archipelago: You need {_need} to play this campaign."
+                        )
                     ctx.locked_warning_campaigns.add(campaign)
                 continue
 

@@ -1829,10 +1829,12 @@ class AoMContext(CommonContext):
             if vic_loc is None or vic_loc.id not in valid_loc_ids:
                 continue
             if vic_loc.id not in self.game_ctx.sent_checks:
-                # Find unchecked objective locations for this scenario,
-                # filtered to those present in the player's pool.
+                # Find unchecked objective + relic locations for this scenario,
+                # filtered to those present in the player's pool.  Relic ids are
+                # only in valid_loc_ids when relicsanity is on, so they're
+                # naturally excluded otherwise.
                 unchecked = [l.id for l in SCENARIO_TO_LOCATIONS.get(scenario, [])
-                             if l.type == aomLocationType.OBJECTIVE
+                             if l.type in (aomLocationType.OBJECTIVE, aomLocationType.RELIC)
                              and l.id in valid_loc_ids
                              and l.id not in self.game_ctx.sent_checks]
                 if unchecked:

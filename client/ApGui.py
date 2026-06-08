@@ -729,7 +729,11 @@ class AoMManager(GameManager):
             for sid, (tile, color, slash_col, camp_name, name_lbl, god_lbl, checks_lbl) in self._scenario_tile_widgets.items():
                 base = _CAMPAIGN_TILE_COLORS.get(camp_name, (0.5, 0.5, 0.5))
                 gid = scenario_to_gate_id.get(sid)
-                key_held = (gid is not None and gid in held_gates)
+                # Scenarios with no gate id (the Final section, 31 & 32) are not
+                # key-gated at all — their access is the campaign unlock alone
+                # (Atlantis Key / beat-X / always-open), so never slash them for
+                # a missing key.  Keyed scenarios still require their gate item.
+                key_held = (gid is None) or (gid in held_gates)
                 # Without the scenario-key option, every scenario is treated as key-held.
                 if max_keys_on_keyrings <= 0:
                     key_held = True
@@ -1392,11 +1396,32 @@ class AoMManager(GameManager):
                         if not grp:
                             continue
                         ib.add_widget(_subhdr(grp_name, color=hdr_col))
-                        for it, n in grp:
-                            sfx = f" [color=AAAAAA]x{n}[/color]" if n > 1 else ""
-                            ib.add_widget(
-                                _mkrow(f"[color=EEEEEE]    \u2022 {it.item_name}[/color]{sfx}")
-                            )
+                        if grp_name in ("Starting Resources", "Passive Income"):
+                            # Consolidate duplicates/tiers sharing the same label,
+                            # summing the leading "+N" amount * count.  e.g.
+                            # +0.1 and +0.5 Favor trickle rate -> +0.6 Favor trickle rate
+                            _sums: dict = {}
+                            for it, n in grp:
+                                _tok, _, _label = it.item_name.partition(" ")
+                                try:
+                                    _val = float(_tok.lstrip("+"))
+                                except ValueError:
+                                    _label, _val = it.item_name, 0.0
+                                _sums[_label] = _sums.get(_label, 0.0) + _val * n
+                            for _label, _total in _sums.items():
+                                if abs(_total - round(_total)) < 1e-9:
+                                    _num = str(int(round(_total)))
+                                else:
+                                    _num = ("%.2f" % _total).rstrip("0").rstrip(".")
+                                ib.add_widget(
+                                    _mkrow(f"[color=EEEEEE]    \u2022 +{_num} {_label}[/color]")
+                                )
+                        else:
+                            for it, n in grp:
+                                sfx = f" [color=AAAAAA]x{n}[/color]" if n > 1 else ""
+                                ib.add_widget(
+                                    _mkrow(f"[color=EEEEEE]    \u2022 {it.item_name}[/color]{sfx}")
+                                )
 
                     # Wonders: each Progressive Wonder received unlocks the
                     # next tier of wonder perks.  List every currently-unlocked

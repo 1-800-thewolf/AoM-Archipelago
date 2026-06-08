@@ -892,12 +892,12 @@ class aomItemData(enum.IntEnum):
     PASSIVE_WOOD_SMALL    = 13, "+0.5 Wood trickle rate",  PassiveIncome(Resource.WOOD,  1)
     PASSIVE_FOOD_SMALL    = 14, "+0.5 Food trickle rate",  PassiveIncome(Resource.FOOD,  1)
     PASSIVE_GOLD_SMALL    = 15, "+0.5 Gold trickle rate",  PassiveIncome(Resource.GOLD,  1)
-    PASSIVE_FAVOR_SMALL   = 16, "+0.25 Favor trickle rate", PassiveIncome(Resource.FAVOR, 0)
+    PASSIVE_FAVOR_SMALL   = 16, "+0.1 Favor trickle rate", PassiveIncome(Resource.FAVOR, 0)
 
     PASSIVE_WOOD_LARGE    = 21, "+2 Wood trickle rate",    PassiveIncomeLarge(Resource.WOOD,  3)
     PASSIVE_FOOD_LARGE    = 22, "+2 Food trickle rate",    PassiveIncomeLarge(Resource.FOOD,  3)
     PASSIVE_GOLD_LARGE    = 23, "+2 Gold trickle rate",    PassiveIncomeLarge(Resource.GOLD,  3)
-    PASSIVE_FAVOR_LARGE   = 24, "+1 Favor trickle rate",   PassiveIncomeLarge(Resource.FAVOR, 0)
+    PASSIVE_FAVOR_LARGE   = 24, "+0.5 Favor trickle rate", PassiveIncomeLarge(Resource.FAVOR, 0)
 
     # -----------------------------------------------------------------------
     # Relic Trickle — Useful
@@ -1048,7 +1048,11 @@ class aomItemData(enum.IntEnum):
     STARTING_ARMY_UMIBOZU         = 4047, "1 Umibozu",                                 StartingArmyUseful("Umibozu",   1)
     # Aztec starting army units
     STARTING_ARMY_EAGLE_WARRIOR   = 4048, f"{STARTING_ARMY_AMOUNT} Eagle Warriors",    StartingArmy("EagleWarrior",    STARTING_ARMY_AMOUNT)
+    # Chaneque retained only for back-compat with already-generated seeds (XS
+    # still spawns Chaneque for id 4049).  New generation excludes it from the
+    # pool (see create_items) and uses Centzon Totochtin instead.
     STARTING_ARMY_CHANEQUE        = 4049, "1 Chaneque",                                StartingArmy("Chaneque",        1)
+    STARTING_ARMY_CENTZON         = 4057, "1 Centzon Totochtin",                       StartingArmy("CentzonTotochtin", 1)
     STARTING_ARMY_TZITZIMITL      = 4050, "1 Tzitzimitl",                              StartingArmy("Tzitzimitl",      1)
     STARTING_ARMY_AHUIZOTL        = 4051, "1 Ahuizotl",                                StartingArmyUseful("Ahuizotl",  1)
     STARTING_ARMY_OBSIDIAN_BUTTERFLY = 4056, "1 Obsidian Butterfly",                   StartingArmy("ObsidianButterfly", 1)

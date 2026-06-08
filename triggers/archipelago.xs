@@ -310,14 +310,18 @@ const int cSTARTING_ARMY_DAO_SWORDSMAN   = 4040;
 const int cSTARTING_ARMY_QILIN           = 4041;
 const int cSTARTING_ARMY_BAIHU           = 4042;
 const int cSTARTING_ARMY_QINGLONG        = 4043;
+const int cSTARTING_ARMY_PIXIU           = 4054;
+const int cSTARTING_ARMY_TAOTIE          = 4055;
 const int cSTARTING_ARMY_YUMI_ARCHER     = 4044;
 const int cSTARTING_ARMY_JOROGUMO        = 4045;
 const int cSTARTING_ARMY_ONI             = 4046;
 const int cSTARTING_ARMY_UMIBOZU         = 4047;
 const int cSTARTING_ARMY_EAGLE_WARRIOR   = 4048;
 const int cSTARTING_ARMY_CHANEQUE        = 4049;
+const int cSTARTING_ARMY_CENTZON         = 4057;
 const int cSTARTING_ARMY_TZITZIMITL      = 4050;
 const int cSTARTING_ARMY_AHUIZOTL        = 4051;
+const int cSTARTING_ARMY_OBSIDIAN_BUTTERFLY = 4056;
 const int cSTARTING_ARMY_KUAFU           = 4052;
 
 // cXSPUResourceEffectCost=0, cXSPUResourceEffectCarryCapacity=1
@@ -2023,36 +2027,54 @@ void APTransformBuildings()
             int    _cnt  = gAPBldgToCount[i];
             if (_cnt > 0)
             {
-                // Gather the player's individual buildings of _from, then
-                // round-robin them across the target list so they split as
-                // evenly as possible (e.g. 5 Barracks -> 2/2/1 over 3 targets)
-                // instead of all mutating to a single proto.
-                xsSetContextPlayer(_tp);
-                int qid = kbUnitQueryCreate("APBldgXform");
-                kbUnitQuerySetPlayerID(qid, _tp);
-                kbUnitQuerySetUnitType(qid, kbProtoUnitGetID(_from));
-                kbUnitQuerySetState(qid, cUnitStateAlive);
-                kbUnitQueryExecute(qid);
-                int[] res = kbUnitQueryGetResults(qid);
-                kbUnitQueryDestroy(qid);
+                // Fakified ally buildings (fott 7 player 3, fott 26 players 3-5,
+                // NA 11 / scen 511 players 2-5) are NOT in the knowledge base, so
+                // kbUnitQuery can't see them.  For those, use the engine-side
+                // trPlayerChangeProtoUnit (all _from -> first target proto).
+                // Every other case (player 1 anywhere, the non-fake ally player
+                // 4 in fott 16) uses the kbUnitQuery round-robin so buildings
+                // split evenly across the target protos.
+                bool _useEngine = false;
+                if (_tp != 1 && (scenId == 7 || scenId == 26 || scenId == 511)) { _useEngine = true; }
 
-                int sz = res.size();
-                if (sz > 0)
+                if (_useEngine)
                 {
-                    // Random start offset so the "extra" on uneven splits
-                    // isn't always the same target.
-                    int start = xsRandInt(0, _cnt - 1);
-                    int j = 0;
-                    while (j < sz)
-                    {
-                        string _target = gAPBldgToList[_off + ((j + start) % _cnt)];
-                        trUnitSelectClear();
-                        trUnitSelectByID(res[j]);
-                        trUnitChangeProtoUnit(_target, true, false);
-                        j++;
-                    }
+                    string _etarget = gAPBldgToList[_off];
+                    trPlayerChangeProtoUnit(_tp, _from, _etarget, false);
                 }
-                xsSetContextPlayer(12);
+                else
+                {
+                    // Gather the player's individual buildings of _from, then
+                    // round-robin them across the target list so they split as
+                    // evenly as possible (e.g. 5 Barracks -> 2/2/1 over 3 targets)
+                    // instead of all mutating to a single proto.
+                    xsSetContextPlayer(_tp);
+                    int qid = kbUnitQueryCreate("APBldgXform");
+                    kbUnitQuerySetPlayerID(qid, _tp);
+                    kbUnitQuerySetUnitType(qid, kbProtoUnitGetID(_from));
+                    kbUnitQuerySetState(qid, cUnitStateAlive);
+                    kbUnitQueryExecute(qid);
+                    int[] res = kbUnitQueryGetResults(qid);
+                    kbUnitQueryDestroy(qid);
+
+                    int sz = res.size();
+                    if (sz > 0)
+                    {
+                        // Random start offset so the "extra" on uneven splits
+                        // isn't always the same target.
+                        int start = xsRandInt(0, _cnt - 1);
+                        int j = 0;
+                        while (j < sz)
+                        {
+                            string _target = gAPBldgToList[_off + ((j + start) % _cnt)];
+                            trUnitSelectClear();
+                            trUnitSelectByID(res[j]);
+                            trUnitChangeProtoUnit(_target, true, false);
+                            j++;
+                        }
+                    }
+                    xsSetContextPlayer(12);
+                }
             }
         }
         i++;
@@ -2407,7 +2429,7 @@ bool APTrapExecuteTrap(int trapType = 0)
     if (trapType == 34) { trGodPowerGrant(12, "SmitingGust",        1, 0, false, false); trGodPowerInvoke(12, "SmitingGust",        gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 35) { trGodPowerGrant(12, "DivineSlash",        1, 0, false, false); trGodPowerInvoke(12, "DivineSlash",        gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 36) { trGodPowerGrant(12, "DragonTyphoon",      1, 0, false, false); trGodPowerInvoke(12, "DragonTyphoon",      gAPTrapPos, gAPTrapPos, true); }
-    if (trapType == 37) { trGodPowerGrant(12, "Infestation",        1, 0, false, false); trGodPowerInvoke(12, "Infestation",        gAPTrapPos, gAPTrapPos, true); }
+    if (trapType == 37) { trProtoUnitSetFlag(12, "InfestedDen", "PlaceAnywhere", true); trGodPowerGrant(12, "Infestation",        1, 0, false, false); trGodPowerInvoke(12, "Infestation",        gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 38) { trGodPowerGrant(12, "Lullaby",            1, 0, false, false); trGodPowerInvoke(12, "Lullaby",            gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 39) { trGodPowerGrant(12, "Purge",              1, 0, false, false); trGodPowerInvoke(12, "Purge",              gAPTrapPos, gAPTrapPos, true); }
     if (trapType == 40) { trGodPowerGrant(12, "EarthMonster",       1, 0, false, false); trGodPowerInvoke(12, "EarthMonster",       gAPTrapPos, gAPTrapPos, true); }
@@ -3482,7 +3504,10 @@ void APCheckCampaignLock()
     bool keysActive = (trQuestVarGet("APScenarioKeysActive") > 0.5);
     bool keyHeld    = true;
     string scenLabel = "Scenario";
-    if (keysActive == true)
+    // Final scenarios (31 & 32) have no Scenario Key — access is governed solely
+    // by the Final-section unlock (always-open / beat-X / Atlantis Key) which is
+    // checked above via gHasAtlantis.  Never key-gate them.
+    if (keysActive == true && gAPScenarioId != 31 && gAPScenarioId != 32)
     {
         // Per-scenario key flag is APHasKey<scenarioId>; default 0 if not set.
         keyHeld   = (trQuestVarGet("APHasKey" + gAPScenarioId) > 0.5);
@@ -3506,9 +3531,9 @@ void APCheckCampaignLock()
     {
         // Variant 1 (existing): missing the campaign-unlock item.
         string neededItem = "UNKNOWN ITEM";
-        if (gAPCampaignId == 1) { neededItem = "Greek Scenarios"; }
-        if (gAPCampaignId == 2) { neededItem = "Egyptian Scenarios"; }
-        if (gAPCampaignId == 3) { neededItem = "Norse Scenarios"; }
+        if (gAPCampaignId == 1) { neededItem = "Unlock FotT Greek Campaign"; }
+        if (gAPCampaignId == 2) { neededItem = "Unlock FotT Egyptian Campaign"; }
+        if (gAPCampaignId == 3) { neededItem = "Unlock FotT Norse Campaign"; }
         if (gAPCampaignId == 4) { neededItem = "Atlantis Key"; }
         if (gAPCampaignId == 5) { neededItem = "Unlock New Atlantis Campaign"; }
         if (gAPCampaignId == 6) { neededItem = "Unlock The Golden Gift Campaign"; }
@@ -4516,11 +4541,11 @@ runImmediately
         if (itemId == cPASSIVE_WOOD_SMALL)    { trPlayerModifyResourceData(1, 2, 1, 0.5,  0); }
         if (itemId == cPASSIVE_FOOD_SMALL)    { trPlayerModifyResourceData(1, 2, 2, 0.5,  0); }
         if (itemId == cPASSIVE_GOLD_SMALL)    { trPlayerModifyResourceData(1, 2, 0, 0.5,  0); }
-        if (itemId == cPASSIVE_FAVOR_SMALL)   { trPlayerModifyResourceData(1, 2, 3, 0.25, 0); }
+        if (itemId == cPASSIVE_FAVOR_SMALL)   { trPlayerModifyResourceData(1, 2, 3, 0.1, 0); }
         if (itemId == cPASSIVE_WOOD_LARGE)    { trPlayerModifyResourceData(1, 2, 1, 2.0,  0); }
         if (itemId == cPASSIVE_FOOD_LARGE)    { trPlayerModifyResourceData(1, 2, 2, 2.0,  0); }
         if (itemId == cPASSIVE_GOLD_LARGE)    { trPlayerModifyResourceData(1, 2, 0, 2.0,  0); }
-        if (itemId == cPASSIVE_FAVOR_LARGE)   { trPlayerModifyResourceData(1, 2, 3, 1.0,  0); }
+        if (itemId == cPASSIVE_FAVOR_LARGE)   { trPlayerModifyResourceData(1, 2, 3, 0.5,  0); }
 
         if (itemId == cSTARTING_ARMY_ANUBITES)
         {
@@ -4691,6 +4716,8 @@ runImmediately
         if (itemId == cSTARTING_ARMY_QILIN)    { trUnitCreateFromSource("QiLin",    gStartingArmySpawnID, gStartingArmySpawnID, 1); }
         if (itemId == cSTARTING_ARMY_BAIHU)    { trUnitCreateFromSource("BaiHu",    gStartingArmySpawnID, gStartingArmySpawnID, 1); }
         if (itemId == cSTARTING_ARMY_QINGLONG) { trUnitCreateFromSource("QingLong", gStartingArmySpawnID, gStartingArmySpawnID, 1); }
+        if (itemId == cSTARTING_ARMY_PIXIU)    { trUnitCreateFromSource("PiXiu",    gStartingArmySpawnID, gStartingArmySpawnID, 1); }
+        if (itemId == cSTARTING_ARMY_TAOTIE)   { trUnitCreateFromSource("TaoTie",   gStartingArmySpawnID, gStartingArmySpawnID, 1); }
         if (itemId == cSTARTING_ARMY_KUAFU)
         {
             for (j = 0; j < 2; j++) { trUnitCreateFromSource("Kuafu", gStartingArmySpawnID, gStartingArmySpawnID, 1); }
@@ -4708,9 +4735,11 @@ runImmediately
         {
             for (j = 0; j < 2; j++) { trUnitCreateFromSource("EagleWarrior", gStartingArmySpawnID, gStartingArmySpawnID, 1); }
         }
-        if (itemId == cSTARTING_ARMY_CHANEQUE)   { trUnitCreateFromSource("Chaneque",   gStartingArmySpawnID, gStartingArmySpawnID, 1); }
+        if (itemId == cSTARTING_ARMY_CHANEQUE)   { trUnitCreateFromSource("Chaneque",        gStartingArmySpawnID, gStartingArmySpawnID, 1); }
+        if (itemId == cSTARTING_ARMY_CENTZON)    { trUnitCreateFromSource("CentzonTotochtin", gStartingArmySpawnID, gStartingArmySpawnID, 1); }
         if (itemId == cSTARTING_ARMY_TZITZIMITL) { trUnitCreateFromSource("Tzitzimitl", gStartingArmySpawnID, gStartingArmySpawnID, 1); }
         if (itemId == cSTARTING_ARMY_AHUIZOTL)   { trUnitCreateFromSource("Ahuizotl",   gStartingArmySpawnID, gStartingArmySpawnID, 1); }
+        if (itemId == cSTARTING_ARMY_OBSIDIAN_BUTTERFLY) { trUnitCreateFromSource("ObsidianButterfly", gStartingArmySpawnID, gStartingArmySpawnID, 1); }
         if (itemId == cREGINLEIF_JOINS)
         {
             // Reginleif joins naturally on scenarios 26-30; skip spawn there

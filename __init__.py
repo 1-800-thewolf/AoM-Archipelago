@@ -1466,6 +1466,12 @@ class aomWorld(World):
             if item_type == Items.Trap or (isinstance(item_type, type) and issubclass(item_type, Items.Trap)):
                 continue  # traps placed via trap_count option below
 
+            # Chaneque starting-army item is retained only for back-compat with
+            # already-generated seeds (XS still spawns Chaneque for its id).
+            # New generation uses Centzon Totochtin instead, so keep it out of the pool.
+            if item == Items.aomItemData.STARTING_ARMY_CHANEQUE:
+                continue
+
             # Scenario Keys and Key Ring items are not aomItemData enum
             # members (registered as duck-typed objects in items/Items.py).
             # They are pushed explicitly below depending on

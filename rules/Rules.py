@@ -1412,26 +1412,30 @@ def set_scenario_age_and_point_rules(world) -> None:
 # --------------------------------------------------
 
 def exclude_scenario_32_locations(world) -> None:
-    """Mark non-victory FOTT_32 locations as EXCLUDED so AP fill won't place
-    progression items there.  Scenario 32 is the win condition — players
-    shouldn't be required to collect optional objectives or relics there
-    just to finish a multiworld.  Victory and COMPLETION are exempt
-    (Victory holds the actual Victory item; COMPLETION is the locked event).
+    """Mark the three FOTT_32 side-objectives ('construct a Wonder', 'Use the
+    Blessing of Zeus God Power on Arkantos', and 'Defeat the Living Statue of
+    Poseidon') as EXCLUDED so AP fill won't place progression items there —
+    these are effectively part of beating the win-condition scenario.  Every
+    other FOTT_32 location (the relics, Victory, COMPLETION) carries no
+    restriction: relics behave like any other relicsanity check and Victory
+    stays the goal.
 
     Called from `set_rules`.
     """
     player    = world.player
     multiworld = world.multiworld
     disabled_campaigns = getattr(world, "disabled_campaigns", set())
-    relicsanity_on = bool(getattr(world, "relicsanity_enabled", False))
+    if aomScenarioData.FOTT_32.campaign in disabled_campaigns:
+        return
+    forced_filler_names = {
+        "Advance to the Mythic Age and construct a Wonder.",
+        "Use the Blessing of Zeus God Power on Arkantos.",
+        "Defeat the Living Statue of Poseidon.",
+    }
     for location_data in aomLocationData:
-        if location_data.scenario.campaign in disabled_campaigns:
-            continue
         if location_data.scenario != aomScenarioData.FOTT_32:
             continue
-        if location_data.type in (aomLocationType.VICTORY, aomLocationType.COMPLETION):
-            continue
-        if not relicsanity_on and location_data.type == aomLocationType.RELIC:
+        if location_data.location_name not in forced_filler_names:
             continue
         location = multiworld.get_location(location_data.global_name(), player)
         location.progress_type = LocationProgressType.EXCLUDED
