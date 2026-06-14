@@ -276,35 +276,35 @@ _SCENARIO_DATA: dict[int, tuple[int, int, float, bool, bool]] = {
     1:  (1, 0,  0.0,  True,  False),  # no TC; always accessible
     2:  (1, 1,  2.0,  False, False),  # reach Classical (1 advancement)
     3:  (1, 1,  2.0,  False, False),  # reach Classical (1 advancement); custom points
-    4:  (2, 2, 8.0,  False, False),  # reach Heroic (1 advancement)
-    5:  (3, 3, 14.0,  False, False),  # reach Mythic (1 advancement); custom points
+    4:  (2, 2, 10.0,  False, False),  # reach Heroic (1 advancement)
+    5:  (3, 3, 22.0,  False, False),  # reach Mythic (1 advancement); custom points
     6:  (3, 0,  3.0,  False, False),  # custom: no age floor
     7:  (3, 0,  1.0,  False, False),  # special: no TC, no age req, points only
-    8:  (2, 2, 19.0,  False, False),  # reach Heroic (1 advancement); custom points
+    8:  (2, 2, 25.0,  False, False),  # reach Heroic (1 advancement); custom points
     9:  (4, 0,  0.0,  True,  False),  # always accessible
     10: (1, 0,  0.0,  True,  False),  # always accessible
     11: (1, 0,  0.0,  True,  False),  # always accessible
     12: (1, 2,  4.0,  False, False),  # Archaic+Mythic -> reach Heroic (2 advancements); custom points
     13: (3, 0,  3.0,  False, False),  # custom: no age floor + points
     14: (3, 0,  4.0,  False, True),   # myth-only; custom: no age floor
-    15: (2, 2, 14.0,  False, False),  # reach Heroic (1 advancement); custom points
+    15: (2, 2, 18.0,  False, False),  # reach Heroic (1 advancement); custom points
     16: (4, 0,  0.0,  True,  False),  # always accessible
-    17: (3, 3, 8.0,  False, False),  # reach Mythic (1 advancement)
-    18: (2, 2, 12.0,  False, False),  # reach Heroic (1 advancement)
+    17: (3, 3, 9.0,  False, False),  # reach Mythic (1 advancement)
+    18: (2, 2, 15.0,  False, False),  # reach Heroic (1 advancement)
     19: (3, 0, 6.0,  False, False),  # custom: no age floor
-    20: (3, 3, 20.0,  False, False),  # reach Mythic (1 advancement); custom points
+    20: (3, 3, 28.0,  False, False),  # reach Mythic (1 advancement); custom points
     21: (2, 2,  4.0,  False, False),  # reach Heroic (1 advancement); custom points
     22: (1, 1,  2.0,  False, False),  # reach Classical (1 advancement); custom points
-    23: (2, 2, 12.0,  False, False),  # reach Heroic (1 advancement); custom points
+    23: (2, 2, 16.0,  False, False),  # reach Heroic (1 advancement); custom points
     24: (2, 2,  1.0,  False, False),  # reach Heroic (1 advancement); custom points
     25: (1, 0,  0.0,  True,  False),  # no TC; always accessible
-    26: (2, 2,  2.0,  False, False),  # reach Heroic (1 advancement); custom points
-    27: (2, 2, 12.0,  False, False),  # reach Heroic (1 advancement); custom points
+    26: (2, 2,  3.0,  False, False),  # reach Heroic (1 advancement); custom points
+    27: (2, 2, 27.0,  False, False),  # reach Heroic (1 advancement); custom points
     28: (3, 0,  2.0,  False, False),  # custom: no age floor + points
     29: (2, 0,  0.0,  True,  False),  # always accessible
-    30: (2, 2, 20.0,  False, False),  # reach Heroic (1 advancement); custom points
-    31: (3, 3, 20.0,  False, False),  # reach Mythic (1 advancement); custom points
-    32: (3, 3, 18.0,  False, False),  # reach Mythic (1 advancement); custom points
+    30: (2, 2, 35.0,  False, False),  # reach Heroic (1 advancement); custom points
+    31: (3, 3, 31.0,  False, False),  # reach Mythic (1 advancement); custom points
+    32: (3, 3, 16.0,  False, False),  # reach Mythic (1 advancement); custom points
     # ---------------------------------------------------------------------------
     # New Atlantis (APScenarioIDs 501-512)
     # Age-capped (501,503,504,505,511,512) and exempt (506,507) scenarios ignore
@@ -313,14 +313,14 @@ _SCENARIO_DATA: dict[int, tuple[int, int, float, bool, bool]] = {
     501: (3, 0,  4.0, False, False),  # age-capped @Heroic; custom points
     502: (1, 1,  2.0, False, False),  # reach Classical (1 advancement)
     503: (3, 0,  0.0, False, False),  # age-capped @Heroic, NO TC
-    504: (3, 0, 14.0, False, False),  # age-capped @Heroic; custom points
+    504: (3, 0, 19.0, False, False),  # age-capped @Heroic; custom points
     505: (3, 0, 8.0, False, False),  # age-capped @Heroic
     506: (4, 0,  0.0, True,  False),  # Mythic start, NO TC — always accessible
     507: (3, 0,  0.0, True,  False),  # always accessible — sphere 1
     508: (3, 0, 8.0, False, False),  # custom: no age floor
     509: (3, 0,  1.0, False, False),  # custom: no age floor + points
-    510: (3, 3, 8.0, False, False),  # reach Mythic (1 advancement)
-    511: (4, 0, 10.0, False, False),  # age-capped @Mythic; custom points
+    510: (3, 3, 11.0, False, False),  # reach Mythic (1 advancement)
+    511: (4, 0, 13.0, False, False),  # age-capped @Mythic; custom points
     512: (4, 0,  4.0, False, False),  # age-capped @Mythic; custom points
     # ---------------------------------------------------------------------------
     # The Golden Gift (APScenarioIDs 601-604)
@@ -329,7 +329,7 @@ _SCENARIO_DATA: dict[int, tuple[int, int, float, bool, bool]] = {
     # ---------------------------------------------------------------------------
     601: (3, 0,  7.0,  False, False),  # age-capped @Heroic; custom points
     602: (3, 0,  2.0,  False, False),  # age-capped @Heroic
-    603: (3, 0, 10.0,  False, False),  # heroic-floor; custom points
+    603: (3, 0, 16.0,  False, False),  # heroic-floor; custom points
     604: (4, 0,  1.0,  False, False),  # points-only gate (custom; no longer exempt)
 }
 
@@ -493,10 +493,14 @@ def _titan_buildable(
     has_town_center: bool,
 ) -> bool:
     """True when the player could build a Titan in this scenario: a town centre
-    is present, the Mythic age is reachable, and the civ's Titan Age item is
-    held."""
+    is present, the Mythic age is reachable, and the player has unlocked the
+    civ's Titan Age — i.e. holds 4 Progressive Age Unlocks for the civ (the 4th
+    tier), or, for pre-overhaul seeds, holds the retired per-civ Titan item."""
     if not (has_town_center and can_reach_mythic):
         return False
+    unlock_names = _CIV_UNLOCK_NAMES.get(god_civ, [])
+    if sum(state.count(n, player) for n in unlock_names) >= 4:
+        return True
     titan_item = _TITAN_ITEM_BY_CIV.get(god_civ)
     return bool(titan_item) and state.has(titan_item, player)
 
@@ -572,6 +576,8 @@ _JOINS_ITEM_HERO = {
     aomItemData.REGINLEIF_JOINS.item_name: "Reginleif",
     aomItemData.ODYSSEUS_JOINS.item_name:  "Odysseus",
 }
+
+_KASTOR_JOINS_NAME = aomItemData.KASTOR_JOINS.item_name
 
 # Base per-scenario hero roster (which heroes appear by default).
 _HERO_ROSTER: dict[str, frozenset] = {
@@ -718,12 +724,32 @@ def _heroes_present(state: CollectionState, player: int, ctx: "_ScoreCtx") -> se
     for jname, hero in _JOINS_ITEM_HERO.items():
         if state.has(jname, player):
             heroes.add(hero)
+    # NA 5 (scenario 505): Kastor is only present (and so only his items count
+    # toward the points gate) if the player holds "Kastor Joins the Campaign".
+    if ctx.n == 505 and not state.has(_KASTOR_JOINS_NAME, player):
+        heroes.discard("Kastor")
     if ctx.n in (29, 30, 31, 32) and state.has(_CHIRON_DIDNT_DIE_NAME, player):
         heroes.add("Chiron")
     if ctx.n == 32 and state.has(_DREAMS_ITEM_NAME, player):
         heroes.add("Ajax")
         heroes.add("Amanra")
     return heroes
+
+
+def _scenario_cap_tier(n: int, start_tier: int) -> int:
+    """Max age tier the player can actually reach in scenario `n` (0=Archaic,
+    1=Classical, 2=Heroic, 3=Mythic).  Used to score age-unlock items: only
+    unlocks that advance the player above the scenario's STARTING age, up to
+    this cap, are worth points.  No-advancement scenarios (no TC, or age-capped
+    at the starting age) return start_tier, so age unlocks score 0 there."""
+    if n in _SCENARIO_AGE_CAP:
+        return _SCENARIO_AGE_CAP[n]
+    if n in _SCENARIO_HEROIC_FLOOR:
+        return 3
+    if n == 7:
+        return start_tier  # no TC: cannot advance age at all
+    floor = _SCENARIO_DATA.get(n, (1, 0, 0.0, True, False))[1]
+    return max(floor, min(3, start_tier + 1))
 
 
 def count_points(state: CollectionState, player: int, ctx: "_ScoreCtx") -> float:
@@ -750,12 +776,18 @@ def count_points(state: CollectionState, player: int, ctx: "_ScoreCtx") -> float
         if c:
             total += c * pts
 
-    # Age unlocks — civ-conditional, 1 pt each.
-    for name, civ in _AGE_CIV.items():
-        if civ == ctx.civ:
-            c = state.count(name, player)
-            if c:
-                total += c * 1.0
+    # Age unlocks — only the copies that actually advance the player's age
+    # count.  An unlock is worth a point only if it raises the reachable tier
+    # above the scenario's starting age, up to the scenario's age cap.  So a
+    # Heroic-start scenario that can reach Mythic scores at most 1 (the unlock
+    # that reaches Mythic); a no-advancement scenario (fott 7, age-capped)
+    # scores 0 regardless of how many unlocks are held.
+    n_age_unlocks = sum(state.count(nm, player) for nm in ctx.unlock_names)
+    if n_age_unlocks:
+        cap_tier = _scenario_cap_tier(ctx.n, ctx.start_tier)
+        useful_unlocks = max(0, min(n_age_unlocks, cap_tier) - ctx.start_tier)
+        if useful_unlocks:
+            total += useful_unlocks * 1.0
 
     # Hero items — only when the hero appears in this scenario.
     heroes = _heroes_present(state, player, ctx)
