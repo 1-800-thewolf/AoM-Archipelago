@@ -1706,8 +1706,14 @@ class aomWorld(World):
             "FireGiant", "Siren", "Lampades", "Phoenix", "Colossus",
             "QingLong", "Umibozu", "Ahuizotl",
         })
+        _CLASSICAL_MYTH_REINF_PROTOS: frozenset = frozenset({
+            "Cyclops", "Wadjet", "Anubite", "Troll", "Draugr",
+            "Automaton", "Caladria", "QiLin", "Jorogumo",
+            "Chaneque", "CentzonTotochtin",
+        })
         _MAX_HEROIC_MYTH_REINF  = 5
         _MAX_MYTHIC_MYTH_REINF  = 3
+        _MAX_CLASSICAL_MYTH_REINF = 6
 
         def _trim_myth_reinf(age_protos: frozenset, cap: int) -> None:
             """Walk useful_groups and filler_groups; collect (type_, name) for
@@ -1738,6 +1744,7 @@ class aomWorld(World):
 
         _trim_myth_reinf(_HEROIC_MYTH_REINF_PROTOS, _MAX_HEROIC_MYTH_REINF)
         _trim_myth_reinf(_MYTHIC_MYTH_REINF_PROTOS, _MAX_MYTHIC_MYTH_REINF)
+        _trim_myth_reinf(_CLASSICAL_MYTH_REINF_PROTOS, _MAX_CLASSICAL_MYTH_REINF)
 
         # Progressive Wonder — 6 stackable copies, useful classification.
         # Each one the player owns unlocks one wonder-perk tier (see
@@ -1771,24 +1778,27 @@ class aomWorld(World):
             aztec_extra = extra_final
         else:                                  # Norse (7, 8, 9, 14)
             norse_extra = extra_final
+        # 4 base copies per civ: 1=Classical, 2=Heroic, 3=Mythic, 4=Titan.
+        # The 4th copy is the former per-civ Titan Age item, now folded into the
+        # progressive track (see Items.AgeUnlock / Items.TitanAgeUnlock).
         age_unlock_config = [
-            (Items.aomItemData.GREEK_AGE_UNLOCK,    "Greek",    3 + greek_extra),
-            (Items.aomItemData.EGYPTIAN_AGE_UNLOCK, "Egyptian", 3 + egyptian_extra),
-            (Items.aomItemData.NORSE_AGE_UNLOCK,    "Norse",    3 + norse_extra),
+            (Items.aomItemData.GREEK_AGE_UNLOCK,    "Greek",    4 + greek_extra),
+            (Items.aomItemData.EGYPTIAN_AGE_UNLOCK, "Egyptian", 4 + egyptian_extra),
+            (Items.aomItemData.NORSE_AGE_UNLOCK,    "Norse",    4 + norse_extra),
         ]
         # Atlantean/Chinese/Japanese/Aztec age unlocks only added when random_major_gods is on
         if random_major_gods_on:
             age_unlock_config.append(
-                (Items.aomItemData.ATLANTEAN_AGE_UNLOCK, "Atlantean", 3 + atlantean_extra)
+                (Items.aomItemData.ATLANTEAN_AGE_UNLOCK, "Atlantean", 4 + atlantean_extra)
             )
             age_unlock_config.append(
-                (Items.aomItemData.CHINESE_AGE_UNLOCK, "Chinese", 3 + chinese_extra)
+                (Items.aomItemData.CHINESE_AGE_UNLOCK, "Chinese", 4 + chinese_extra)
             )
             age_unlock_config.append(
-                (Items.aomItemData.JAPANESE_AGE_UNLOCK, "Japanese", 3 + japanese_extra)
+                (Items.aomItemData.JAPANESE_AGE_UNLOCK, "Japanese", 4 + japanese_extra)
             )
             age_unlock_config.append(
-                (Items.aomItemData.AZTEC_AGE_UNLOCK, "Aztec", 3 + aztec_extra)
+                (Items.aomItemData.AZTEC_AGE_UNLOCK, "Aztec", 4 + aztec_extra)
             )
         _new_atlantis_disabled = Campaigns.aomCampaignData.NEW_ATLANTIS in self.disabled_campaigns
         for item_data, culture, count in age_unlock_config:
@@ -1815,29 +1825,10 @@ class aomWorld(World):
                 else:
                     progression_pool.append(ap_item)
 
-        # Titan Age unlocks — one Useful item per ACTIVATED civ.  Same civ
-        # gating as the age unlocks above: Greek/Egyptian/Norse always; the
-        # DLC civs only when random_major_gods is on; skipped for civs that
-        # rolled no scenarios (effective_excluded_civs).  One copy each.
-        titan_unlock_config = [
-            (Items.aomItemData.GREEK_TITAN_UNLOCK,    "Greek"),
-            (Items.aomItemData.EGYPTIAN_TITAN_UNLOCK, "Egyptian"),
-            (Items.aomItemData.NORSE_TITAN_UNLOCK,    "Norse"),
-        ]
-        if random_major_gods_on:
-            titan_unlock_config.extend([
-                (Items.aomItemData.ATLANTEAN_TITAN_UNLOCK, "Atlantean"),
-                (Items.aomItemData.CHINESE_TITAN_UNLOCK,   "Chinese"),
-                (Items.aomItemData.JAPANESE_TITAN_UNLOCK,  "Japanese"),
-                (Items.aomItemData.AZTEC_TITAN_UNLOCK,     "Aztec"),
-            ])
-        for item_data, culture in titan_unlock_config:
-            if culture in self.effective_excluded_civs:
-                if not random_major_gods_on and culture == "Atlantean" and not _new_atlantis_disabled:
-                    pass  # keep Atlantean for NA when random gods are off
-                else:
-                    continue
-            useful_groups.setdefault(Items.TitanAgeUnlock, []).append(item_data.item_name)
+        # Titan Age unlocks — RETIRED.  The Titan Age is now the 4th copy of the
+        # Progressive Age Unlock added above, so no standalone Titan items are
+        # placed into the pool anymore (the TitanAgeUnlock items remain defined
+        # only for backwards compatibility with pre-overhaul seeds).
 
         # Starting Tech items — 1 copy each.
         # Economy and Military are Useful; Dock and Buildings are Filler.
@@ -2114,7 +2105,7 @@ class aomWorld(World):
         # useful-capable slots before the last few useful items are placed.
         # Reserve ~10% of capacity as slack so the filler pool always has more
         # room than the strict filler-only demand.
-        _safety = max(10, (visible_location_count - len(progression_pool)) // 6)
+        _safety = max(18, (visible_location_count - len(progression_pool)) // 6)
         useful_capacity = max(
             0,
             visible_location_count

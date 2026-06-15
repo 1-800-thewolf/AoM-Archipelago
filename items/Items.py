@@ -87,7 +87,7 @@ from ..locations.Campaigns import aomCampaignData
 # -----------------------------------------------------------------------
 
 BASE_ID = 0x3B0000  # 3866624 — AP location/item ID offset (added by Archipelago when serializing)
-BASE_RESOURCE = 30  # Base unit count for the small starting-resource items (Large = 4x)
+BASE_RESOURCE = 50  # Base unit count for the small starting-resource items (Medium = 2x, Large = 5x)
 STARTING_ARMY_AMOUNT = 2  # Default count of units that starting-army items spawn at the spawn marker
 
 
@@ -124,18 +124,21 @@ class Campaign:
 
 @dataclass
 class AgeUnlock:
-    """Progressive age unlock — Classical / Heroic / Mythic, in order, by stack
-    count.  `culture` controls which civilization is unlocked
-    ("Greek" / "Egyptian" / "Norse" / "Atlantean")."""
+    """Progressive age unlock — Classical / Heroic / Mythic / Titan, in order, by
+    stack count (1=Classical, 2=Heroic, 3=Mythic, 4=Titan).  The 4th copy lifts
+    the Titan lock (Secrets of the Titans + Titan Gate) for the civ, replacing
+    the retired per-civ TitanAgeUnlock item.  `culture` controls which
+    civilization is unlocked ("Greek" / "Egyptian" / "Norse" / "Atlantean")."""
     culture: str
 
 
 @dataclass
 class TitanAgeUnlock:
-    """Per-civ Titan Age unlock — Useful item.  While the player lacks the
-    Titan item matching the civ they are currently playing, the XS watcher
-    `APEnforceTitanLock` keeps the `SecretsOfTheTitans` tech disabled (so no
-    Titan can be summoned).  Holding the matching item lifts the lock.
+    """RETIRED — no longer placed into the multiworld.  The Titan Age is now the
+    4th tier of the Progressive Age Unlock (see `AgeUnlock`).  This class and its
+    items are kept ONLY for backwards compatibility: games generated before the
+    overhaul still contain these items, and the XS watcher / Rules.py still honor
+    a held legacy item so those seeds keep working.  Do not add it to the pool.
     `culture` is the civ string ("Greek"/"Egyptian"/.../"Aztec")."""
     culture: str
 
@@ -784,11 +787,12 @@ class aomItemData(enum.IntEnum):
     AZTEC_AGE_UNLOCK      = 1020, "Progressive Aztec Age Unlock",     AgeUnlock("Aztec")     # only in pool when random_major_gods is on
 
     # -----------------------------------------------------------------------
-    # Titan Age unlocks (IDs 1100-1106) — one Useful item per civ.  While the
-    # player lacks the item matching the civ they're playing, XS keeps the
-    # SecretsOfTheTitans tech disabled (no Titan).  Non-Greek/Egyptian/Norse
-    # civs only enter the pool when random_major_gods is on (same as their
-    # age unlocks above).
+    # Titan Age unlocks (IDs 1100-1106) — RETIRED, NO LONGER PLACED.
+    # The Titan Age is now the 4th tier of the Progressive Age Unlock above
+    # (4 copies = Titan).  These items remain defined so their IDs/names still
+    # resolve for backwards compatibility: pre-overhaul seeds still carry them,
+    # and APEnforceTitanLock / Rules._titan_buildable honor a held legacy item.
+    # New generations must NOT add these to the pool.
     # -----------------------------------------------------------------------
     GREEK_TITAN_UNLOCK     = 1100, "Unlock Greek Titan Age",     TitanAgeUnlock("Greek")
     EGYPTIAN_TITAN_UNLOCK  = 1101, "Unlock Egyptian Titan Age",  TitanAgeUnlock("Egyptian")
@@ -872,18 +876,24 @@ class aomItemData(enum.IntEnum):
 
     # -----------------------------------------------------------------------
     # Starting Resources
-    # Filler: small grants (BASE_RESOURCE x1).
-    # Useful: large grants (BASE_RESOURCE x4).
+    # Filler: small/medium grants (BASE_RESOURCE x1 / x2).
+    # Large grants (BASE_RESOURCE x5) use StartingResourcesLarge.
+    # Favor is set explicitly (small +5, medium +10, large +20).
     # -----------------------------------------------------------------------
-    STARTING_WOOD_SMALL   = 1,  f"+{_res(1)} Starting Wood",              StartingResources(Resource.WOOD,  _res(1))
-    STARTING_FOOD_SMALL   = 2,  f"+{_res(1)} Starting Food",              StartingResources(Resource.FOOD,  _res(1))
-    STARTING_GOLD_SMALL   = 3,  f"+{_res(1)} Starting Gold",              StartingResources(Resource.GOLD,  _res(1))
-    STARTING_FAVOR_SMALL  = 4,  f"+{_res(1, favor=True)} Starting Favor", StartingResources(Resource.FAVOR, _res(1, favor=True))
+    STARTING_WOOD_SMALL   = 1,  f"+{_res(1)} Starting Wood",  StartingResources(Resource.WOOD,  _res(1))
+    STARTING_FOOD_SMALL   = 2,  f"+{_res(1)} Starting Food",  StartingResources(Resource.FOOD,  _res(1))
+    STARTING_GOLD_SMALL   = 3,  f"+{_res(1)} Starting Gold",  StartingResources(Resource.GOLD,  _res(1))
+    STARTING_FAVOR_SMALL  = 4,  "+5 Starting Favor",          StartingResources(Resource.FAVOR, 5)
 
-    STARTING_WOOD_LARGE   = 9,  f"+{_res(4)} Starting Wood",              StartingResourcesLarge(Resource.WOOD,  _res(4))
-    STARTING_FOOD_LARGE   = 10, f"+{_res(4)} Starting Food",              StartingResourcesLarge(Resource.FOOD,  _res(4))
-    STARTING_GOLD_LARGE   = 11, f"+{_res(4)} Starting Gold",              StartingResourcesLarge(Resource.GOLD,  _res(4))
-    STARTING_FAVOR_LARGE  = 12, f"+{_res(4, favor=True)} Starting Favor", StartingResourcesLarge(Resource.FAVOR, _res(4, favor=True))
+    STARTING_WOOD_MEDIUM  = 5,  f"+{_res(2)} Starting Wood",  StartingResources(Resource.WOOD,  _res(2))
+    STARTING_FOOD_MEDIUM  = 6,  f"+{_res(2)} Starting Food",  StartingResources(Resource.FOOD,  _res(2))
+    STARTING_GOLD_MEDIUM  = 7,  f"+{_res(2)} Starting Gold",  StartingResources(Resource.GOLD,  _res(2))
+    STARTING_FAVOR_MEDIUM = 8,  "+10 Starting Favor",         StartingResources(Resource.FAVOR, 10)
+
+    STARTING_WOOD_LARGE   = 9,  f"+{_res(5)} Starting Wood",  StartingResourcesLarge(Resource.WOOD,  _res(5))
+    STARTING_FOOD_LARGE   = 10, f"+{_res(5)} Starting Food",  StartingResourcesLarge(Resource.FOOD,  _res(5))
+    STARTING_GOLD_LARGE   = 11, f"+{_res(5)} Starting Gold",  StartingResourcesLarge(Resource.GOLD,  _res(5))
+    STARTING_FAVOR_LARGE  = 12, "+20 Starting Favor",         StartingResourcesLarge(Resource.FAVOR, 20)
 
     # -----------------------------------------------------------------------
     # Passive Income
@@ -898,7 +908,7 @@ class aomItemData(enum.IntEnum):
     PASSIVE_WOOD_LARGE    = 21, "+2 Wood trickle rate",    PassiveIncomeLarge(Resource.WOOD,  3)
     PASSIVE_FOOD_LARGE    = 22, "+2 Food trickle rate",    PassiveIncomeLarge(Resource.FOOD,  3)
     PASSIVE_GOLD_LARGE    = 23, "+2 Gold trickle rate",    PassiveIncomeLarge(Resource.GOLD,  3)
-    PASSIVE_FAVOR_LARGE   = 24, "+0.5 Favor trickle rate", PassiveIncomeLarge(Resource.FAVOR, 0)
+    PASSIVE_FAVOR_LARGE   = 24, "+0.2 Favor trickle rate", PassiveIncomeLarge(Resource.FAVOR, 0)
 
     # -----------------------------------------------------------------------
     # Relic Trickle — Useful
@@ -907,7 +917,7 @@ class aomItemData(enum.IntEnum):
     RELIC_TRICKLE_FOOD    = 25, "Each Owned Relic Grants 1 Food Trickle",   RelicTrickle(Resource.FOOD, 1.0)
     RELIC_TRICKLE_WOOD    = 26, "Each Owned Relic Grants 1 Wood Trickle",   RelicTrickle(Resource.WOOD, 1.0)
     RELIC_TRICKLE_GOLD    = 27, "Each Owned Relic Grants 1 Gold Trickle",   RelicTrickle(Resource.GOLD, 1.0)
-    RELIC_TRICKLE_FAVOR   = 28, "Each Owned Relic Grants 0.25 Favor Trickle",  RelicTrickle(Resource.FAVOR, 0.25)
+    RELIC_TRICKLE_FAVOR   = 28, "Each Owned Relic Grants 0.1 Favor Trickle",  RelicTrickle(Resource.FAVOR, 0.1)
 
     # -----------------------------------------------------------------------
     # Relic Effects — Useful
@@ -925,7 +935,7 @@ class aomItemData(enum.IntEnum):
     RELIC_EFFECT_WOOD_COST    = 35, "Each Owned Relic Reduces the Wood Cost of Everything 4%",      RelicEffect("wood_cost")
     RELIC_EFFECT_FAVOR_COST   = 36, "Each Owned Relic Reduces the Favor Cost of Units and Buildings 4%", RelicEffect("favor_cost")
     RELIC_EFFECT_FOOD_COST    = 37, "Each Owned Relic Reduces the Food Cost of Everything 4%",      RelicEffect("food_cost")
-    RELIC_EFFECT_BUILD_SPEED  = 38, "Each Owned Relic Makes Buildings Build 10% faster",            RelicEffect("build_speed")
+    RELIC_EFFECT_BUILD_SPEED  = 38, "Each Owned Relic Makes Buildings Build 8% faster",            RelicEffect("build_speed")
 
     # -----------------------------------------------------------------------
     # StartingArmys — Filler
@@ -1037,7 +1047,7 @@ class aomItemData(enum.IntEnum):
     # Chinese starting army units
     STARTING_ARMY_DAO_SWORDSMAN   = 4040, f"{STARTING_ARMY_AMOUNT} Dao Swordsmen",     StartingArmy("DaoSwordsman",    STARTING_ARMY_AMOUNT)
     STARTING_ARMY_QILIN           = 4041, "1 QiLin",                                   StartingArmy("QiLin",           1)
-    STARTING_ARMY_KUAFU           = 4052, f"{STARTING_ARMY_AMOUNT} Kuafu",              StartingArmy("Kuafu",           STARTING_ARMY_AMOUNT)
+    STARTING_ARMY_KUAFU           = 4052, "1 Kuafu",                                   StartingArmy("Kuafu",           1)
     STARTING_ARMY_BAIHU           = 4042, "1 BaiHu",                                   StartingArmy("BaiHu",           1)
     STARTING_ARMY_QINGLONG        = 4043, "1 QingLong",                                StartingArmyUseful("QingLong",  1)
     STARTING_ARMY_PIXIU           = 4054, "1 Pixiu",                                   StartingArmy("PiXiu",           1)

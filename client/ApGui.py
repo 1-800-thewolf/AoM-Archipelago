@@ -1194,8 +1194,13 @@ class AoMManager(GameManager):
                 )
 
             def _civ_has_titan(culture):
-                """True if the player holds this civ's Titan Age unlock — i.e.
-                the civ can research Secrets of the Titans."""
+                """True if the civ can research Secrets of the Titans — i.e. the
+                player holds 4 Progressive Age Unlocks for the civ (the Titan
+                tier), or, for pre-overhaul seeds, the retired per-civ Titan
+                item."""
+                age_it = _get_age_item(culture)
+                if age_it and counts.get(age_it.id, 0) >= 4:
+                    return True
                 it = next(
                     (i for i in aomItemData
                      if isinstance(i.type, TitanAgeUnlock)
@@ -1493,10 +1498,11 @@ class AoMManager(GameManager):
                     if age_ref is not None:
                         _age_txt = "  " + _age_markup(min(age_count, 3))
                         # If the civ can research Secrets of the Titans, show a
-                        # bright-orange "Titan" badge just past Mythic (with a
-                        # little extra gap); nothing while still Titan-locked.
+                        # bright-orange "Titan" badge just past Mythic, using the
+                        # same separation/padding as the other age badges;
+                        # nothing while still Titan-locked.
                         if _civ_has_titan(civ):
-                            _age_txt += "     [b][color=FF8C1A]Titan[/color][/b]"
+                            _age_txt += "  [b][color=FF8C1A] Titan [/color][/b]"
                         age_ref.text = _age_txt
 
                     all_civ = _civ_items_all(civ)

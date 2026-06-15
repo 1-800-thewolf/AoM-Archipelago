@@ -50,6 +50,7 @@ import asyncio
 import json
 import logging
 import os
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -179,7 +180,7 @@ def _ensure_user_cfg(user_folder: str) -> None:
             f"This usually means the wrong AoMR folder was selected at first-time setup. "
             f"Run /fix_aom_folder to clear the saved path and pick the correct folder. "
             f"The folder we need is likely here: "
-            f"C:\\Users\\[YourName]\\Games\\Age of Mythology Retold\\[SteamID] "
+            f"{_aomr_example_path()} "
             f"(not the Steam install directory). "
             f"If the path above is correct, add these lines manually to {cfg_path}: {missing}"
         )
@@ -235,32 +236,110 @@ def _looks_like_aomr_folder(folder: str) -> bool:
     return any((p / d).is_dir() for d in _AOMR_MARKER_DIRS)
 
 
+# Age of Mythology: Retold Steam application id — used to locate the Proton
+# compatibility prefix on Linux / Steam Deck.
+_AOMR_STEAM_APPID = "1934680"
+
+# Tail shared by every base path: <prefix>/Games/Age of Mythology Retold.
+_AOMR_GAMES_SUBPATH = ("Games", "Age of Mythology Retold")
+
+
+def _is_windows() -> bool:
+    return os.name == "nt" or sys.platform.startswith("win")
+
+
+def _aomr_example_path() -> str:
+    """Human-readable example of where the AoMR user folder lives, tailored to
+    the host OS so the on-screen guidance is actually findable by the player."""
+    if _is_windows():
+        return "C:\\Users\\[YourName]\\Games\\Age of Mythology Retold\\[SteamID]"
+    # Linux / Steam Deck: the game runs under Proton, so its user data lives
+    # inside the Steam compatibility prefix for the AoMR app id.
+    return (
+        f"~/.steam/steam/steamapps/compatdata/{_AOMR_STEAM_APPID}/pfx/drive_c/"
+        "users/steamuser/Games/Age of Mythology Retold/[SteamID]"
+    )
+
+
+def _aomr_base_dirs() -> list:
+    """Candidate base directories AoMR creates per-Steam-ID user folders under.
+
+    On Windows this is just %USERPROFILE%\\Games\\Age of Mythology Retold.
+    On Linux / Steam Deck the game runs under Proton, so its user data lives
+    inside the Steam compatibility prefix for the AoMR app id; several Steam
+    layouts (native, legacy, Flatpak) are probed.  Returns existing dirs first,
+    in priority order, but always includes the primary candidate so callers
+    have a sensible default to open a picker at."""
+    home = Path(os.path.expanduser("~"))
+    if _is_windows():
+        return [home.joinpath(*_AOMR_GAMES_SUBPATH)]
+
+    prefixes: list = []
+    # Honor an explicitly exported Proton prefix first.
+    env_prefix = os.environ.get("STEAM_COMPAT_DATA_PATH")
+    if env_prefix:
+        prefixes.append(Path(env_prefix))
+    # Common Steam install roots; the appid-scoped compatdata prefix sits under
+    # each one's steamapps/compatdata.
+    steam_roots = [
+        home / ".steam" / "steam",
+        home / ".local" / "share" / "Steam",
+        home / ".steam" / "root",
+        home / ".var" / "app" / "com.valvesoftware.Steam" / ".steam" / "steam",
+        home / ".var" / "app" / "com.valvesoftware.Steam" / ".local" / "share" / "Steam",
+    ]
+    for root in steam_roots:
+        prefixes.append(root / "steamapps" / "compatdata" / _AOMR_STEAM_APPID / "pfx")
+
+    bases = [
+        p / "drive_c" / "users" / "steamuser" / Path(*_AOMR_GAMES_SUBPATH)
+        for p in prefixes
+    ]
+    # De-dupe while preserving order; existing dirs sorted to the front.
+    seen: set = set()
+    ordered: list = []
+    for b in bases:
+        s = str(b)
+        if s not in seen:
+            seen.add(s)
+            ordered.append(b)
+    ordered.sort(key=lambda b: (not b.is_dir(),))
+    return ordered
+
+
 def _aomr_base_dir() -> Path:
-    """Standard location AoMR creates per-Steam-ID user folders under:
-    %USERPROFILE%\\Games\\Age of Mythology Retold."""
-    return Path(os.path.expanduser("~")) / "Games" / "Age of Mythology Retold"
+    """Primary base directory for opening the folder picker / showing guidance.
+    Returns the first existing candidate, else the first candidate overall."""
+    candidates = _aomr_base_dirs()
+    for c in candidates:
+        if c.is_dir():
+            return c
+    return candidates[0]
 
 
 def _scan_aomr_user_folders(base: Path) -> list:
     """Return every immediate subfolder of `base` that looks like an AoMR
     per-user folder.  Used both for auto-detection and for guiding the user
-    when they accidentally pick the parent folder."""
+    when they accidentally pick the parent folder.  Paths use native
+    separators (str(Path)) so they stay valid on both Windows and Linux."""
     found: list = []
     try:
         if base.is_dir():
             for child in sorted(base.iterdir()):
                 if child.is_dir() and _looks_like_aomr_folder(str(child)):
-                    found.append(str(child).replace("/", "\\"))
+                    found.append(str(Path(child)))
     except Exception:
         pass
     return found
 
 
 def _autodetect_user_folders() -> list:
-    """Auto-detect AoMR user folders at the standard base path.  Normally
+    """Auto-detect AoMR user folders at the standard base path(s).  Normally
     returns exactly one (the player's Steam-ID folder); empty if AoMR user
     data is absent (game never run, or installed to a non-standard path)."""
-    candidates = _scan_aomr_user_folders(_aomr_base_dir())
+    candidates: list = []
+    for base in _aomr_base_dirs():
+        candidates.extend(_scan_aomr_user_folders(base))
     # The real per-user folder is named with the numeric Steam ID.  When any
     # numeric-named folder exists, restrict to those so detection is not
     # derailed by other siblings the game may create next to it.
@@ -1148,7 +1227,7 @@ class AoMCommandProcessor(ClientCommandProcessor):
 
         self.output(
             "Pick your AoMR user folder. The correct folder is typically here: "
-            "C:\\Users\\[YourName]\\Games\\Age of Mythology Retold\\[SteamID]"
+            f"{_aomr_example_path()}"
         )
         folder = AoMContext._prompt_for_folder()
         if not folder:
@@ -1445,7 +1524,7 @@ class AoMContext(CommonContext):
                 "Next, pick your Age of Mythology: Retold user folder.\n\n"
                 "It is the folder named with a big number (your Steam ID), "
                 "usually here:\n\n"
-                "C:\\Users\\[YourName]\\Games\\Age of Mythology Retold\\[SteamID]\n\n"
+                f"{_aomr_example_path()}\n\n"
                 "It contains these subfolders as well as others:\n"
                 "config, Data, Game, mods, scenario, (and more)",
             )
@@ -1463,7 +1542,7 @@ class AoMContext(CommonContext):
 
             folder = tkinter.filedialog.askdirectory(
                 title=("Select your AoMR folder with the big number. It's probably here: "
-                       "C:\\Users\\[YourName]\\Games\\Age of Mythology Retold\\[SteamID]"),
+                       f"{_aomr_example_path()}"),
                 initialdir=initial_dir,
                 mustexist=True,
             )
@@ -1472,8 +1551,8 @@ class AoMContext(CommonContext):
                 root.destroy()
                 return ""
 
-            # Normalize path separators
-            folder = str(folder).replace("/", "\\")
+            # Normalize to native path separators (\ on Windows, / on Linux).
+            folder = str(Path(folder))
 
             if _looks_like_aomr_folder(folder):
                 root.destroy()
@@ -1764,19 +1843,14 @@ class AoMContext(CommonContext):
                 f"{_new_count} Wonder Item{'s' if _new_count != 1 else ''}: {_summary}"
             )
 
-        PROG_INFO_ID = 9997
-        old_info_level = self.game_ctx.received_items.count(PROG_INFO_ID)
-
+        # Progressive Shop Info upgrades never broadcast hints — hints are only
+        # provided by explicitly buying a hint from the shop (see the "hint"
+        # branch in _resolve_shop_signal).
         if index == 0:
             on_items_received(self.game_ctx, item_ids)
         else:
             combined = self.game_ctx.received_items + item_ids
             on_items_received(self.game_ctx, combined)
-
-        new_info_level = self.game_ctx.received_items.count(PROG_INFO_ID)
-        if old_info_level < 4 <= new_info_level:
-            logger.info("4th Progressive Shop Info received — sending hints for 5 missions")
-            self.send_mission_hints((5, 5))
 
         # Queue newly received traps — only for incremental updates (index > 0).
         # On full resend (index == 0), load_trap_state already holds the correct

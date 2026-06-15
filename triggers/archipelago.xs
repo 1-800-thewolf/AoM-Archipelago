@@ -909,6 +909,24 @@ void APForbidScenarioNavalUnits()
         trForbidProtounit(1, "TepoztliCanoe");
         trForbidProtounit(1, "AtlatlSiegeCanoe");
     }
+    // NA 11 (Atlantis Betrayed): forbid Houses (both House and Atlantean Manor)
+    if (scenId == 511)
+    {
+        trForbidProtounit(1, "House");
+        trForbidProtounit(1, "Manor");
+    }
+}
+
+// APSetNoBuildVolcano â€" in no-build missions the player has no build zone, so
+// allow the Volcano god-power unit to be placed anywhere.
+void APSetNoBuildVolcano()
+{
+    int scenId = trQuestVarGet("APScenarioID");
+    if (scenId == 7  || scenId == 9  || scenId == 10 || scenId == 11 ||
+        scenId == 16 || scenId == 25 || scenId == 506)
+    {
+        trProtoUnitSetFlag(1, "Volcano", "PlaceAnywhere", true);
+    }
 }
 
 // APForbidWrongCivTempleUnits â€" forbids every temple-trainable unit (myth +
@@ -2828,24 +2846,35 @@ void APComputeTitanUnlock()
     bool isJapanese  = (gAPMajorGod == cAPMajorAmaterasu || gAPMajorGod == cAPMajorTsukuyomi || gAPMajorGod == cAPMajorSusanoo);
     bool isAztec     = (gAPMajorGod == cAPMajorHuitzilopochtli || gAPMajorGod == cAPMajorTezcatlipoca || gAPMajorGod == cAPMajorQuetzalcoatl);
 
-    int wantId = -1;
-    if (isGreek     == true) { wantId = cGREEK_TITAN_UNLOCK; }
-    if (isEgyptian  == true) { wantId = cEGYPTIAN_TITAN_UNLOCK; }
-    if (isNorse     == true) { wantId = cNORSE_TITAN_UNLOCK; }
-    if (isAtlantean == true) { wantId = cATLANTEAN_TITAN_UNLOCK; }
-    if (isChinese   == true) { wantId = cCHINESE_TITAN_UNLOCK; }
-    if (isJapanese  == true) { wantId = cJAPANESE_TITAN_UNLOCK; }
-    if (isAztec     == true) { wantId = cAZTEC_TITAN_UNLOCK; }
-    if (wantId < 0) { return; }
+    // Titan Age is now the 4th Progressive Age Unlock for the civ: holding 4+
+    // age-unlock items lifts the Titan lock.  ageWantId is the civ's age-unlock
+    // item; wantId is the RETIRED per-civ Titan item, still honored so seeds
+    // generated before the overhaul keep unlocking the Titan Age.
+    int ageWantId = -1;
+    int wantId    = -1;
+    if (isGreek     == true) { ageWantId = cGREEK_AGE_UNLOCK;     wantId = cGREEK_TITAN_UNLOCK; }
+    if (isEgyptian  == true) { ageWantId = cEGYPTIAN_AGE_UNLOCK;  wantId = cEGYPTIAN_TITAN_UNLOCK; }
+    if (isNorse     == true) { ageWantId = cNORSE_AGE_UNLOCK;     wantId = cNORSE_TITAN_UNLOCK; }
+    if (isAtlantean == true) { ageWantId = cATLANTEAN_AGE_UNLOCK; wantId = cATLANTEAN_TITAN_UNLOCK; }
+    if (isChinese   == true) { ageWantId = cCHINESE_AGE_UNLOCK;   wantId = cCHINESE_TITAN_UNLOCK; }
+    if (isJapanese  == true) { ageWantId = cJAPANESE_AGE_UNLOCK;  wantId = cJAPANESE_TITAN_UNLOCK; }
+    if (isAztec     == true) { ageWantId = cAZTEC_AGE_UNLOCK;     wantId = cAZTEC_TITAN_UNLOCK; }
+    if (ageWantId < 0) { return; }
 
     int i = 0;
+    int ageCount = 0;
     for (i = 9; i < gAPItemCount; i++)
     {
+        if (gAPItems[i] == ageWantId) { ageCount++; }
         if (gAPItems[i] == wantId)
         {
-            gAPHasTitanForCiv = true;
+            gAPHasTitanForCiv = true;   // legacy Titan item (backwards compat)
             return;
         }
+    }
+    if (ageCount >= 4)
+    {
+        gAPHasTitanForCiv = true;
     }
 }
 
@@ -2859,6 +2888,7 @@ runImmediately
 {
     APForbidVanillaArchaicUnits();
     APForbidScenarioNavalUnits();
+    APSetNoBuildVolcano();
     APInitGodPowers();
     // Reset random god power QVs at the start of each scenario.
     trQuestVarSet("rand_gp_1", 0);
@@ -4556,18 +4586,18 @@ runImmediately
             gAPWonderTier = gAPWonderTier + 1;
         }
 
-        if (itemId == cSTARTING_WOOD_SMALL)    { wood  += 30;  }
-        if (itemId == cSTARTING_FOOD_SMALL)    { food  += 30;  }
-        if (itemId == cSTARTING_GOLD_SMALL)    { gold  += 30;  }
-        if (itemId == cSTARTING_FAVOR_SMALL)   { favor += 15;  }
-        if (itemId == cSTARTING_WOOD_MEDIUM)   { wood  += 60;  }
-        if (itemId == cSTARTING_FOOD_MEDIUM)   { food  += 60;  }
-        if (itemId == cSTARTING_GOLD_MEDIUM)   { gold  += 60;  }
-        if (itemId == cSTARTING_FAVOR_MEDIUM)  { favor += 30;  }
-        if (itemId == cSTARTING_WOOD_LARGE)    { wood  += 120; }
-        if (itemId == cSTARTING_FOOD_LARGE)    { food  += 120; }
-        if (itemId == cSTARTING_GOLD_LARGE)    { gold  += 120; }
-        if (itemId == cSTARTING_FAVOR_LARGE)   { favor += 60;  }
+        if (itemId == cSTARTING_WOOD_SMALL)    { wood  += 50;  }
+        if (itemId == cSTARTING_FOOD_SMALL)    { food  += 50;  }
+        if (itemId == cSTARTING_GOLD_SMALL)    { gold  += 50;  }
+        if (itemId == cSTARTING_FAVOR_SMALL)   { favor += 5;   }
+        if (itemId == cSTARTING_WOOD_MEDIUM)   { wood  += 100; }
+        if (itemId == cSTARTING_FOOD_MEDIUM)   { food  += 100; }
+        if (itemId == cSTARTING_GOLD_MEDIUM)   { gold  += 100; }
+        if (itemId == cSTARTING_FAVOR_MEDIUM)  { favor += 10;  }
+        if (itemId == cSTARTING_WOOD_LARGE)    { wood  += 250; }
+        if (itemId == cSTARTING_FOOD_LARGE)    { food  += 250; }
+        if (itemId == cSTARTING_GOLD_LARGE)    { gold  += 250; }
+        if (itemId == cSTARTING_FAVOR_LARGE)   { favor += 20;  }
 
         if (itemId == cPASSIVE_WOOD_SMALL)    { trPlayerModifyResourceData(1, 2, 1, 0.5,  0); }
         if (itemId == cPASSIVE_FOOD_SMALL)    { trPlayerModifyResourceData(1, 2, 2, 0.5,  0); }
@@ -4576,7 +4606,7 @@ runImmediately
         if (itemId == cPASSIVE_WOOD_LARGE)    { trPlayerModifyResourceData(1, 2, 1, 2.0,  0); }
         if (itemId == cPASSIVE_FOOD_LARGE)    { trPlayerModifyResourceData(1, 2, 2, 2.0,  0); }
         if (itemId == cPASSIVE_GOLD_LARGE)    { trPlayerModifyResourceData(1, 2, 0, 2.0,  0); }
-        if (itemId == cPASSIVE_FAVOR_LARGE)   { trPlayerModifyResourceData(1, 2, 3, 0.5,  0); }
+        if (itemId == cPASSIVE_FAVOR_LARGE)   { trPlayerModifyResourceData(1, 2, 3, 0.2,  0); }
 
         if (itemId == cSTARTING_ARMY_ANUBITES)
         {
@@ -4749,10 +4779,7 @@ runImmediately
         if (itemId == cSTARTING_ARMY_QINGLONG) { trUnitCreateFromSource("QingLong", gStartingArmySpawnID, gStartingArmySpawnID, 1); }
         if (itemId == cSTARTING_ARMY_PIXIU)    { trUnitCreateFromSource("PiXiu",    gStartingArmySpawnID, gStartingArmySpawnID, 1); }
         if (itemId == cSTARTING_ARMY_TAOTIE)   { trUnitCreateFromSource("TaoTie",   gStartingArmySpawnID, gStartingArmySpawnID, 1); }
-        if (itemId == cSTARTING_ARMY_KUAFU)
-        {
-            for (j = 0; j < 2; j++) { trUnitCreateFromSource("Kuafu", gStartingArmySpawnID, gStartingArmySpawnID, 1); }
-        }
+        if (itemId == cSTARTING_ARMY_KUAFU) { trUnitCreateFromSource("Kuafu", gStartingArmySpawnID, gStartingArmySpawnID, 1); }
         // ---- Japanese ----
         if (itemId == cSTARTING_ARMY_YUMI_ARCHER)
         {
@@ -5030,19 +5057,20 @@ int APCountPlayer1Relics()
 
 // Formats a float to at most 2 decimal places, snapping to the nearest 0.25
 // step.  Used for trickle amounts in the relic notification chat.  Favor
-// trickles can be 0.25 increments so we handle .25 / .5 / .75 (the previous
-// version only handled .5 and rounded .25 down to 0).
+// trickles are now 0.1 increments, so format to one decimal place (nearest
+// tenth); whole numbers print without a decimal.
 string APFormatFloat(float val = 0.0)
 {
     // XS has no cast operators. Extract integer part via subtraction loop.
     int   _i   = 0;
     float _rem = val;
     while (_rem >= 1.0) { _rem = _rem - 1.0; _i = _i + 1; }
-    if (_rem > 0.875) { return ("" + (_i + 1)); }
-    if (_rem > 0.625) { return ("" + _i + ".75"); }
-    if (_rem > 0.375) { return ("" + _i + ".5"); }
-    if (_rem > 0.125) { return ("" + _i + ".25"); }
-    return ("" + _i);
+    // Round remainder to nearest tenth via subtraction loop.
+    int _tenths = 0;
+    while (_rem >= 0.05) { _rem = _rem - 0.1; _tenths = _tenths + 1; }
+    if (_tenths >= 10) { _i = _i + 1; _tenths = 0; }
+    if (_tenths == 0) { return ("" + _i); }
+    return ("" + _i + "." + _tenths);
 }
 
 // APRelicTrickleEnforce â€" every couple seconds: walk owned relics and apply
@@ -5087,7 +5115,7 @@ inactive
         if (id == cRELIC_TRICKLE_FOOD)  { perFood  = perFood  + 1.0;  }
         if (id == cRELIC_TRICKLE_WOOD)  { perWood  = perWood  + 1.0;  }
         if (id == cRELIC_TRICKLE_GOLD)  { perGold  = perGold  + 1.0;  }
-        if (id == cRELIC_TRICKLE_FAVOR) { perFavor = perFavor + 0.25; }
+        if (id == cRELIC_TRICKLE_FAVOR) { perFavor = perFavor + 0.1; }
         if (id == cRELIC_EFFECT_LOS)         { countLOS++;           }
         if (id == cRELIC_EFFECT_REGEN)       { countRegen++;         }
         if (id == cRELIC_EFFECT_SPEED)       { countSpeed++;         }
@@ -5149,11 +5177,11 @@ inactive
         gAPRelicEffAppliedLOS = targLOS;
     }
 
-    // Additive: Regen +0.5 per relic. Field 17 = regen rate.
+    // Additive: Regen +0.25 per relic. Field 17 = regen rate.
     apRelicDelta = targRegen - gAPRelicEffAppliedRegen;
     if (apRelicDelta != 0)
     {
-        trModifyProtounitData("All", 1, 17, 0.5 * apRelicDelta, 0);
+        trModifyProtounitData("All", 1, 17, 0.25 * apRelicDelta, 0);
         gAPRelicEffAppliedRegen = targRegen;
     }
 
@@ -5309,7 +5337,7 @@ inactive
         gAPRelicEffAppliedFoodCost = targFoodCost;
     }
 
-    // Multiplicative: Build time x0.90 per relic on Building. Field 4 = build
+    // Multiplicative: Build time x0.92 per relic on Building. Field 4 = build
     // points / build time multiplier.
     apRelicDelta = targBuildSpeed - gAPRelicEffAppliedBuildSpeed;
     if (apRelicDelta > 0)
@@ -5317,7 +5345,7 @@ inactive
         k = 0;
         while (k < apRelicDelta)
         {
-            trModifyProtounitData("Building", 1, 4, 0.9, 2);
+            trModifyProtounitData("Building", 1, 4, 0.92, 2);
             k = k + 1;
         }
         gAPRelicEffAppliedBuildSpeed = targBuildSpeed;
@@ -5328,7 +5356,7 @@ inactive
         undoCount = 0 - apRelicDelta;
         while (k < undoCount)
         {
-            trModifyProtounitData("Building", 1, 4, 1.0 / 0.9, 2);
+            trModifyProtounitData("Building", 1, 4, 1.0 / 0.92, 2);
             k = k + 1;
         }
         gAPRelicEffAppliedBuildSpeed = targBuildSpeed;
@@ -5393,7 +5421,7 @@ inactive
             }
             if (countRegen > 0)
             {
-                _line = "granting " + _cY + "+" + APFormatFloat(relicCount * countRegen * 0.5) + _cE + " " + _cG + "Regeneration" + _cE + " to everything";
+                _line = "granting " + _cY + "+" + APFormatFloat(relicCount * countRegen * 0.25) + _cE + " " + _cG + "Regeneration" + _cE + " to everything";
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
             if (countSpeed > 0)
@@ -5433,7 +5461,7 @@ inactive
             }
             if (hasBuildSpeed)
             {
-                _line = "making " + _cG + "buildings" + _cE + " build " + _cY + (relicCount * 10) + "%" + _cE + " faster";
+                _line = "making " + _cG + "buildings" + _cE + " build " + _cY + (relicCount * 8) + "%" + _cE + " faster";
                 if (_first) { _msg = _pfx + _line; _first = false; } else { _msg = _msg + _and + _line; }
             }
 
@@ -5640,7 +5668,10 @@ inactive
     int wonderTech      = kbTechGetID("WonderAgeGeneral");
     int wonderTitanTech = kbTechGetID("WonderAgeTitan");
 
-    if (gAPWonderTier <= 0)
+    // FotT 32 objective is to build the Wonder in Mythic Age, so it must
+    // always be buildable there regardless of Progressive Wonder tier.
+    // Treat it as tier 1 (Mythic-gated) when tier 0; higher tiers keep perks.
+    if (gAPWonderTier <= 0 && gAPScenarioId != 32)
     {
         // No wonder item received -- forbid entirely.
         trForbidProtounit(1, "Wonder");
