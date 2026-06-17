@@ -163,6 +163,7 @@ from .Options import (Random_Major_Gods, ForceDifferentGod, ExtraFinalMissionAge
     # MoreFrequentDLCGods,  # hidden from players; uncomment to re-expose
     NewAtlantis,
     GoldenGift,
+    PillarsOfTheGods,
     Relicsanity,
     OptionalObjectivesAreLocations,
     GemShop,
@@ -199,6 +200,7 @@ class aomWebWorld(WebWorld):
             FottNorseCampaign,
             NewAtlantis,
             GoldenGift,
+            PillarsOfTheGods,
             Relicsanity,
             OptionalObjectivesAreLocations,
             MaxKeysOnKeyrings,

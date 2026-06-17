@@ -78,6 +78,7 @@ greek:        Scenarios 1-10 (Fall of the Trident: Greek)
 egyptian:     Scenarios 11-20 (Fall of the Trident: Egyptian)
 norse:        Scenarios 21-30 (Fall of the Trident: Norse)
 new_atlantis: Start with the New Atlantis Campaign.
+pillars: Start with the Pillars of the Gods Campaign.
 
 Starting with the Greek block is the easiest."""
     internal_name = "starting_scenarios"
@@ -86,6 +87,7 @@ Starting with the Greek block is the easiest."""
     option_egyptian     = 1
     option_norse        = 2
     option_new_atlantis = 3
+    option_pillars = 4
     default = option_greek
 
 
@@ -112,11 +114,13 @@ class XScenarios(Range):
     """If Final Scenarios (above) is set to beat_x_scenarios, this is how many scenarios must be completed before you receive the Atlantis Key.
 
 You may beat any combination of scenarios from any activated campaigns. 
-(46 requires beats all 30 Fall of the Trident, all 12 New Atlantis, and all 4 Golden Gift scenarios)"""
+(46 requires beats all 30 Fall of the Trident, all 12 New Atlantis, and all 4 Golden Gift scenarios)
+****Updated to 54 max for PoTG"""
+
     internal_name = "x_scenarios"
     display_name = "X Scenarios"
     range_start = 0
-    range_end   = 46
+    range_end   = 54
     default     = 12
 
 
@@ -387,6 +391,12 @@ When disabled, those 4 scenarios are unplayable and are removed from the pool.""
     display_name  = "Golden Gift Campaign"
     default = 0
 
+class PillarsOfTheGods(Toggle):
+    """Include The Pillars of The Gods campaign.
+    When disabled, those 9 scenarios are unplayable and are removed from the pool."""
+    internal_name = "pillars_of_the_gods"
+    display_name = "Pillars of The Gods Campaign"
+    default = 0
 
 class MaxKeysOnKeyrings(Range):
     """Maximum number of Scenario Keys carried by a Key Ring item.
@@ -438,6 +448,7 @@ class AomOptions(PerGameCommonOptions):
     fott_norse_campaign:                FottNorseCampaign
     new_atlantis_campaign:              NewAtlantis
     golden_gift_campaign:               GoldenGift
+    pillars_of_the_gods:                PillarsOfTheGods
     relicsanity:                        Relicsanity
     optional_objectives_are_locations:  OptionalObjectivesAreLocations
     max_keys_on_keyrings:               MaxKeysOnKeyrings

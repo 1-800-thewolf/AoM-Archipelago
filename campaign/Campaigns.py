@@ -31,3 +31,4 @@ class aomCampaignData(enum.Enum):
     FOTT_FINAL = 4, "FOTT-FI", "Fall of the Trident: Final"
     NEW_ATLANTIS = 5, "NA", "The New Atlantis"
     GOLDEN_GIFT  = 6, "GG", "The Golden Gift"
+    PILLARS_OF_THE_GODS = 7, "POTG", "Pillars of the Gods"

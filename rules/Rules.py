@@ -331,6 +331,20 @@ _SCENARIO_DATA: dict[int, tuple[int, int, float, bool, bool]] = {
     602: (3, 0,  2.0,  False, False),  # age-capped @Heroic
     603: (3, 0, 16.0,  False, False),  # heroic-floor; custom points
     604: (4, 0,  1.0,  False, False),  # points-only gate (custom; no longer exempt)
+    # ---------------------------------------------------------------------------
+    # Pillars of the Gods (APScenarioIDs 701-709)
+    # 601,602 age-capped @Heroic; 603 heroic-floor (Mythic via 3 unlocks);
+    # 604 points-only gate (was always-accessible). UPDATE FOR POTG
+    # ---------------------------------------------------------------------------
+    701: (2, 2, 0.0, False, False),  #age capped @ heroic, but no build
+    702: (2, 0, 0.0, False, False),  #capped @ classical
+    703: (1, 2, 0.0, False, False),  #build to heroic
+    704: (3, 0, 0.0, False, False),  #capped @ heroic
+    705: (2, 3, 0.0, False, False),  #classical to mythic
+    706: (3, 3, 0.0, False, False),  #heroic to mythic
+    707: (3, 3, 0.0, False, False),  #heroic to mythic, no build
+    708: (4, 0, 0.0, False, False),  #start at mythic
+    709: (4, 0, 0.0, False, False),  #start at mythic
 }
 
 _VANILLA_CIV: dict[int, str] = {
@@ -349,6 +363,10 @@ _VANILLA_CIV: dict[int, str] = {
     509: "Norse",     510: "Atlantean", 511: "Atlantean", 512: "Atlantean",
     # The Golden Gift (APScenarioIDs 601-604)
     601: "Norse", 602: "Norse", 603: "Norse", 604: "Norse",
+    # Pillars of the Gods (APScenarioIDs 701-709)
+    701: "Chinese", 702: "Chinese", 703: "Chinese", 704: "Chinese",
+    705: "Chinese", 706: "Chinese", 707: "Chinese",  708: "Chinese",
+    709: "Chinese",
 }
 
 _VANILLA_GODS: dict[int, int] = {
@@ -368,6 +386,9 @@ _VANILLA_GODS: dict[int, int] = {
     507:  5, 508:  6, 509:  8, 510: 12, 511: 11, 512: 12,
     # The Golden Gift (APScenarioIDs 601-604)
     601: 8, 602: 9, 603: 9, 604: 8,
+    # Pillars of the Gods (APScenarioIDs 701-709)
+    701: 17, 702: 16, 703: 15, 704: 17, 705: 17, 706: 16, 707: 17,
+    708: 15, 709: 17,
 }
 
 
@@ -1298,6 +1319,8 @@ def set_section_rules(world) -> None:
                lambda state: state.has(aomItemData.UNLOCK_NEW_ATLANTIS.item_name, player))
     _maybe_set(aomCampaignData.GOLDEN_GIFT,   "The Golden Gift",
                lambda state: state.has(aomItemData.UNLOCK_GOLDEN_GIFT.item_name, player))
+    _maybe_set(aomCampaignData.PILLARS_OF_THE_GODS,   "Pillars of the Gods",
+               lambda state: state.has(aomItemData.UNLOCK_PILLARS_OF_THE_GODS.item_name, player))
 
     mode = get_final_mode_value(world)
     if mode == FinalScenarios.option_always_open:
@@ -1348,6 +1371,7 @@ def set_scenario_age_and_point_rules(world) -> None:
         "Final":       "Fall of the Trident: Final",
         "NewAtlantis": "The New Atlantis",
         "GoldenGift":  "The Golden Gift",
+        "PillarsOfTheGods": "Pillars of the Gods",
     }
 
     def section_for(n: int) -> str:
@@ -1357,6 +1381,7 @@ def set_scenario_age_and_point_rules(world) -> None:
         if n <= 32:          return section_names["Final"]
         if 501 <= n <= 512:  return section_names["NewAtlantis"]
         if 601 <= n <= 604:  return section_names["GoldenGift"]
+        if 701<=n <= 709:    return section_names["PillarsOfTheGods"]
         return section_names["Final"]
 
     for scenario in aomScenarioData:
@@ -1494,6 +1519,7 @@ def set_item_placement_restrictions(world) -> None:
         "FOTT_FINAL":    aomItemData.ATLANTIS_KEY.item_name,
         "NEW_ATLANTIS":  aomItemData.UNLOCK_NEW_ATLANTIS.item_name,
         "GOLDEN_GIFT":   aomItemData.UNLOCK_GOLDEN_GIFT.item_name,
+        "PILLARS_OF_THE_GODS": aomItemData.UNLOCK_PILLARS_OF_THE_GODS.item_name,
     }
     disabled_campaigns = getattr(world, "disabled_campaigns", set())
     relicsanity_on = bool(getattr(world, "relicsanity_enabled", False))
@@ -1763,6 +1789,7 @@ def set_scenario_key_rules(world) -> None:
         "FOTT_FINAL":    "Fall of the Trident: Final",
         "NEW_ATLANTIS":  "The New Atlantis",
         "GOLDEN_GIFT":   "The Golden Gift",
+        "PILLARS_OF_THE_GODS": "Pillars of the Gods",
     }
 
     if mk == 1:

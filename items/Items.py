@@ -767,6 +767,7 @@ class aomItemData(enum.IntEnum):
     NORSE_SCENARIOS    = 3502, "Unlock FotT Norse Campaign",    Campaign(aomCampaignData.FOTT_NORSE)
     UNLOCK_NEW_ATLANTIS = 3503, "Unlock New Atlantis Campaign",    Campaign(aomCampaignData.NEW_ATLANTIS)
     UNLOCK_GOLDEN_GIFT  = 3504, "Unlock The Golden Gift Campaign", Campaign(aomCampaignData.GOLDEN_GIFT)
+    UNLOCK_PILLARS_OF_THE_GODS = 3505, "Unlock the Pillars of the Gods Campaign", Campaign(aomCampaignData.PILLARS_OF_THE_GODS)
     ATLANTIS_KEY       = 3510, "Atlantis Key",       FinalUnlock()
 
     # -----------------------------------------------------------------------

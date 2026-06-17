@@ -779,6 +779,7 @@ class AoMCommandProcessor(ClientCommandProcessor):
         has_atlantis = aomItemData.ATLANTIS_KEY.id       in received
         has_na       = aomItemData.UNLOCK_NEW_ATLANTIS.id in received
         has_gg       = aomItemData.UNLOCK_GOLDEN_GIFT.id  in received
+        has_potg     = aomItemData.UNLOCK_PILLARS_OF_THE_GODS.id in received
         threshold    = getattr(ctx, "_x_scenarios_threshold", None)
         beaten_count = _count_beaten_scenarios(ctx)
         if not has_atlantis and threshold is not None and beaten_count >= threshold:
@@ -813,6 +814,8 @@ class AoMCommandProcessor(ClientCommandProcessor):
             self.output(block_line("New Atlantis Scenarios", has_na))
         if 6 not in disabled_ids:
             self.output(block_line("Golden Gift Scenarios",  has_gg))
+        if 7 not in disabled_ids:
+            self.output(block_line("Pillars of the Gods Scenarios", has_potg))
 
         # Sort scenarios into categories.
         # Beaten = victory sent. In Progress = any checked AND any missing (including beaten with missing).
@@ -1290,6 +1293,13 @@ class AoMCommandProcessor(ClientCommandProcessor):
             # The Golden Gift
             601:"GG1. Brokk's Journey",           602:"GG2. Eitri's Journey",
             603:"GG3. Fight at the Forge",        604:"GG4. Loki's Temples",
+            # Pillars of the Gods (701-709)
+            701: "POTG1. Shennong's Chosen",      702: "POTG2. Houyi's Pride",
+            703: "POTG3. Stronger Together",      704: "POTG4. The God Trap",
+            705: "POTG5. Overcoming Fixations",   706: "POTG6. Reality's Collapse",
+            707: "POTG7. Shattered Underworlds",  708: "POTG8. Divine Intervention",
+            709: "POTG9. Duel of the Deathless",
+
         }
 
         assignments = ctx.game_ctx.god_assignments
@@ -1300,7 +1310,7 @@ class AoMCommandProcessor(ClientCommandProcessor):
         disabled_ids: set[int] = getattr(ctx, "_disabled_campaign_ids", set())
 
         # Group by campaign for readable output; skip disabled campaigns
-        # Campaign IDs: 1-4 = FotT (Greek/Egyptian/Norse/Final), 5 = New Atlantis, 6 = Golden Gift
+        # Campaign IDs: 1-4 = FotT (Greek/Egyptian/Norse/Final), 5 = New Atlantis, 6 = Golden Gift, 7 = Pillars of the Gods
         # FotT scenario IDs 1-32 map to campaigns by range:
         #   1-10 → Greek (1), 11-20 → Egyptian (2), 21-30 → Norse (3), 31-32 → Final (4)
         def _fott_camp(n: int) -> int:
@@ -1312,6 +1322,7 @@ class AoMCommandProcessor(ClientCommandProcessor):
         fott_ids = [n for n in range(1, 33)    if n in assignments and _fott_camp(n) not in disabled_ids]
         na_ids   = [n for n in range(501, 513) if n in assignments and 5 not in disabled_ids]
         gg_ids   = [n for n in range(601, 605) if n in assignments and 6 not in disabled_ids]
+        potg_ids   = [n for n in range(701, 710) if n in assignments and 7 not in disabled_ids]
 
         def print_group(ids, header):
             if not ids:
@@ -1326,6 +1337,7 @@ class AoMCommandProcessor(ClientCommandProcessor):
         print_group(fott_ids, "=== Fall of the Trident ===")
         print_group(na_ids,   "=== The New Atlantis ===")
         print_group(gg_ids,   "=== The Golden Gift ===")
+        print_group(potg_ids, "=== Pillars of the Gods ===")
 
         # NOTE: Age expectation display was removed to reduce clutter.
         # To re-enable it, import _SCENARIO_DATA from rules.Rules and add:

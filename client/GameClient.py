@@ -240,6 +240,7 @@ VICTORY_LOCATION_IDS: frozenset = frozenset(
         (4, range(1, 2)),   # FotT Final 31
         (5, range(1, 13)),  # New Atlantis 501-512
         (6, range(1, 5)),   # The Golden Gift 601-604
+        (7, range(1, 10)),  # Pillars of the Gods 701-709
     ]
     for chapter in chapters
 )
@@ -485,7 +486,7 @@ def generate_ap_ai_xs(ctx: AoMGameContext, mods_local_dir: Path) -> None:
 
     lines.append("")
 
-    for campaign in ["Greek", "Egyptian", "Norse", "Final", "NewAtlantis", "GoldenGift"]:
+    for campaign in ["Greek", "Egyptian", "Norse", "Final", "NewAtlantis", "GoldenGift", "PillarsOfTheGods"]:
         lines.append(f'void APLocked_{campaign}() {{ aiEcho("{AP_LOCKED_PREFIX}{campaign}"); }}')
         generated_count += 1
 
@@ -648,12 +649,14 @@ def write_aom_state(ctx: AoMGameContext) -> None:
     #   [6] = 9010 if gem_shop is enabled,          else 9000
     #   [7] = 9005 if Unlock New Atlantis in items,         else 9000
     #   [8] = 9006 if Unlock The Golden Gift in items,      else 9000
+    #   [9] = 9007 if Unlock Pillars Of The Gods in items,  else 9000
     # Real items start at index 9.
     GREEK_SCENARIOS      = 3500
     EGYPTIAN_SCENARIOS   = 3501
     NORSE_SCENARIOS      = 3502
     UNLOCK_NEW_ATLANTIS  = 3503
     UNLOCK_GOLDEN_GIFT   = 3504
+    UNLOCK_PILLARS_OF_THE_GODS = 3505
     ATLANTIS_KEY         = 3510
     received_set = set(ctx.received_items)
     flags = [
@@ -665,7 +668,8 @@ def write_aom_state(ctx: AoMGameContext) -> None:
         9010 if ctx.random_major_gods else 9000,         # index 5: random_major_gods flag
         9010 if ctx.gem_shop_enabled else 9000,  # index 6: gem_shop flag
         9005 if UNLOCK_NEW_ATLANTIS in received_set else 9000,  # index 7
-        9006 if UNLOCK_GOLDEN_GIFT  in received_set else 9000,  # index 8
+        9006 if UNLOCK_GOLDEN_GIFT  in received_set else 9000,# index 8
+        9007 if UNLOCK_PILLARS_OF_THE_GODS in received_set else 9000,#index 9
     ]
     items_with_flags = flags + list(ctx.received_items)
     total = len(items_with_flags)
@@ -905,6 +909,9 @@ def write_aom_state(ctx: AoMGameContext) -> None:
             507:  5, 508:  6, 509:  8, 510: 12, 511: 11, 512: 12,
             # The Golden Gift (APScenarioIDs 601-604)
             601: 8, 602: 9, 603: 9, 604: 8,
+            # Pillars of the Gods (APScenarioIDs 701-709)
+            701: 17, 702: 16, 703: 15, 704: 17, 705: 17, 706: 16, 707: 17,
+            708: 15, 709: 17,
         }
         # Each entry maps one source proto to the full list of assigned-civ
         # target protos.  Runtime (APTransformBuildings) round-robins the

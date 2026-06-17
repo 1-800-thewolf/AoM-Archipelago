@@ -15,6 +15,7 @@
 #      ├── Fall of the Trident: Final          ── star ── 2  scenario regions
 #      ├── New Atlantis (optional)             ── star ── 12 scenario regions
 #      ├── Golden Gift  (optional)             ── star ── 4  scenario regions
+#      ├── PILLARS OF THE GODS (optional)      ── star ── 9  scenario regions
 #      └── Shop         (optional)             ── all shop / hint locations
 #
 # Star topology is intentional: once a campaign section is unlocked, every

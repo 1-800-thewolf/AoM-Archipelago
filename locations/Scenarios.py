@@ -62,7 +62,8 @@ class aomScenarioData(enum.IntEnum):
             chapter:       1-based chapter index within its campaign.
             global_number: the APScenarioID the running game broadcasts via
                             `trQuestVarSet("APScenarioID", N)`.  FotT uses
-                            1-32, New Atlantis 501-512, Golden Gift 601-604.
+                            1-32, New Atlantis 501-512, Golden Gift 601-604,
+                            Immortal Pillars 701-709
         """
         self.id = self.value
         self.scenario_name = scenario_name
@@ -144,6 +145,19 @@ class aomScenarioData(enum.IntEnum):
     GG_2  = ("Eitri's Journey",       aomCampaignData.GOLDEN_GIFT,  2, 602)
     GG_3  = ("Fight at the Forge",    aomCampaignData.GOLDEN_GIFT,  3, 603)
     GG_4  = ("Loki's Temples",        aomCampaignData.GOLDEN_GIFT,  4, 604)
+
+    # Pillars of the Gods (campaign value 7, APScenarioIDs 701-709)
+    POTG_1  = ("Shennong's Chosen",     aomCampaignData.PILLARS_OF_THE_GODS,  1, 701)
+    POTG_2  = ("Houyi's Pride",         aomCampaignData.PILLARS_OF_THE_GODS,  2, 702)
+    POTG_3  = ("Stronger Together",     aomCampaignData.PILLARS_OF_THE_GODS,  3, 703)
+    POTG_4  = ("The God Trap",          aomCampaignData.PILLARS_OF_THE_GODS,  4, 704)
+    POTG_5  = ("Overcoming Fixations",  aomCampaignData.PILLARS_OF_THE_GODS,  5, 705)
+    POTG_6  = ("Reality's Collapse",    aomCampaignData.PILLARS_OF_THE_GODS,  6, 706)
+    POTG_7  = ("Shattered Underworlds", aomCampaignData.PILLARS_OF_THE_GODS,  7, 707)
+    POTG_8  = ("Divine Intervention",   aomCampaignData.PILLARS_OF_THE_GODS,  8, 708)
+    POTG_9  = ("Duel of the Deathless", aomCampaignData.PILLARS_OF_THE_GODS,  9, 709)
+
+
 
 
 # --- Lookup tables, all built once at import time ---
