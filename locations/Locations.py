@@ -1734,7 +1734,7 @@ class aomLocationData(enum.IntEnum):
         aomScenarioData.POTG_1,
         aomLocationType.OBJECTIVE,
     )
-    #POTG - Houyi's Pride
+    #POTG_2 - Houyi's Pride
     POTG_2_VICTORY = (
         global_location_id(aomScenarioData.POTG_2.id, 0),
         "Victory",
@@ -1759,7 +1759,7 @@ class aomLocationData(enum.IntEnum):
         aomScenarioData.POTG_2,
         aomLocationType.OBJECTIVE,
     )
-    #POTG - Stronger Together
+    #POTG_3 - Stronger Together
     POTG_3_VICTORY = (
         global_location_id(aomScenarioData.POTG_3.id, 0),
         "Victory",
@@ -1772,7 +1772,13 @@ class aomLocationData(enum.IntEnum):
         aomScenarioData.POTG_3,
         aomLocationType.COMPLETION,
     )
-    #POTG - Stronger Together
+    POTG_3_OBJ_1 = (
+        global_location_id(aomScenarioData.POTG_3.id, 1),
+        "Reach Nuchou.",
+        aomScenarioData.POTG_3,
+        aomLocationType.OBJECTIVE,
+    )
+    #POTG_4 - The God Trap
     POTG_4_VICTORY = (
         global_location_id(aomScenarioData.POTG_4.id, 0),
         "Victory",
@@ -1785,7 +1791,19 @@ class aomLocationData(enum.IntEnum):
         aomScenarioData.POTG_4,
         aomLocationType.COMPLETION,
     )
-    #POTG - Stronger Together
+    POTG_4_OBJ_1 = (
+        global_location_id(aomScenarioData.POTG_4.id, 1),
+        "Find the ancient Temple.",
+        aomScenarioData.POTG_4,
+        aomLocationType.OBJECTIVE,
+    )
+    POTG_4_OBJ_2 = (
+        global_location_id(aomScenarioData.POTG_4.id, 1),
+        "Defeat Chiyou's army to reach the Northern Pillar.",
+        aomScenarioData.POTG_4,
+        aomLocationType.OBJECTIVE,
+    )
+    #POTG_5 - Overcoming Fixations
     POTG_5_VICTORY = (
         global_location_id(aomScenarioData.POTG_5.id, 0),
         "Victory",
@@ -1798,7 +1816,31 @@ class aomLocationData(enum.IntEnum):
         aomScenarioData.POTG_5,
         aomLocationType.COMPLETION,
     )
-    #POTG - Stronger Together
+    POTG_5_OBJ_1 = (
+        global_location_id(aomScenarioData.POTG_5.id, 1),
+        "Protect the Southern Pillar.",
+        aomScenarioData.POTG_5,
+        aomLocationType.OBJECTIVE,
+    )
+    POTG_5_OBJ_2 = (
+        global_location_id(aomScenarioData.POTG_5.id, 1),
+        "Select a Settlement to Start the mission.",
+        aomScenarioData.POTG_5,
+        aomLocationType.OBJECTIVE,
+    )
+    POTG_5_OBJ_3 = (
+        global_location_id(aomScenarioData.POTG_5.id, 1),
+        "Destroy the Giant Siege Crossbows.",
+        aomScenarioData.POTG_5,
+        aomLocationType.OBJECTIVE,
+    )
+    POTG_5_OBJ_4 = (
+        global_location_id(aomScenarioData.POTG_5.id, 1),
+        "Defeat Nuchou.",
+        aomScenarioData.POTG_5,
+        aomLocationType.OBJECTIVE,
+    )
+    #POTG_6 - Reality's Collapse
     POTG_6_VICTORY = (
         global_location_id(aomScenarioData.POTG_6.id, 0),
         "Victory",
@@ -1811,7 +1853,19 @@ class aomLocationData(enum.IntEnum):
         aomScenarioData.POTG_6,
         aomLocationType.COMPLETION,
     )
-    #POTG - Stronger Together
+    POTG_6_OBJ_1 = (
+        global_location_id(aomScenarioData.POTG_6.id, 1),
+        "Prevent Huang Zhaowu from destroying the pillar.",
+        aomScenarioData.POTG_6,
+        aomLocationType.OBJECTIVE,
+    )
+    POTG_6_OBJ_2 = (
+        global_location_id(aomScenarioData.POTG_6.id, 1),
+        "Bring Yan Feifeng to the Pillar before Huang Zhaowu destroys it.",
+        aomScenarioData.POTG_6,
+        aomLocationType.OBJECTIVE,
+    )
+    #POTG_7 - Shattered Underworlds
     POTG_7_VICTORY = (
         global_location_id(aomScenarioData.POTG_7.id, 0),
         "Victory",
@@ -1824,7 +1878,67 @@ class aomLocationData(enum.IntEnum):
         aomScenarioData.POTG_7,
         aomLocationType.COMPLETION,
     )
-    #POTG - Stronger Together
+    POTG_7_OBJ_1 = (
+        global_location_id(aomScenarioData.POTG_7.id, 1),
+        "Find the Red Stone (Greek).",
+        aomScenarioData.POTG_7,
+        aomLocationType.OBJECTIVE,
+    )
+    POTG_7_OBJ_2 = (
+        global_location_id(aomScenarioData.POTG_7.id, 1),
+        "Find the Black Stone (Atlantean).",
+        aomScenarioData.POTG_7,
+        aomLocationType.OBJECTIVE,
+    )
+    POTG_7_OBJ_3 = (
+        global_location_id(aomScenarioData.POTG_7.id, 1),
+        "Find the Blue Stone (Norse).",
+        aomScenarioData.POTG_7,
+        aomLocationType.OBJECTIVE,
+    )
+    POTG_7_OBJ_4 = (
+        global_location_id(aomScenarioData.POTG_7.id, 1),
+        "Find the Yellow Stone (Egyptian).",
+        aomScenarioData.POTG_7,
+        aomLocationType.OBJECTIVE,
+    )
+    POTG_7_OBJ_5 = (
+        global_location_id(aomScenarioData.POTG_7.id, 1),
+        "Find the White Stone (Chinese).",
+        aomScenarioData.POTG_7,
+        aomLocationType.OBJECTIVE,
+    )
+    POTG_7_OBJ_6 = (
+        global_location_id(aomScenarioData.POTG_7.id, 1),
+        "Defeat Xiaoli to retrieve the White Stone.",
+        aomScenarioData.POTG_7,
+        aomLocationType.OBJECTIVE,
+    )
+    POTG_7_OBJ_7 = (
+        global_location_id(aomScenarioData.POTG_7.id, 1),
+        "Protect the Mirror Tower to get the Black Stone.",
+        aomScenarioData.POTG_7,
+        aomLocationType.OBJECTIVE,
+    )
+    POTG_7_OBJ_8 = (
+        global_location_id(aomScenarioData.POTG_7.id, 1),
+        "Defeat Halogi to collect the Blue Stone.",
+        aomScenarioData.POTG_7,
+        aomLocationType.OBJECTIVE,
+    )
+    POTG_7_OBJ_9 = (
+        global_location_id(aomScenarioData.POTG_7.id, 1),
+        "Defeat the defenders of the enemy fortress to capture the Yellow Stone.",
+        aomScenarioData.POTG_7,
+        aomLocationType.OBJECTIVE,
+    )
+    POTG_7_OBJ_10 = (
+        global_location_id(aomScenarioData.POTG_7.id, 1),
+        "Destroy statues to find the Red Stone.",
+        aomScenarioData.POTG_7,
+        aomLocationType.OBJECTIVE,
+    )
+    #POTG_8 - Divine Intervention
     POTG_8_VICTORY = (
         global_location_id(aomScenarioData.POTG_8.id, 0),
         "Victory",
@@ -1837,7 +1951,19 @@ class aomLocationData(enum.IntEnum):
         aomScenarioData.POTG_8,
         aomLocationType.COMPLETION,
     )
-    #POTG - Stronger Together
+    POTG_8_OBJ_1 = (
+        global_location_id(aomScenarioData.POTG_8.id, 1),
+        "Request Nuwa's help by rebuilding her wonder.",
+        aomScenarioData.POTG_8,
+        aomLocationType.OBJECTIVE,
+    )
+    POTG_8_OBJ_2 = (
+        global_location_id(aomScenarioData.POTG_8.id, 1),
+        "Nuwa's Wonder must not be destroyed.",
+        aomScenarioData.POTG_8,
+        aomLocationType.OBJECTIVE,
+    )
+    #POTG_9 - Duel of the Deathless
     POTG_9_VICTORY = (
         global_location_id(aomScenarioData.POTG_9.id, 0),
         "Victory",
@@ -1849,6 +1975,30 @@ class aomLocationData(enum.IntEnum):
         "Completion",
         aomScenarioData.POTG_9,
         aomLocationType.COMPLETION,
+    )
+    POTG_9_OBJ_1 = (
+        global_location_id(aomScenarioData.POTG_9.id, 1),
+        "Nuwa's Wonder must not be destroyed.",
+        aomScenarioData.POTG_9,
+        aomLocationType.OBJECTIVE,
+    )
+    POTG_9_OBJ_2 = (
+        global_location_id(aomScenarioData.POTG_9.id, 1),
+        "Empower the Titan Gate with Sages to summon Xingtian.",
+        aomScenarioData.POTG_9,
+        aomLocationType.OBJECTIVE,
+    )
+    POTG_9_OBJ_3 = (
+        global_location_id(aomScenarioData.POTG_9.id, 1),
+        "Defeat Chiyou.",
+        aomScenarioData.POTG_9,
+        aomLocationType.OBJECTIVE,
+    )
+    POTG_9_OBJ_4 = (
+        global_location_id(aomScenarioData.POTG_9.id, 1),
+        "Defeat Huang Zhaowu.",
+        aomScenarioData.POTG_9,
+        aomLocationType.OBJECTIVE,
     )
     # ===========================================================================
     # RELICSANITY — one location per garrisoned relic.

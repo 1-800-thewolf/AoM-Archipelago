@@ -1784,12 +1784,21 @@ string APGetCheckText(int id = 0)
     if (id == 3936827) { return "Build up and defeat Huang Zhaowu's Army."; }
     //POTG_3 - Stronger Together
     if (id == 3936924) { return "Scenario Victory."; }
+    if (id == 3936926 { return "Reach Nuchou."; }
     //POTG_4 - The God Trap
     if (id == 3937024) { return "Scenario Victory."; }
+    if (id == 3937026 { return "Find the ancient Temple."; }
+    if (id == 3937027) { return "Defeat Chiyou's army to reach the Northern Pillar."; }
     //POTG_5 - Overcoming Fixations
     if (id == 3937124) { return "Scenario Victory."; }
+    if (id == 3937126) { return "Protect the Southern Pillar."; }
+    if (id == 3937127) {return "Select a settlement to Start the mission."; }
+    if (id == 3937128) {return "Destroy the Giant Siege Crossbows."; }
+    if (id == 3937129) {return "Defeat Nuchou."; }
     //POTG_6 - Reality's Collapse
     if (id == 3937224) { return "Scenario Victory."; }
+    if (id == 3937226) { return "Prevent Huang Zhaowu from destroying the pillar."; }
+    if (id == 3937227) {return "Bring Yan Feifeng to the Pillar before Huang Zhaowu destroys it."; }
     //POTG_7 - Shattered Underworlds
     if (id == 3937324) { return "Scenario Victory."; }
     //POTG_8 - Divine Intervention
@@ -3638,7 +3647,7 @@ void APCheckCampaignLock()
     if (gAPCampaignId == 4) { campaignName = "Final Scenarios"; }
     if (gAPCampaignId == 5) { campaignName = "New Atlantis"; }
     if (gAPCampaignId == 6) { campaignName = "Golden Gift"; }
-    if (gAPCampaignId == 7) { campaignName = "Pillars of the Gods}"; }
+    if (gAPCampaignId == 7) { campaignName = "Pillars of the Gods"; }
 
 
     bool keysActive = (trQuestVarGet("APScenarioKeysActive") > 0.5);

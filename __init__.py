@@ -542,6 +542,7 @@ _SPHERE_ONE_BY_CAMPAIGN: dict[str, list[int]] = {
     "FOTT_FINAL":    [],
     "NEW_ATLANTIS":  [506, 507],
     "GOLDEN_GIFT":   [604],
+    "PILLARS_OF_THE_GODS": [701, 702]
 }
 
 
@@ -629,6 +630,7 @@ class aomWorld(World):
             StartingScenarios.option_egyptian:     Campaigns.aomCampaignData.FOTT_EGYPTIAN,
             StartingScenarios.option_norse:        Campaigns.aomCampaignData.FOTT_NORSE,
             StartingScenarios.option_new_atlantis: Campaigns.aomCampaignData.NEW_ATLANTIS,
+            StartingScenarios.option_pillars: Campaigns.aomCampaignData.PILLARS_OF_THE_GODS,
         }
         return mapping.get(value, Campaigns.aomCampaignData.FOTT_GREEK)
 
@@ -802,6 +804,8 @@ class aomWorld(World):
             self.disabled_campaigns.add(aomCampaignData.NEW_ATLANTIS)
         if not bool(self.options.golden_gift_campaign.value):
             self.disabled_campaigns.add(aomCampaignData.GOLDEN_GIFT)
+        if not bool(self.options.pillars_of_the_gods.value):
+            self.disabled_campaigns.add(aomCampaignData.PILLARS_OF_THE_GODS)
 
         # If the chosen starting campaign is disabled, fall back to the first
         # enabled FOTT campaign so the player has somewhere to start.
@@ -1112,7 +1116,7 @@ class aomWorld(World):
         allowed = frozenset(self._allowed_god_ids)
         assignments: dict[int, int] = {}
         # Iterate all scenario IDs that have vanilla god assignments:
-        # FotT (1-32), New Atlantis (501-512), Golden Gift (601-604)
+        # FotT (1-32), New Atlantis (501-512), Golden Gift (601-604), Pillars (701-709)
         for scenario_id in sorted(sid for sid in _VANILLA_GODS):
             vanilla = _VANILLA_GODS[scenario_id]
             if force:
