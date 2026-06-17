@@ -1384,6 +1384,7 @@ def read_new_checks(ctx: AoMGameContext) -> list[int]:
                         "Norse":       _IData.NORSE_SCENARIOS,
                         "NewAtlantis": _IData.UNLOCK_NEW_ATLANTIS,
                         "GoldenGift":  _IData.UNLOCK_GOLDEN_GIFT,
+                        "PillarsOfTheGods": _IData.UNLOCK_PILLARS_OF_THE_GODS,
                     }
                     # Determine, from the CLIENT's authoritative received_items,
                     # whether the player actually has the unlock for this section.

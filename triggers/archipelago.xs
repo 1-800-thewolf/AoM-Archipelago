@@ -1778,6 +1778,24 @@ string APGetCheckText(int id = 0)
     if (id == 3936728) { return "Kill the Taoties."; }
     if (id == 3936729) { return "Save allied soldiers."; }
     if (id == 3936730) { return "Use the Pioneer's lantern to discover what is behind the wall."; }
+    //POTG_2 - Houyi's Pride
+    if (id == 3936824) { return "Scenario Victory."; }
+    if (id == 3936826) { return "Save the village."; }
+    if (id == 3936827) { return "Build up and defeat Huang Zhaowu's Army."; }
+    //POTG_3 - Stronger Together
+    if (id == 3936924) { return "Scenario Victory."; }
+    //POTG_4 - The God Trap
+    if (id == 3937024) { return "Scenario Victory."; }
+    //POTG_5 - Overcoming Fixations
+    if (id == 3937124) { return "Scenario Victory."; }
+    //POTG_6 - Reality's Collapse
+    if (id == 3937224) { return "Scenario Victory."; }
+    //POTG_7 - Shattered Underworlds
+    if (id == 3937324) { return "Scenario Victory."; }
+    //POTG_8 - Divine Intervention
+    if (id == 3937424) { return "Scenario Victory."; }
+    //POTG_9 - Duel of the Deathless
+    if (id == 3937524) { return "Scenario Victory."; }
 
     // ---- Optional objectives (local_id >= 40) ----
     if (id == 3876764) { return "Train Archers."; }
@@ -1821,6 +1839,8 @@ string APGetCheckText(int id = 0)
     if (id == 3917264) { return "Destroy Shrines of Olympus for different rewards."; }
     if (id == 3917464) { return "Find stray Camel caravans."; }
     if (id == 3917564) { return "Protect Folstag's Temples to receive Frost Giants."; }
+
+
     // ---- Relicsanity locations (local_id >= 10) ----
     // FOTT 3
     if (id == 3876934) { return "Relic 1: Near Stone Pillars at Camp"; }
