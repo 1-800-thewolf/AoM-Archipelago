@@ -166,6 +166,8 @@ from .Options import (Random_Major_Gods, ForceDifferentGod, ExtraFinalMissionAge
     PillarsOfTheGods,
     Relicsanity,
     OptionalObjectivesAreLocations,
+    ExcludeScenario30,
+    GemsAsFiller,
     GemShop,
     WinsToOpenShop,
     MaxProgressionItemsInEachShop,
@@ -203,6 +205,7 @@ class aomWebWorld(WebWorld):
             PillarsOfTheGods,
             Relicsanity,
             OptionalObjectivesAreLocations,
+            ExcludeScenario30,
             MaxKeysOnKeyrings,
         ]),
         OptionGroup("Starting Campaign", [
@@ -228,6 +231,7 @@ class aomWebWorld(WebWorld):
             ExtraFinalMissionAgeUnlocks,
             HeroAbilities,
             LocalFillerFrequency,
+            GemsAsFiller,
         ]),
     ] if OptionGroup is not None else []
 
@@ -661,6 +665,15 @@ class aomWorld(World):
         # should never appear as padding filler at objective/relic locations.
         non_gem = [item.item_name for item in Items.filler_items
                    if not isinstance(item.type, Items.Gem)]
+        # gems_as_filler (opt-in) lets Gems pad framework-level filler requests
+        # (start_inventory_from_pool swaps, item_links, other slots pulling
+        # filler) — only meaningful when the Gem Shop is on so the Gem has value.
+        gems_as_filler = bool(
+            getattr(self.options, "gems_as_filler", None)
+            and self.options.gems_as_filler.value
+        )
+        if gems_as_filler and getattr(self, "gem_shop_enabled", False):
+            return self.random.choice(non_gem + [Items.aomItemData.GEM.item_name])
         return self.random.choice(non_gem)
 
     def generate_early(self) -> None:
@@ -790,6 +803,18 @@ class aomWorld(World):
 
         # Disabled-campaign set: campaigns can be opted out via YAML.
         # FOTT_FINAL is always enabled (its scenarios are the goal).
+        #
+        # ADDING A CAMPAIGN — every optional campaign MUST be wired here.  This
+        # set is the single source of truth that Regions.py, Locations.py,
+        # Rules.py, create_items (pool sizing), the keyring assignment and
+        # fill_slot_data all consult to skip a campaign's scenarios/locations.
+        # A campaign that has a `<name>_campaign` YAML toggle but is NOT added
+        # to this set will be force-generated regardless of the option (its
+        # scenarios, locations, keys and pool slots all materialize), inflating
+        # item-placement load and silently ignoring the player's choice.  Add a
+        # matching `if not bool(self.options.<opt>.value): ...add(<CAMPAIGN>)`
+        # line below, then make sure the campaign appears in aomCampaignData,
+        # aomScenarioData and the location tables.
         from .locations.Campaigns import aomCampaignData
         self.disabled_campaigns: set[aomCampaignData] = set()
         if not bool(self.options.fott_greek_campaign.value):
@@ -802,6 +827,8 @@ class aomWorld(World):
             self.disabled_campaigns.add(aomCampaignData.NEW_ATLANTIS)
         if not bool(self.options.golden_gift_campaign.value):
             self.disabled_campaigns.add(aomCampaignData.GOLDEN_GIFT)
+        if not bool(self.options.pillars_of_the_gods.value):
+            self.disabled_campaigns.add(aomCampaignData.PILLARS_OF_THE_GODS)
 
         # If the chosen starting campaign is disabled, fall back to the first
         # enabled FOTT campaign so the player has somewhere to start.
@@ -814,6 +841,24 @@ class aomWorld(World):
                     self._fallback_start_campaign = _fallback
                     break
 
+        # Per-scenario exclusion set (global_numbers).  An excluded scenario
+        # behaves like one in a disabled campaign: no region, no locations, no
+        # scenario key, no completion event.  Every aomScenarioData loop that
+        # honors disabled_campaigns also skips these numbers.  Currently only
+        # scenario 30 ("All Is Not Lost") — the highest point gate — via the
+        # exclude_scenario_30 option (default on).
+        from .locations.Scenarios import aomScenarioData as _ScenData
+        self.excluded_scenarios: set[int] = set()
+        if bool(self.options.exclude_scenario_30.value) and \
+                _ScenData.FOTT_30.campaign not in self.disabled_campaigns:
+            self.excluded_scenarios.add(_ScenData.FOTT_30.global_number)
+
+        # Multiworld-size point-threshold scale: eases per-scenario point gates
+        # in large asyncs (where filler point items are spread thin) while
+        # preserving the gradient.  Read by Rules.set_scenario_age_and_point_rules
+        # and the client's reachability replica (via slot_data).
+        self.points_scale: float = Rules._multiworld_scale_factor(self.multiworld.players)
+
         # Auto-clamp x_scenarios to the number of enabled non-final scenarios.
         # If beat_x_scenarios mode asks the player to beat more scenarios than
         # exist in the active campaigns, the Final section can never unlock and
@@ -824,6 +869,7 @@ class aomWorld(World):
                 1 for s in aomScenarioData
                 if s.campaign not in self.disabled_campaigns
                 and s.campaign != aomCampaignData.FOTT_FINAL
+                and s.global_number not in self.excluded_scenarios
             )
             requested = int(self.options.x_scenarios.value)
             if requested > enabled_scenario_count:
@@ -834,6 +880,61 @@ class aomWorld(World):
                     "Final section can actually unlock."
                 )
                 self.options.x_scenarios.value = enabled_scenario_count
+
+            # Feasibility clamp.  Replay the per-scenario reachability rules with
+            # EVERY item held — the collection state fill guarantees for any
+            # beatable seed.  Scenarios still out of logic here can NEVER be
+            # completed no matter how fill places items (e.g. a god draw whose
+            # scenario-32 civ can't reach the age its gate needs).  If fewer than
+            # x_scenarios are reachable even with everything, the Final section
+            # could never unlock, so clamp x down to what is actually achievable
+            # instead of failing hours into fill with an opaque
+            # "Game appears as unbeatable".  max_keys=0 here so the key gate
+            # (gate 2) never blocks — this is a pure structural upper bound.
+            from .items import Items as _Items
+            _max_state = {name: 99 for name in _Items.item_name_to_id}
+            _campaign_unlocked = {
+                c.id: (c not in self.disabled_campaigns) for c in aomCampaignData
+            }
+            _reach = Rules.compute_scenarios_in_logic(
+                received_counts=_max_state,
+                god_assignments=self.god_assignments,
+                campaign_unlocked_by_id=_campaign_unlocked,
+                scenario_to_gate_id={},
+                held_gate_ids=set(),
+                max_keys_on_keyrings=0,
+                disabled_campaign_ids={c.id for c in self.disabled_campaigns},
+                minor_god_assignments={},
+                trap_percentage=int(self.options.trap_percentage.value),
+                excluded_scenario_numbers=self.excluded_scenarios,
+                multiworld_scale=self.points_scale,
+            )
+            _final_ids = {
+                s.global_number for s in aomScenarioData
+                if s.campaign == aomCampaignData.FOTT_FINAL
+            }
+            max_reach = sum(1 for n, ok in _reach.items()
+                            if ok and n not in _final_ids)
+            current_x = int(self.options.x_scenarios.value)
+            # Bound the feasibility nudge: never reduce x by more than ~10% of
+            # the player's original request.  This is a gentle correction toward
+            # a generatable seed, NOT a rewrite of the intended length — if a
+            # seed needs a deeper cut than that to look feasible, we nudge the
+            # allowed 10% and let fill try anyway rather than gut the experience.
+            # (The hard enabled-count clamp above is separate and uncapped — too
+            # few campaigns is structurally impossible, not a nudge.)
+            floor_x = requested - requested // 10
+            if current_x > max_reach:
+                new_x = min(current_x, max(max_reach, floor_x))
+                if new_x < current_x:
+                    logger.warning(
+                        f"AoMR: only {max_reach} scenarios are completable even "
+                        "with every item under this seed's god assignment "
+                        f"(x_scenarios={current_x}). Nudging x_scenarios down to "
+                        f"{new_x} (capped at a 10% reduction from {requested}) to "
+                        "help the Final section unlock."
+                    )
+                    self.options.x_scenarios.value = new_x
 
         # Pre-determined random god powers per scenario per tier (uses self.random
         # for deterministic regeneration). Must run after disabled_campaigns is set.
@@ -1352,6 +1453,7 @@ class aomWorld(World):
             s.global_number for s in aomScenarioData
             if s.campaign not in self.disabled_campaigns
             and s.campaign != _C_keys.FOTT_FINAL
+            and s.global_number not in self.excluded_scenarios
         ]
         if not active_scenarios:
             return
@@ -1713,6 +1815,19 @@ class aomWorld(World):
                                        Items.StartingDockTech, Items.StartingBuildingsTech)):
                 continue
 
+            # "Joins the Campaign" items are catalogued StartingArmyUseful but
+            # are treated as progression: each grants a flat +2 points on every
+            # scenario (see Rules.count_points), so guaranteeing them reachable
+            # raises the guaranteed-points floor that gates high-threshold
+            # scenarios under accessibility=full.
+            if item in (Items.aomItemData.KASTOR_JOINS,
+                        Items.aomItemData.ODYSSEUS_JOINS,
+                        Items.aomItemData.REGINLEIF_JOINS):
+                _join_item = self.create_item(item.item_name)
+                _join_item.classification = ItemClassification.progression
+                progression_pool.append(_join_item)
+                continue
+
             # All remaining items bucketed by classification
             if classification == ItemClassification.progression:
                 progression_pool.append(self.create_item(item.item_name))
@@ -1892,10 +2007,12 @@ class aomWorld(World):
         disabled_campaigns = self.disabled_campaigns
         relicsanity_on = self.relicsanity_enabled
         optional_objectives_on = self.optional_objectives_enabled
+        excluded_scenarios = self.excluded_scenarios
         visible_location_count = (
             sum(1 for loc in Locations.aomLocationData
                 if loc.type != Locations.aomLocationType.COMPLETION
                 and loc.scenario.campaign not in disabled_campaigns
+                and loc.scenario.global_number not in excluded_scenarios
                 and (relicsanity_on or loc.type != Locations.aomLocationType.RELIC)
                 and (optional_objectives_on or loc.type != Locations.aomLocationType.OPTIONAL_OBJECTIVE))
             - 1  # scenario 32 Victory is always locked to the Victory item
@@ -1910,6 +2027,7 @@ class aomWorld(World):
                 1 for loc in Locations.aomLocationData
                 if loc.type == Locations.aomLocationType.VICTORY
                 and loc.scenario.campaign not in disabled_campaigns
+                and loc.scenario.global_number not in excluded_scenarios
             ) - 1
             _n_starting_gems = int(getattr(self, "starting_gems_from_pool", 0))
             locked_gem_count = max(0, locked_gem_count - _n_starting_gems)
@@ -1940,6 +2058,7 @@ class aomWorld(World):
             sum(1 for loc in Locations.aomLocationData
                 if loc.type != Locations.aomLocationType.COMPLETION
                 and loc.scenario.campaign not in disabled_campaigns
+                and loc.scenario.global_number not in excluded_scenarios
                 and (relicsanity_on or loc.type != Locations.aomLocationType.RELIC)
                 and (optional_objectives_on or loc.type != Locations.aomLocationType.OPTIONAL_OBJECTIVE))
             - 1  # scenario 32 Victory locked to Victory item
@@ -1990,6 +2109,32 @@ class aomWorld(World):
                 f"raise max_progression_items_in_each_shop, enable relicsanity, "
                 f"or disable random_major_gods."
             )
+
+        # Full-accessibility fill needs spare reachable slots to seed sphere
+        # expansion: a pool that nearly fills every progression-legal slot can
+        # pass the count check above yet still deadlock Fill, because it can
+        # place the items but not ORDER them so every location stays reachable.
+        # This bites hardest with per-scenario keys (max_keys_on_keyrings == 1),
+        # which turn every scenario into its own gated progression item. Detect
+        # that regime and fail early with the actionable message instead of a
+        # late, opaque "FillError: No more spots to place N items". Gated to
+        # keys==1 + accessibility==full so configs that fill fine under minimal
+        # or with bundled keys (>=2) are never rejected.
+        _acc = getattr(self.options.accessibility, "current_key", "")
+        if _acc == "full" and self.max_keys_on_keyrings == 1:
+            _slack = progression_legal_count - len(progression_pool)
+            _need = max(2, progression_legal_count // 10)
+            if _slack < _need:
+                raise ValueError(
+                    f"AoMR: accessibility=full with max_keys_on_keyrings=1 leaves "
+                    f"only {_slack} spare progression-legal location(s) "
+                    f"(progression pool {len(progression_pool)} of "
+                    f"{progression_legal_count}; needs >= {_need}). Fill would "
+                    f"deadlock placing per-scenario keys. Fixes: raise "
+                    f"max_keys_on_keyrings to bundle keys onto rings, enable "
+                    f"relicsanity / optional objectives / more campaigns to add "
+                    f"locations, or set accessibility=minimal."
+                )
 
         # Trap cycle — deck-of-cards pool: every enabled trap type is shuffled,
         # popped one at a time, then the deck is reshuffled when empty so no
@@ -2389,6 +2534,8 @@ class aomWorld(World):
             "version_major":  2,
             "version_minor":  3,
             "disabled_campaigns": [c.id for c in self.disabled_campaigns],
+            "excluded_scenarios": sorted(getattr(self, "excluded_scenarios", set())),
+            "points_scale":   float(getattr(self, "points_scale", 1.0)),
             "world_id":       ((time.time_ns() >> 17) + self.player) & 0x7FFF_FFFF,
             "final_mode":     int(self.options.final_scenarios.value),
             "x_scenarios":    int(self.options.x_scenarios.value),

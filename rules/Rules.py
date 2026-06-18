@@ -80,6 +80,9 @@ from ..items.Items import (
     StartingArmyUseful,
     StartingResources,
     StartingResourcesLarge,
+    StartingEconomyTech,
+    StartingMilitaryTech,
+    StartingDockTech,
     TitanAgeUnlock,
     UnitUnlockProgression,
     UnitUnlockUseful,
@@ -584,12 +587,37 @@ _DREAMS_ITEM_NAME    = aomItemData.AJAX_AMANRA_DREAMS.item_name
 _CHIRON_DIDNT_DIE_NAME = aomItemData.CHIRON_DIDNT_DIE.item_name
 _WONDER_ANYWHERE_ANYAGE_TIER = 5   # ProgressiveWonder copies for anywhere + any age
 
-# Mythic-age myth-unit protos (mirror __init__.py) — starting-army items that
-# spawn one of these are worth 3 points.
-_MYTHIC_MYTH_STARTING_ARMY_PROTOS = frozenset({
-    "FireGiant", "Siren", "Lampades", "Phoenix", "Colossus",
-    "QingLong", "Umibozu", "Ahuizotl",
+# Starting-army myth-unit protos by age (proto names as used in a StartingArmy
+# item's unit_name).  A myth starting army is worth 2 * age_tier
+# (Classical=4, Heroic=6, Mythic=8); non-myth starting armies are worth 2.
+# Ages sourced from Memory Files/techtree.xml — a myth unit appears under a
+# `<Age>Age<God>` tech (e.g. BattleBoar under HeroicAgeBragi -> Heroic).
+# See the reference-techtree-myth-unit-age memory note.  Archaic myth units
+# (e.g. Pegasus) fold into the non-myth value of 2, so they need no set.
+_MYTHIC_MYTH_ARMY_PROTOS = frozenset({
+    "Ahuizotl", "Colossus", "FireGiant", "Hippopotamus", "Lampades",
+    "Phoenix", "QingLong", "Siren", "Umibozu",
 })
+_HEROIC_MYTH_ARMY_PROTOS = frozenset({
+    "BaiHu", "BattleBoar", "Behemoth", "Hamadryad", "ObsidianButterfly",
+    "Oni", "PiXiu", "Roc", "TaoTie", "Tzitzimitl",
+})
+_CLASSICAL_MYTH_ARMY_PROTOS = frozenset({
+    "Anubite", "Automaton", "Caladria", "CentzonTotochtin", "Chaneque",
+    "Cyclops", "Draugr", "Hyena", "Jorogumo", "QiLin", "Troll", "Wadjet",
+})
+
+
+def _starting_army_points(proto: str) -> float:
+    """Points for a starting-army item: 2 for non-myth units; 2 * age for myth
+    units (Classical=4, Heroic=6, Mythic=8)."""
+    if proto in _MYTHIC_MYTH_ARMY_PROTOS:
+        return 8.0
+    if proto in _HEROIC_MYTH_ARMY_PROTOS:
+        return 6.0
+    if proto in _CLASSICAL_MYTH_ARMY_PROTOS:
+        return 4.0
+    return 2.0
 
 # "Joins the Campaign" item -> hero it makes present in EVERY scenario.
 _JOINS_ITEM_HERO = {
@@ -700,15 +728,22 @@ for _it in aomItemData:
     elif isinstance(_t, PassiveIncome):
         _GENERIC_PTS[_nm] = 1.0
     elif isinstance(_t, (StartingArmy, StartingArmyUseful)):
-        _proto = getattr(_t, "unit_name", "") or ""
-        if _proto in _MYTHIC_MYTH_STARTING_ARMY_PROTOS:
-            _GENERIC_PTS[_nm] = 3.0                    # Mythic myth starting army
-        else:
-            _GENERIC_PTS[_nm] = 2.0 if isinstance(_t, StartingArmyUseful) else 1.0
+        _GENERIC_PTS[_nm] = _starting_army_points(getattr(_t, "unit_name", "") or "")
+    elif isinstance(_t, (StartingEconomyTech, StartingMilitaryTech)):
+        _GENERIC_PTS[_nm] = 3.0                        # starting eco / military tech
+    elif isinstance(_t, StartingDockTech):
+        _GENERIC_PTS[_nm] = 1.0                        # starting dock tech
 
 # Ajax & Amanra "Dreams" is a StartingArmyUseful by type, but scores specially:
 # +2 to scenario 32 only (handled in count_points), never as a generic item.
 _GENERIC_PTS.pop(_DREAMS_ITEM_NAME, None)
+
+# "Joins the Campaign" items score a flat +2 on EVERY scenario they affect
+# (added in count_points) on top of that hero's upgrade points (which count via
+# hero presence in _heroes_present).  Remove them from the generic starting-army
+# scoring so the +2 isn't double-counted with their StartingArmyUseful value.
+for _jn in _JOINS_ITEM_HERO:
+    _GENERIC_PTS.pop(_jn, None)
 
 
 class _ScoreCtx:
@@ -818,6 +853,20 @@ def count_points(state: CollectionState, player: int, ctx: "_ScoreCtx") -> float
             if c:
                 total += c * pts
 
+    # "Joins the Campaign" items — +2 ONLY on scenarios where the item actually
+    # spawns the hero (the hero isn't already in that scenario without it).
+    # e.g. Odysseus Joins is +2 on fott 2 but +0 on fott 6 (he's in fott 6's
+    # base roster).  The hero's own upgrade items are scored above via
+    # _heroes_present, which adds the hero whether from the roster or the join.
+    for jname, jhero in _JOINS_ITEM_HERO.items():
+        if not state.has(jname, player):
+            continue
+        present_without_join = jhero in ctx.base_heroes
+        if ctx.n == 505 and jhero == "Kastor":
+            present_without_join = False  # Kastor reaches NA 5 only via the join
+        if not present_without_join:
+            total += 2.0
+
     # Relic-effect items — 0.2 per relic present in the scenario.
     if ctx.relic_count > 0:
         for name in _RELIC_EFFECT_NAMES:
@@ -836,15 +885,36 @@ def count_points(state: CollectionState, player: int, ctx: "_ScoreCtx") -> float
     return total
 
 
-def _trap_scaled_points(points_needed: float, trap_percentage: int) -> float:
-    """Reduce a scenario's point requirement when the player opts into heavy
-    traps.  No change at trap_percentage <= 50; a linear ("even") reduction
-    above that reaching HALF at 100 (factor 1.0 -> 0.5 over 50..100).  The
-    result is floored.  Players who crank traps up trade points for danger."""
-    if trap_percentage <= 50 or points_needed <= 0:
+def _multiworld_scale_factor(num_players: int) -> float:
+    """Ease per-scenario point thresholds down slightly in larger multiworlds.
+
+    In a big async the filler/useful items that supply most of a scenario's
+    points are spread thin across many slots, so high thresholds become the
+    main fill-fragility source.  Returns 1.0 for solo/small games and eases
+    linearly to a 0.8 floor by ~30 players.  The same factor multiplies EVERY
+    threshold, so the relative gradient between scenarios is preserved."""
+    if num_players <= 1:
+        return 1.0
+    frac = min(max((num_players - 1) / 29.0, 0.0), 1.0)
+    return 1.0 - 0.2 * frac
+
+
+def _trap_scaled_points(points_needed: float, trap_percentage: int,
+                        mw_factor: float = 1.0) -> float:
+    """Reduce a scenario's point requirement for two independent reasons:
+
+      * traps — no change at trap_percentage <= 50; a linear reduction above
+        that reaching HALF at 100 (factor 1.0 -> 0.5 over 50..100).
+      * multiworld size — `mw_factor` (see `_multiworld_scale_factor`) eases
+        thresholds in large asyncs.
+
+    The two factors multiply; the result is floored.  Both default to no-op."""
+    if points_needed <= 0:
         return points_needed
-    factor = 1.0 - (min(trap_percentage, 100) - 50) / 100.0   # 0.75 @75, 0.5 @100
-    return float(int(points_needed * factor))                 # int() == floor for >= 0
+    factor = mw_factor
+    if trap_percentage > 50:
+        factor *= 1.0 - (min(trap_percentage, 100) - 50) / 100.0   # 0.75 @75, 0.5 @100
+    return float(int(points_needed * factor))                      # int() == floor for >= 0
 
 
 # --------------------------------------------------
@@ -1145,6 +1215,8 @@ def compute_scenarios_in_logic(
     player: int = 1,
     minor_god_assignments: dict = None,
     trap_percentage: int = 0,
+    excluded_scenario_numbers: set = frozenset(),
+    multiworld_scale: float = 1.0,
 ) -> dict[int, bool]:
     """Replay gates 1-5 for every scenario without a multiworld and return
     `{global_number: in_logic}`.
@@ -1174,11 +1246,13 @@ def compute_scenarios_in_logic(
         if scenario.campaign.id in disabled_campaign_ids:
             continue
         n    = scenario.global_number
+        if n in excluded_scenario_numbers:
+            continue
         data = _SCENARIO_DATA.get(n)
         if data is None:
             continue
         start_age_num, min_required_unlocks, points_needed, is_exempt, is_myth_only = data
-        points_needed = _trap_scaled_points(points_needed, trap_percentage)
+        points_needed = _trap_scaled_points(points_needed, trap_percentage, multiworld_scale)
 
         # Gate 1 — section / Final unlock.
         if not campaign_unlocked_by_id.get(scenario.campaign.id, False):
@@ -1263,8 +1337,11 @@ def place_completion_events(world) -> None:
     player    = world.player
     multiworld = world.multiworld
     disabled_campaigns = getattr(world, "disabled_campaigns", set())
+    excluded_scenarios = getattr(world, "excluded_scenarios", set())
     for scenario in aomScenarioData:
         if scenario.campaign in disabled_campaigns:
+            continue
+        if scenario.global_number in excluded_scenarios:
             continue
         location   = multiworld.get_location(completion_location_name(scenario), player)
         event_item = Item(
@@ -1363,6 +1440,7 @@ def set_scenario_age_and_point_rules(world) -> None:
     multiworld = world.multiworld
     disabled_campaigns = getattr(world, "disabled_campaigns", set())
     trap_pct = int(getattr(world.options, "trap_percentage").value)
+    mw_scale = float(getattr(world, "points_scale", 1.0))
 
     section_names = {
         "Greek":       "Fall of the Trident: Greek",
@@ -1384,12 +1462,15 @@ def set_scenario_age_and_point_rules(world) -> None:
         if 701<=n <= 709:    return section_names["PillarsOfTheGods"]
         return section_names["Final"]
 
+    excluded_scenarios = getattr(world, "excluded_scenarios", set())
     for scenario in aomScenarioData:
         if scenario.campaign in disabled_campaigns:
             continue
+        if scenario.global_number in excluded_scenarios:
+            continue
         n = scenario.global_number
         start_age_num, min_required_unlocks, points_needed, is_exempt, is_myth_only = _SCENARIO_DATA[n]
-        points_needed = _trap_scaled_points(points_needed, trap_pct)
+        points_needed = _trap_scaled_points(points_needed, trap_pct, mw_scale)
 
         if is_exempt:
             continue
@@ -1522,10 +1603,13 @@ def set_item_placement_restrictions(world) -> None:
         "PILLARS_OF_THE_GODS": aomItemData.UNLOCK_PILLARS_OF_THE_GODS.item_name,
     }
     disabled_campaigns = getattr(world, "disabled_campaigns", set())
+    excluded_scenarios = getattr(world, "excluded_scenarios", set())
     relicsanity_on = bool(getattr(world, "relicsanity_enabled", False))
     optional_objectives_on = bool(getattr(world, "optional_objectives_enabled", False))
     for location_data in aomLocationData:
         if location_data.scenario.campaign in disabled_campaigns:
+            continue
+        if location_data.scenario.global_number in excluded_scenarios:
             continue
         if not relicsanity_on and location_data.type == aomLocationType.RELIC:
             continue
@@ -1575,10 +1659,12 @@ def place_gems(world) -> None:
     player     = world.player
     multiworld = world.multiworld
     disabled_campaigns = getattr(world, "disabled_campaigns", set())
+    excluded_scenarios = getattr(world, "excluded_scenarios", set())
 
     eligible = [
         s for s in aomScenarioData
         if s != aomScenarioData.FOTT_32 and s.campaign not in disabled_campaigns
+        and s.global_number not in excluded_scenarios
     ]
 
     # Pick which Victories to SKIP (swapped to free-fill).  Deterministic via
@@ -1804,8 +1890,11 @@ def set_scenario_key_rules(world) -> None:
             getattr(world, "scenario_to_ring_item_id", {}) or {}
         )
 
+    excluded_scenarios = getattr(world, "excluded_scenarios", set())
     for scenario in aomScenarioData:
         if scenario.campaign in disabled_campaigns:
+            continue
+        if scenario.global_number in excluded_scenarios:
             continue
         # FOTT_FINAL (31 & 32) is never gated by scenario keys — only by the
         # final_scenarios option mechanism.

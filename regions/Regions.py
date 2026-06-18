@@ -208,8 +208,11 @@ def create_regions(multiworld: MultiWorld, player: int) -> None:
     # gated only by their individual age-unlock and point requirements (set in Rules.py).
     relicsanity_on = bool(getattr(multiworld.worlds[player], "relicsanity_enabled", False))
     optional_objectives_on = bool(getattr(multiworld.worlds[player], "optional_objectives_enabled", False))
+    excluded_scenarios = getattr(multiworld.worlds[player], "excluded_scenarios", set())
     for scenario in aomScenarioData:
         if scenario.campaign in disabled_campaigns:
+            continue
+        if scenario.global_number in excluded_scenarios:
             continue
         scenario_locations = REGION_TO_LOCATIONS.get(scenario, [])
         if not relicsanity_on:
@@ -269,6 +272,8 @@ def create_regions(multiworld: MultiWorld, player: int) -> None:
         kd_region = create_region(multiworld, player, "Key Deliveries")
         for _scen in aomScenarioData:
             if _scen.campaign in disabled_campaigns:
+                continue
+            if _scen.global_number in excluded_scenarios:
                 continue
             # FOTT_FINAL (31 & 32) never participates in the scenario-key
             # system — access is governed solely by final_scenarios.

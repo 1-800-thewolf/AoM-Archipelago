@@ -435,6 +435,27 @@ class OptionalObjectivesAreLocations(Toggle):
     default = 0
 
 
+class ExcludeScenario30(Toggle):
+    """Exclude scenario 30, "All Is Not Lost", from the world.
+
+When enabled (default), scenario 30 and ALL of its locations — including its relics and optional objectives when those are turned on — are removed from the pool.
+Scenario 30 has the highest point requirement of any scenario, so dropping it noticeably lowers item-placement pressure in large multiworlds.
+Has no effect when the Norse campaign is already disabled."""
+    internal_name = "exclude_scenario_30"
+    display_name  = "Exclude 30. All Is Not Lost"
+    default = 1
+
+
+class GemsAsFiller(Toggle):
+    """Allow Gems to be used as filler items.
+
+Normally Gems are awarded only by Victory locations. When enabled, the world may also pad filler slots with Gems — only relevant in large multiworlds that need extra filler.
+Has no effect when the Gem Shop is disabled."""
+    internal_name = "gems_as_filler"
+    display_name  = "Gems As Filler"
+    default = 0
+
+
 @dataclass
 class AomOptions(PerGameCommonOptions):
     """All options for the Age of Mythology Retold Archipelago world."""
@@ -451,6 +472,8 @@ class AomOptions(PerGameCommonOptions):
     pillars_of_the_gods:                PillarsOfTheGods
     relicsanity:                        Relicsanity
     optional_objectives_are_locations:  OptionalObjectivesAreLocations
+    exclude_scenario_30:                ExcludeScenario30
+    gems_as_filler:                     GemsAsFiller
     max_keys_on_keyrings:               MaxKeysOnKeyrings
     starting_scenarios:                 StartingScenarios
     final_scenarios:                    FinalScenarios
