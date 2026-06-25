@@ -261,6 +261,29 @@ def _aomr_example_path() -> str:
     )
 
 
+def _parse_steam_library_paths(steam_root: Path) -> list:
+    """Extract every Steam library path from `<steam_root>/steamapps/libraryfolders.vdf`.
+
+    Steam stores games across multiple libraries (internal drive, SD card,
+    external disks); each library's `compatdata` holds the Proton prefix for
+    games installed there. The VDF lists them as `"path"  "<dir>"` entries.
+    We regex them out rather than depend on a VDF parser. Returns [] if the
+    file is missing or unreadable."""
+    vdf = steam_root / "steamapps" / "libraryfolders.vdf"
+    paths: list = []
+    try:
+        text = vdf.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return paths
+    import re
+    for m in re.finditer(r'"path"\s*"([^"]+)"', text):
+        raw = m.group(1).replace("\\\\", "/").replace("\\", "/")
+        p = Path(raw)
+        if p not in paths:
+            paths.append(p)
+    return paths
+
+
 def _aomr_base_dirs() -> list:
     """Candidate base directories AoMR creates per-Steam-ID user folders under.
 
@@ -288,7 +311,31 @@ def _aomr_base_dirs() -> list:
         home / ".var" / "app" / "com.valvesoftware.Steam" / ".steam" / "steam",
         home / ".var" / "app" / "com.valvesoftware.Steam" / ".local" / "share" / "Steam",
     ]
+    # Steam Deck / multi-library installs: the game (and therefore its
+    # compatdata prefix) may live in a library on the SD card or any extra
+    # drive. Discover every library path from libraryfolders.vdf under the
+    # known roots, plus common Deck SD-card mount points as a fallback.
+    library_roots = list(steam_roots)
     for root in steam_roots:
+        for lib in _parse_steam_library_paths(root):
+            if lib not in library_roots:
+                library_roots.append(lib)
+    # /run/media/<user>/<label> (Deck) and /run/media/<label> (KDE) SD-card /
+    # external-drive mounts that may not be listed in libraryfolders.vdf.
+    media_bases = [Path("/run/media")]
+    try:
+        for u in Path("/run/media").iterdir():
+            media_bases.append(u)
+    except OSError:
+        pass
+    for mount_base in media_bases:
+        try:
+            for child in mount_base.iterdir():
+                if (child / "steamapps").is_dir() and child not in library_roots:
+                    library_roots.append(child)
+        except OSError:
+            pass
+    for root in library_roots:
         prefixes.append(root / "steamapps" / "compatdata" / _AOMR_STEAM_APPID / "pfx")
 
     bases = [
