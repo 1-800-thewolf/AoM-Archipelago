@@ -902,60 +902,34 @@ class aomWorld(World):
                 )
                 self.options.x_scenarios.value = enabled_scenario_count
 
-            # Feasibility clamp.  Replay the per-scenario reachability rules with
-            # EVERY item held — the collection state fill guarantees for any
-            # beatable seed.  Scenarios still out of logic here can NEVER be
-            # completed no matter how fill places items (e.g. a god draw whose
-            # scenario-32 civ can't reach the age its gate needs).  If fewer than
-            # x_scenarios are reachable even with everything, the Final section
-            # could never unlock, so clamp x down to what is actually achievable
-            # instead of failing hours into fill with an opaque
-            # "Game appears as unbeatable".  max_keys=0 here so the key gate
-            # (gate 2) never blocks — this is a pure structural upper bound.
+            # Feasibility clamp (coarse pre-pass).  Replay the per-scenario
+            # reachability rules with EVERY catalog item held (99 copies each) —
+            # an upper bound on what fill could ever make completable.  Scenarios
+            # still out of logic here can NEVER be completed no matter how fill
+            # places items (e.g. a god draw whose scenario-32 civ can't reach the
+            # age its gate needs), so clamp x down to that ceiling instead of
+            # failing hours into fill with an opaque "Game appears as unbeatable".
+            #
+            # This pass OVERCOUNTS: 99-of-everything feeds count_points far more
+            # points than the finite real pool grants, so point-gated scenarios
+            # the real pool can't satisfy still read reachable.  A second,
+            # authoritative clamp in create_items() (see _reclamp_x_scenarios)
+            # re-runs this with the ACTUAL pool counts once the pool exists and
+            # tightens x further.  This pass stays as a cheap early reject for the
+            # structurally-impossible cases (bad god draw) that don't need the
+            # pool to detect.
             from .items import Items as _Items
             _max_state = {name: 99 for name in _Items.item_name_to_id}
-            _campaign_unlocked = {
-                c.id: (c not in self.disabled_campaigns) for c in aomCampaignData
-            }
-            _reach = Rules.compute_scenarios_in_logic(
-                received_counts=_max_state,
-                god_assignments=self.god_assignments,
-                campaign_unlocked_by_id=_campaign_unlocked,
-                scenario_to_gate_id={},
-                held_gate_ids=set(),
-                max_keys_on_keyrings=0,
-                disabled_campaign_ids={c.id for c in self.disabled_campaigns},
-                minor_god_assignments={},
-                trap_percentage=int(self.options.trap_percentage.value),
-                excluded_scenario_numbers=self.excluded_scenarios,
-                multiworld_scale=self.points_scale,
-            )
-            _final_ids = {
-                s.global_number for s in aomScenarioData
-                if s.campaign == aomCampaignData.FOTT_FINAL
-            }
-            max_reach = sum(1 for n, ok in _reach.items()
-                            if ok and n not in _final_ids)
+            max_reach = self._max_reachable_nonfinal_scenarios(_max_state)
             current_x = int(self.options.x_scenarios.value)
-            # Bound the feasibility nudge: never reduce x by more than ~10% of
-            # the player's original request.  This is a gentle correction toward
-            # a generatable seed, NOT a rewrite of the intended length — if a
-            # seed needs a deeper cut than that to look feasible, we nudge the
-            # allowed 10% and let fill try anyway rather than gut the experience.
-            # (The hard enabled-count clamp above is separate and uncapped — too
-            # few campaigns is structurally impossible, not a nudge.)
-            floor_x = requested - requested // 10
             if current_x > max_reach:
-                new_x = min(current_x, max(max_reach, floor_x))
-                if new_x < current_x:
-                    logger.warning(
-                        f"AoMR: only {max_reach} scenarios are completable even "
-                        "with every item under this seed's god assignment "
-                        f"(x_scenarios={current_x}). Nudging x_scenarios down to "
-                        f"{new_x} (capped at a 10% reduction from {requested}) to "
-                        "help the Final section unlock."
-                    )
-                    self.options.x_scenarios.value = new_x
+                logger.warning(
+                    f"AoMR: only {max_reach} scenarios are completable even "
+                    "with every item under this seed's god assignment "
+                    f"(x_scenarios={current_x}). Clamping x_scenarios to "
+                    f"{max_reach} so the Final section can actually unlock."
+                )
+                self.options.x_scenarios.value = max_reach
 
         # Pre-determined random god powers per scenario per tier (uses self.random
         # for deterministic regeneration). Must run after disabled_campaigns is set.
@@ -1567,6 +1541,63 @@ class aomWorld(World):
         if self.scenario_bundles:
             self.starter_ring_item_id = Items.RING_INDEX_TO_ITEM_ID[1]
 
+    def _max_reachable_nonfinal_scenarios(self, received_counts: dict) -> int:
+        """Number of non-Final scenarios completable when the player holds the
+        item counts in `received_counts`.  Used by both feasibility clamps:
+        generate_early passes 99-of-everything (coarse upper bound); create_items
+        passes the actual pool tally (authoritative).  max_keys=0 so the key gate
+        never blocks — keys are obtainable items, not a structural ceiling."""
+        from .locations.Scenarios import aomScenarioData
+        _campaign_unlocked = {
+            c.id: (c not in self.disabled_campaigns) for c in Campaigns.aomCampaignData
+        }
+        _reach = Rules.compute_scenarios_in_logic(
+            received_counts=received_counts,
+            god_assignments=self.god_assignments,
+            campaign_unlocked_by_id=_campaign_unlocked,
+            scenario_to_gate_id={},
+            held_gate_ids=set(),
+            max_keys_on_keyrings=0,
+            disabled_campaign_ids={c.id for c in self.disabled_campaigns},
+            minor_god_assignments=getattr(self, "minor_god_assignments", {}),
+            trap_percentage=int(self.options.trap_percentage.value),
+            excluded_scenario_numbers=self.excluded_scenarios,
+            multiworld_scale=self.points_scale,
+        )
+        _final_ids = {
+            s.global_number for s in aomScenarioData
+            if s.campaign == Campaigns.aomCampaignData.FOTT_FINAL
+        }
+        return sum(1 for n, ok in _reach.items() if ok and n not in _final_ids)
+
+    def _reclamp_x_scenarios(self, itempool: list) -> None:
+        """Authoritative feasibility clamp using the REAL pool counts.
+
+        The generate_early clamp uses 99-of-everything and overcounts points, so
+        vanilla-god seeds with x near the enabled count can still abort fill
+        "Game appears as unbeatable".  Once create_items has built the actual
+        pool we know exactly how many point-bearing copies the player can ever
+        hold, so re-run the reachability sweep with those counts and clamp x down
+        to what is genuinely completable.  Runs before set_rules (Final gate) and
+        fill_slot_data, so the tightened value propagates to both."""
+        if int(self.options.final_scenarios.value) != FinalScenarios.option_beat_x_scenarios:
+            return
+        received_counts: dict = {}
+        for it in itempool:
+            received_counts[it.name] = received_counts.get(it.name, 0) + 1
+        for it in self.multiworld.precollected_items.get(self.player, []):
+            received_counts[it.name] = received_counts.get(it.name, 0) + 1
+        max_reach = self._max_reachable_nonfinal_scenarios(received_counts)
+        current_x = int(self.options.x_scenarios.value)
+        if current_x > max_reach:
+            logger.warning(
+                f"AoMR: with the actual item pool only {max_reach} scenarios are "
+                f"completable under this seed's god assignment (x_scenarios="
+                f"{current_x}). Clamping x_scenarios to {max_reach} so the Final "
+                "section can actually unlock."
+            )
+            self.options.x_scenarios.value = max_reach
+
     def create_items(self) -> None:
         """
         Build the item pool.
@@ -1601,6 +1632,12 @@ class aomWorld(World):
         aztec_types        = (Items.AztecUnitUnlockProgression, Items.AztecUnitUnlockUseful,
                                Items.AztecMythUnitUnlock)
         random_major_gods_on        = bool(self.options.random_major_gods.value)
+        # Native-DLC-civ campaigns: their scenarios are played as that civ, so the
+        # civ's unit items must be in the pool whenever the campaign is enabled,
+        # even with random_major_gods off (otherwise those scenarios are
+        # unbeatable — see the Atlantean/Chinese skip guards below).
+        _new_atlantis_in_pool = Campaigns.aomCampaignData.NEW_ATLANTIS not in self.disabled_campaigns
+        _pillars_in_pool      = Campaigns.aomCampaignData.PILLARS_OF_THE_GODS not in self.disabled_campaigns
 
         # Age unlocks are never precollected — players use start_inventory or
         # start_inventory_from_pool in their YAML if they want starting unlocks.
@@ -1792,12 +1829,22 @@ class aomWorld(World):
                 if _all_fott_disabled:
                     continue
 
-            # Atlantean items — skip if random_major_gods is off (Atlantis not in the pool)
-            if isinstance(item.type, atlantean_types) and not random_major_gods_on:
+            # Atlantean items — needed when random_major_gods is on OR the New
+            # Atlantis campaign (natively Atlantean) is enabled.  Without them the
+            # Atlantean NA scenarios (501-505,510-512) have ZERO trainable-unit
+            # items, so their per-scenario rules can never be satisfied (the
+            # rule requires at least one "Can train <civ unit>") and the
+            # scenarios are unbeatable — and a vanilla NA player can't field any
+            # Atlantean army.  Skip only when neither condition holds.
+            if isinstance(item.type, atlantean_types) \
+                    and not random_major_gods_on and _new_atlantis_in_pool is False:
                 continue
 
-            # Chinese items — skip if random_major_gods is off (Chinese not in the pool)
-            if isinstance(item.type, chinese_types) and not random_major_gods_on:
+            # Chinese items — needed when random_major_gods is on OR the Pillars
+            # of the Gods campaign (natively Chinese) is enabled (same reasoning
+            # as Atlantean/New Atlantis above).
+            if isinstance(item.type, chinese_types) \
+                    and not random_major_gods_on and _pillars_in_pool is False:
                 continue
 
             # Japanese items — skip if random_major_gods is off (Japanese not in the pool)
@@ -1957,14 +2004,22 @@ class aomWorld(World):
             (Items.aomItemData.EGYPTIAN_AGE_UNLOCK, "Egyptian", 4 + egyptian_extra),
             (Items.aomItemData.NORSE_AGE_UNLOCK,    "Norse",    4 + norse_extra),
         ]
-        # Atlantean/Chinese/Japanese/Aztec age unlocks only added when random_major_gods is on
-        if random_major_gods_on:
+        # DLC-civ age unlocks.  Added when random_major_gods is on, OR when that
+        # civ's native campaign is enabled — the New Atlantis scenarios are
+        # vanilla Atlantean and Pillars of the Gods is vanilla Chinese, so those
+        # campaigns need their age unlocks to gate Classical/Heroic/Mythic even
+        # with random_major_gods off (without them, age-advancing NA/PoTG
+        # scenarios like 502/510 are unbeatable).  Japanese/Aztec have no native
+        # campaign, so they ride solely on random_major_gods.
+        if random_major_gods_on or _new_atlantis_in_pool:
             age_unlock_config.append(
                 (Items.aomItemData.ATLANTEAN_AGE_UNLOCK, "Atlantean", 4 + atlantean_extra)
             )
+        if random_major_gods_on or _pillars_in_pool:
             age_unlock_config.append(
                 (Items.aomItemData.CHINESE_AGE_UNLOCK, "Chinese", 4 + chinese_extra)
             )
+        if random_major_gods_on:
             age_unlock_config.append(
                 (Items.aomItemData.JAPANESE_AGE_UNLOCK, "Japanese", 4 + japanese_extra)
             )
@@ -2411,6 +2466,11 @@ class aomWorld(World):
                 f"Visible locations: {visible_location_count}, "
                 f"items in pool: {len(itempool)}."
             )
+
+        # Authoritative feasibility clamp — now that the real pool exists, tighten
+        # x_scenarios against actual point-item counts (the generate_early clamp
+        # overcounts with 99-of-everything). Runs before set_rules/slot_data.
+        self._reclamp_x_scenarios(itempool)
 
         # Pre-collected starting Gems (from start_inventory_from_pool: Gem: N).
         # Pushed here so they aren't part of itempool — place_gems already
