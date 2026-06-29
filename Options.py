@@ -78,7 +78,6 @@ greek:        Scenarios 1-10 (Fall of the Trident: Greek)
 egyptian:     Scenarios 11-20 (Fall of the Trident: Egyptian)
 norse:        Scenarios 21-30 (Fall of the Trident: Norse)
 new_atlantis: Start with the New Atlantis Campaign.
-pillars: Start with the Pillars of the Gods Campaign.
 
 Starting with the Greek block is the easiest."""
     internal_name = "starting_scenarios"
@@ -87,7 +86,8 @@ Starting with the Greek block is the easiest."""
     option_egyptian     = 1
     option_norse        = 2
     option_new_atlantis = 3
-    option_pillars = 4
+    # Pillars of the Gods is not yet ready — disabled as a starting option.
+    # option_pillars = 4
     default = option_greek
 
 

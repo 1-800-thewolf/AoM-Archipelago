@@ -305,8 +305,10 @@ _SCENARIO_DATA: dict[int, tuple[int, int, float, bool, bool]] = {
     27: (2, 2, 27.0,  False, False),  # reach Heroic (1 advancement); custom points
     28: (3, 0,  2.0,  False, False),  # custom: no age floor + points
     29: (2, 0,  0.0,  True,  False),  # always accessible
-    30: (2, 2, 35.0,  False, False),  # reach Heroic (1 advancement); custom points
-    31: (3, 3, 31.0,  False, False),  # reach Mythic (1 advancement); custom points
+    30: (2, 2, 27.0,  False, False),  # reach Heroic (1 advancement); custom points
+                                      # (Norse pool can supply ~30 pts max here; 35 was unreachable)
+    31: (3, 3, 27.0,  False, False),  # reach Mythic (1 advancement); custom points
+                                      # (Greek pool maxes ~30 pts here; 31 was unreachable)
     32: (3, 3, 16.0,  False, False),  # reach Mythic (1 advancement); custom points
     # ---------------------------------------------------------------------------
     # New Atlantis (APScenarioIDs 501-512)
