@@ -5773,9 +5773,13 @@ inactive
     if (wonderTitanTech > 0 && trTechStatusActive(1, wonderTitanTech) == false)
         { trTechSetStatus(1, wonderTitanTech, 1); }
 
-    bool inMythic = (APGetScenarioStartingAge() >= 3)
-                 || (wonderTech > 0      && trTechStatusActive(1, wonderTech) == true)
-                 || (wonderTitanTech > 0 && trTechStatusActive(1, wonderTitanTech) == true);
+    // Detect Mythic Age directly. The WonderAge* techs can't be used here:
+    // their prereq requires an alive Wonder, so they only activate AFTER a
+    // wonder is built -- a chicken-egg that leaves Wonder forbidden forever
+    // for players who advance to Mythic mid-scenario. kbPlayerGetAge returns
+    // cAge constants (Mythic = 3).
+    bool inMythic = (kbPlayerGetAge(1) >= 3)
+                 || (APGetScenarioStartingAge() >= 3);
 
     if (inMythic)
     {
